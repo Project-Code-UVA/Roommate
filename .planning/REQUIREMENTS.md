@@ -23,7 +23,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **AUTH-05**: User can complete required profile fields (name, year, bio)
 - [ ] **AUTH-06**: User who fails verification requirements cannot appear in Discovery, Explore, or message
 - [ ] **AUTH-07**: User can complete selfie verification for verified badge
-- [ ] **AUTH-08**: Progressive onboarding flow (age → phone → photos → school → profile → selfie)
+- [ ] **AUTH-08**: Progressive onboarding flow (age -> phone -> photos -> school -> profile -> selfie)
 
 ### Discovery
 
@@ -78,7 +78,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **SAFE-01**: Shared-school gating enforced server-side on all visibility queries
 - [ ] **SAFE-02**: Block hides user from Discovery, Explore, Likes, and Messages (server-enforced)
 - [ ] **SAFE-03**: Report system with 8 categories (harassment, sexual content, hate speech, spam, impersonation, underage, safety threat, other)
-- [ ] **SAFE-04**: Enforcement escalation (warning → 48hr DM ban → 7-day suspension → permanent ban)
+- [ ] **SAFE-04**: Enforcement escalation (warning -> 48hr DM ban -> 7-day suspension -> permanent ban)
 - [ ] **SAFE-05**: Enforcement state checked before allowing new conversations
 - [ ] **SAFE-06**: Under-18 accounts blocked at signup, "Underage" report category available
 
@@ -141,13 +141,76 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (Populated during roadmap creation) | | |
+| FOUND-01 | Phase 1 | Pending |
+| FOUND-02 | Phase 1 | Pending |
+| FOUND-03 | Phase 1 | Pending |
+| FOUND-04 | Phase 1 | Pending |
+| AUTH-01 | Phase 2 | Pending |
+| AUTH-02 | Phase 2 | Pending |
+| AUTH-03 | Phase 2 | Pending |
+| AUTH-04 | Phase 2 | Pending |
+| AUTH-05 | Phase 2 | Pending |
+| AUTH-06 | Phase 2 | Pending |
+| AUTH-07 | Phase 7 | Pending |
+| AUTH-08 | Phase 2 | Pending |
+| DISC-01 | Phase 4 | Pending |
+| DISC-02 | Phase 4 | Pending |
+| DISC-03 | Phase 4 | Pending |
+| DISC-04 | Phase 4 | Pending |
+| DISC-05 | Phase 3 | Pending |
+| DISC-06 | Phase 3 | Pending |
+| DISC-07 | Phase 3 | Pending |
+| DISC-08 | Phase 3 | Pending |
+| DISC-09 | Phase 3 | Pending |
+| DISC-10 | Phase 3 | Pending |
+| MTCH-01 | Phase 3 | Pending |
+| MTCH-02 | Phase 4 | Pending |
+| MTCH-03 | Phase 4 | Pending |
+| MTCH-04 | Phase 3 | Pending |
+| MSG-01 | Phase 5 | Pending |
+| MSG-02 | Phase 5 | Pending |
+| MSG-03 | Phase 5 | Pending |
+| MSG-04 | Phase 5 | Pending |
+| MSG-05 | Phase 5 | Pending |
+| MSG-06 | Phase 5 | Pending |
+| MSG-07 | Phase 5 | Pending |
+| MSG-08 | Phase 5 | Pending |
+| MSG-09 | Phase 5 | Pending |
+| MSG-10 | Phase 5 | Pending |
+| EXPL-01 | Phase 6 | Pending |
+| EXPL-02 | Phase 6 | Pending |
+| EXPL-03 | Phase 6 | Pending |
+| EXPL-04 | Phase 6 | Pending |
+| EXPL-05 | Phase 6 | Pending |
+| LIKE-01 | Phase 6 | Pending |
+| LIKE-02 | Phase 6 | Pending |
+| LIKE-03 | Phase 6 | Pending |
+| LIKE-04 | Phase 6 | Pending |
+| SAFE-01 | Phase 7 | Pending |
+| SAFE-02 | Phase 7 | Pending |
+| SAFE-03 | Phase 7 | Pending |
+| SAFE-04 | Phase 7 | Pending |
+| SAFE-05 | Phase 7 | Pending |
+| SAFE-06 | Phase 7 | Pending |
+| PAID-01 | Phase 9 | Pending |
+| PAID-02 | Phase 9 | Pending |
+| PAID-03 | Phase 9 | Pending |
+| PAID-04 | Phase 9 | Pending |
+| PAID-05 | Phase 9 | Pending |
+| PAID-06 | Phase 9 | Pending |
+| PAID-07 | Phase 9 | Pending |
+| PAID-08 | Phase 9 | Pending |
+| NOTF-01 | Phase 8 | Pending |
+| NOTF-02 | Phase 8 | Pending |
+| PRIV-01 | Phase 8 | Pending |
+| PRIV-02 | Phase 8 | Pending |
+| PRIV-03 | Phase 8 | Pending |
 
 **Coverage:**
-- v1 requirements: 48 total
-- Mapped to phases: 0
-- Unmapped: 48
+- v1 requirements: 64 total
+- Mapped to phases: 64
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-03*
-*Last updated: 2026-03-03 after initial definition*
+*Last updated: 2026-03-03 after roadmap creation*
