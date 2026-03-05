@@ -33,11 +33,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. All PRD v2.0 tables exist in Supabase (users, profiles, schools, user_schools, likes, matches, dismissals, saves, threads, messages, reports, blocks, ranking_config, ads_engagement, subscriptions)
   3. Row Level Security policies enforce shared-school visibility on user-facing tables
   4. Shared `is_blocked()` Postgres function correctly hides blocked users across all queries that reference it
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md — Expo project scaffold with NativeWind, Supabase client, and 5-tab navigation
+- [ ] 01-02-PLAN.md — Supabase project creation, PRD v2.0 schema migrations, and school seed data
+- [ ] 01-03-PLAN.md — RLS policies, shared trust functions (is_blocked, shares_school), and TypeScript type generation
 
 ### Phase 2: Auth & Onboarding
 **Goal**: Users can create a verified account and complete onboarding to become eligible for Discovery and messaging
