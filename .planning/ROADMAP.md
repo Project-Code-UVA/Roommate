@@ -50,9 +50,10 @@ Plans:
   3. User can upload at least 3 photos and complete required profile fields (name, year, bio)
   4. User can select at least one school during onboarding
   5. User who has not completed all verification steps cannot appear in Discovery, Explore, or send messages
-**Plans**: 4 plans
+**Plans**: 5 plans
 
 Plans:
+- [ ] 02-00-PLAN.md — Wave 0 test infrastructure: shared mocks and test stubs for all Phase 2 services/hooks
 - [ ] 02-01-PLAN.md — Schema migrations, auth context, route protection, services, and shared onboarding components
 - [ ] 02-02-PLAN.md — Welcome screen, age gate (birthday), and phone OTP verification
 - [ ] 02-03-PLAN.md — Name, gender, and school selection onboarding screens
@@ -177,7 +178,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Schema | 0/? | Not started | - |
-| 2. Auth & Onboarding | 0/4 | Not started | - |
+| 2. Auth & Onboarding | 0/5 | Not started | - |
 | 3. Discovery Engine | 0/? | Not started | - |
 | 4. Swipe UI & Match Experience | 0/? | Not started | - |
 | 5. Messaging | 0/? | Not started | - |
