@@ -312,8 +312,10 @@ export type Database = {
           completion_score: number
           created_at: string
           display_name: string | null
+          gender: string | null
           hometown: string | null
           nitty_gritty: Json | null
+          show_gender: boolean
           updated_at: string
           user_id: string
           year: string | null
@@ -323,8 +325,10 @@ export type Database = {
           completion_score?: number
           created_at?: string
           display_name?: string | null
+          gender?: string | null
           hometown?: string | null
           nitty_gritty?: Json | null
+          show_gender?: boolean
           updated_at?: string
           user_id: string
           year?: string | null
@@ -334,8 +338,10 @@ export type Database = {
           completion_score?: number
           created_at?: string
           display_name?: string | null
+          gender?: string | null
           hometown?: string | null
           nitty_gritty?: Json | null
+          show_gender?: boolean
           updated_at?: string
           user_id?: string
           year?: string | null
@@ -595,6 +601,7 @@ export type Database = {
           id: string
           last_active_at: string
           mode_status: Database["public"]["Enums"]["mode_status"]
+          onboarding_completed: boolean
           phone: string | null
           selfie_verified: boolean
         }
@@ -605,6 +612,7 @@ export type Database = {
           id: string
           last_active_at?: string
           mode_status?: Database["public"]["Enums"]["mode_status"]
+          onboarding_completed?: boolean
           phone?: string | null
           selfie_verified?: boolean
         }
@@ -615,6 +623,7 @@ export type Database = {
           id?: string
           last_active_at?: string
           mode_status?: Database["public"]["Enums"]["mode_status"]
+          onboarding_completed?: boolean
           phone?: string | null
           selfie_verified?: boolean
         }
