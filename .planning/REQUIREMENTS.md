@@ -9,10 +9,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Foundation
 
-- [ ] **FOUND-01**: Project scaffold with Expo Development Build, Supabase client, and navigation structure
-- [ ] **FOUND-02**: Database schema aligned with PRD v2.0 (matches, likes, dismissals, saves tables)
-- [ ] **FOUND-03**: Row Level Security policies for shared-school gating on all user-facing tables
-- [ ] **FOUND-04**: Shared block-check Postgres function referenced by all visibility queries
+- [x] **FOUND-01**: Project scaffold with Expo Development Build, Supabase client, and navigation structure
+- [x] **FOUND-02**: Database schema aligned with PRD v2.0 (matches, likes, dismissals, saves tables)
+- [x] **FOUND-03**: Row Level Security policies for shared-school gating on all user-facing tables
+- [x] **FOUND-04**: Shared block-check Postgres function referenced by all visibility queries
 
 ### Authentication
 
@@ -141,10 +141,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FOUND-01 | Phase 1 | Pending |
-| FOUND-02 | Phase 1 | Pending |
-| FOUND-03 | Phase 1 | Pending |
-| FOUND-04 | Phase 1 | Pending |
+| FOUND-01 | Phase 1 | Complete |
+| FOUND-02 | Phase 1 | Complete |
+| FOUND-03 | Phase 1 | Complete |
+| FOUND-04 | Phase 1 | Complete |
 | AUTH-01 | Phase 2 | Pending |
 | AUTH-02 | Phase 2 | Pending |
 | AUTH-03 | Phase 2 | Pending |
