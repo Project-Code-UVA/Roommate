@@ -14,7 +14,7 @@ ALTER TABLE public.profiles
 CREATE OR REPLACE FUNCTION public.validate_age()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF (CURRENT_DATE - NEW.birthdate) < INTERVAL '18 years' THEN
+  IF NEW.birthdate > (CURRENT_DATE - INTERVAL '18 years')::date THEN
     RAISE EXCEPTION 'User must be 18 or older';
   END IF;
   RETURN NEW;
