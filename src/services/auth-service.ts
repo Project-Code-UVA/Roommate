@@ -112,11 +112,10 @@ export async function createUserRecord(
   birthdate: string,
   phone: string,
 ): Promise<{ error: string | null }> {
-  const { error } = await supabase.from("users").insert({
-    id: userId,
-    birthdate,
-    phone,
-  });
+  const { error } = await supabase.from("users").upsert(
+    { id: userId, birthdate, phone },
+    { onConflict: "id" },
+  );
 
   return { error: error?.message ?? null };
 }

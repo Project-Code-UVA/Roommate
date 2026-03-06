@@ -91,14 +91,14 @@ export default function PhoneScreen() {
           className="flex-row rounded-xl border-2 border-gray-300 px-4"
           style={{ alignItems: "center", height: 56 }}
         >
-          <Text style={{ fontSize: 17, color: "#374151" }}>+1</Text>
+          <Text style={{ fontSize: 17, lineHeight: 22, color: "#374151" }}>+1</Text>
           <TextInput
             value={formatPhone(rawDigits)}
             onChangeText={handleChangeText}
             keyboardType="phone-pad"
             placeholder="(555) 555-5555"
             placeholderTextColor={COLORS.gray[400]}
-            style={{ flex: 1, fontSize: 17, color: "#111827", marginLeft: 8, paddingVertical: 0 }}
+            style={{ flex: 1, fontSize: 17, lineHeight: 22, color: "#111827", marginLeft: 8, paddingVertical: 0 }}
             maxLength={14}
             accessibilityLabel="Phone number"
             autoFocus
