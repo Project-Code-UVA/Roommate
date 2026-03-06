@@ -87,16 +87,18 @@ export default function PhoneScreen() {
     >
       <View className="mt-4">
         {/* Phone input row */}
-        <View className="flex-row items-center rounded-xl border-2 border-gray-300 px-4">
-          <Text className="text-base text-gray-700" style={{ fontSize: 16, lineHeight: 22 }}>+1</Text>
+        <View
+          className="flex-row rounded-xl border-2 border-gray-300 px-4"
+          style={{ alignItems: "center", height: 56 }}
+        >
+          <Text style={{ fontSize: 17, color: "#374151" }}>+1</Text>
           <TextInput
             value={formatPhone(rawDigits)}
             onChangeText={handleChangeText}
             keyboardType="phone-pad"
             placeholder="(555) 555-5555"
             placeholderTextColor={COLORS.gray[400]}
-            className="flex-1 py-4 text-gray-900"
-            style={{ fontSize: 16, lineHeight: 22, marginLeft: 8 }}
+            style={{ flex: 1, fontSize: 17, color: "#111827", marginLeft: 8, paddingVertical: 0 }}
             maxLength={14}
             accessibilityLabel="Phone number"
             autoFocus
