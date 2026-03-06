@@ -19,8 +19,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **AUTH-01**: User can create account with birthdate (18+ enforced server-side)
 - [x] **AUTH-02**: User can verify phone number via OTP
 - [ ] **AUTH-03**: User can upload minimum 3 photos during onboarding
-- [ ] **AUTH-04**: User can select at least one school during onboarding
-- [ ] **AUTH-05**: User can complete required profile fields (name, year, bio)
+- [x] **AUTH-04**: User can select at least one school during onboarding
+- [x] **AUTH-05**: User can complete required profile fields (name, year, bio)
 - [x] **AUTH-06**: User who fails verification requirements cannot appear in Discovery, Explore, or message
 - [ ] **AUTH-07**: User can complete selfie verification for verified badge
 - [x] **AUTH-08**: Progressive onboarding flow (age -> phone -> photos -> school -> profile -> selfie)
@@ -148,8 +148,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-01 | Phase 2 | Complete |
 | AUTH-02 | Phase 2 | Complete |
 | AUTH-03 | Phase 2 | Pending |
-| AUTH-04 | Phase 2 | Pending |
-| AUTH-05 | Phase 2 | Pending |
+| AUTH-04 | Phase 2 | Complete |
+| AUTH-05 | Phase 2 | Complete |
 | AUTH-06 | Phase 2 | Complete |
 | AUTH-07 | Phase 7 | Pending |
 | AUTH-08 | Phase 2 | Complete |
