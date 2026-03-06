@@ -1,9 +1,27 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { BRAND_COLOR } from "@/lib/constants";
+import { useSession } from "@/contexts/auth-context";
 
 export default function TabLayout() {
+  const { session, isLoading, onboardingComplete } = useSession();
+
+  // Keep splash screen visible while loading
+  if (isLoading) {
+    return null;
+  }
+
+  // Unauthenticated -> welcome screen
+  if (!session) {
+    return <Redirect href="/welcome" />;
+  }
+
+  // Authenticated but not onboarded -> onboarding flow
+  if (!onboardingComplete) {
+    return <Redirect href="/(auth)/birthday" />;
+  }
+
   return (
     <Tabs
       screenOptions={{
