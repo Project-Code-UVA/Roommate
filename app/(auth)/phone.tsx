@@ -20,12 +20,15 @@ import { sendOtp } from "@/services/auth-service";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { COLORS } from "@/lib/constants";
 
-/** Format raw digits as (xxx) xxx-xxxx for display. */
+const PREFIX = "+1  ";
+
+/** Format raw digits as +1  (xxx) xxx-xxxx for display. */
 function formatPhone(raw: string): string {
   const digits = raw.replace(/\D/g, "").slice(0, 10);
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  if (digits.length === 0) return PREFIX;
+  if (digits.length <= 3) return `${PREFIX}(${digits}`;
+  if (digits.length <= 6) return `${PREFIX}(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `${PREFIX}(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
 }
 
 /** Extract raw digits from formatted phone. */
@@ -44,7 +47,10 @@ export default function PhoneScreen() {
   const isValid = rawDigits.length === 10;
 
   function handleChangeText(text: string) {
-    const digits = extractDigits(text);
+    // Ensure prefix can't be deleted — strip the country code digit from extraction
+    const allDigits = text.replace(/\D/g, "");
+    // Remove the leading "1" from the prefix if present
+    const digits = allDigits.startsWith("1") ? allDigits.slice(1).slice(0, 10) : allDigits.slice(0, 10);
     setRawDigits(digits);
     if (errorMessage) setErrorMessage(null);
   }
@@ -88,20 +94,24 @@ export default function PhoneScreen() {
       <View className="mt-4">
         {/* Phone input row */}
         <View
-          className="flex-row rounded-xl border-2 border-gray-300 px-4"
-          style={{ alignItems: "center", height: 56 }}
+          className="rounded-xl border-2 border-gray-300 px-4"
+          style={{ justifyContent: "center", height: 56 }}
         >
-          <Text style={{ fontSize: 17, lineHeight: 22, color: "#374151" }}>+1</Text>
           <TextInput
             value={formatPhone(rawDigits)}
             onChangeText={handleChangeText}
             keyboardType="phone-pad"
-            placeholder="(555) 555-5555"
+            placeholder={`${PREFIX}(555) 555-5555`}
             placeholderTextColor={COLORS.gray[400]}
-            style={{ flex: 1, fontSize: 17, lineHeight: 22, color: "#111827", marginLeft: 8, paddingVertical: 0 }}
-            maxLength={14}
+            style={{ fontSize: 17, color: "#111827", paddingVertical: 0 }}
+            maxLength={19}
             accessibilityLabel="Phone number"
             autoFocus
+            selection={
+              rawDigits.length === 0
+                ? { start: PREFIX.length, end: PREFIX.length }
+                : undefined
+            }
           />
         </View>
 

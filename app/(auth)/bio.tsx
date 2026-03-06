@@ -65,14 +65,14 @@ export default function BioScreen() {
         return;
       }
 
-      // Step 3: Refresh auth context (triggers redirect to main tabs)
+      // Step 3: Refresh auth context so tabs layout knows onboarding is done
       await refreshOnboardingStatus();
 
       // Step 4: Clear AsyncStorage onboarding progress
       await clearProgress();
 
-      // The auth context state change (onboardingComplete = true) triggers
-      // the layout to stop redirecting to onboarding, and user sees main app.
+      // Step 5: Navigate to main app (tabs layout will see onboardingComplete = true)
+      router.replace("/(tabs)");
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Something went wrong";
