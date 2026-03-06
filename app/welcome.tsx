@@ -6,10 +6,51 @@
  */
 
 import { StatusBar } from "expo-status-bar";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const styles = StyleSheet.create({
+  gradient: { flex: 1 },
+  safeArea: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 24,
+    paddingVertical: 48,
+  },
+  logoArea: { flex: 1, alignItems: "center", justifyContent: "center" },
+  logoText: { fontSize: 56, fontWeight: "800", color: "#ffffff" },
+  tagline: { marginTop: 12, fontSize: 18, color: "#d1d5db" },
+  ctaArea: { width: "100%", alignItems: "center" },
+  legalText: {
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    textAlign: "center",
+    fontSize: 12,
+    color: "#9ca3af",
+  },
+  button: {
+    width: "100%",
+    borderRadius: 9999,
+    backgroundColor: "#9333ea",
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+  },
+  buttonText: {
+    textAlign: "center",
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#ffffff",
+  },
+  signInButton: { marginTop: 16, paddingVertical: 8 },
+  signInText: {
+    fontSize: 16,
+    color: "#c4b5fd",
+    textDecorationLine: "underline",
+  },
+});
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -19,45 +60,39 @@ export default function WelcomeScreen() {
       colors={["#111827", "#4c1d95", "#5b21b6"]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      className="flex-1"
+      style={styles.gradient}
     >
       <StatusBar style="light" />
-      <SafeAreaView className="flex-1 items-center justify-between px-6 py-12">
+      <SafeAreaView style={styles.safeArea}>
         {/* Logo area */}
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-5xl font-bold text-white">Room</Text>
-          <Text className="mt-3 text-lg text-gray-300">
-            Find your perfect roommate
-          </Text>
+        <View style={styles.logoArea}>
+          <Text style={styles.logoText}>Room</Text>
+          <Text style={styles.tagline}>Find your perfect roommate</Text>
         </View>
 
         {/* CTA area */}
-        <View className="w-full items-center">
-          <Text className="mb-4 px-4 text-center text-xs text-gray-400">
+        <View style={styles.ctaArea}>
+          <Text style={styles.legalText}>
             By tapping Get Started, you agree to our Terms of Service and
             Privacy Policy
           </Text>
 
           <Pressable
             onPress={() => router.push("/(auth)/birthday")}
-            className="w-full rounded-full bg-purple-600 px-8 py-4"
+            style={styles.button}
             accessibilityRole="button"
             accessibilityLabel="Get Started"
           >
-            <Text className="text-center text-lg font-semibold text-white">
-              {"Get Started -->"}
-            </Text>
+            <Text style={styles.buttonText}>{"Get Started -->"}</Text>
           </Pressable>
 
           <Pressable
             onPress={() => router.push("/(auth)/phone")}
-            className="mt-4 py-2"
+            style={styles.signInButton}
             accessibilityRole="link"
             accessibilityLabel="Sign in"
           >
-            <Text className="text-base text-purple-300 underline">
-              Sign in
-            </Text>
+            <Text style={styles.signInText}>Sign in</Text>
           </Pressable>
         </View>
       </SafeAreaView>
