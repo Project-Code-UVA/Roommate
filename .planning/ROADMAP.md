@@ -178,7 +178,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Schema | 3/3 | Complete | 2026-03-05 |
-| 2. Auth & Onboarding | 1/5 | In Progress | - |
+| 2. Auth & Onboarding | 2/5 | In Progress|  |
 | 3. Discovery Engine | 0/? | Not started | - |
 | 4. Swipe UI & Match Experience | 0/? | Not started | - |
 | 5. Messaging | 0/? | Not started | - |
