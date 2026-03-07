@@ -16,6 +16,7 @@ import { StepContainer } from "@/components/onboarding/step-container";
 import { OtpInput } from "@/components/onboarding/otp-input";
 import { verifyOtp, sendOtp, createUserRecord } from "@/services/auth-service";
 import { useOnboarding } from "@/hooks/use-onboarding";
+import { COLORS } from "@/lib/constants";
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
@@ -149,7 +150,7 @@ export default function VerifyOtpScreen() {
           <ActivityIndicator
             className="mt-6"
             size="large"
-            color="#7c3aed"
+            color={COLORS.primary[600]}
           />
         ) : null}
 
@@ -179,7 +180,7 @@ export default function VerifyOtpScreen() {
           >
             <Text
               className={`text-base font-semibold ${
-                resendCountdown > 0 ? "text-gray-400" : "text-purple-600"
+                resendCountdown > 0 ? "text-gray-400" : "text-primary-600"
               }`}
             >
               {resendCountdown > 0

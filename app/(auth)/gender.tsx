@@ -21,6 +21,7 @@ import { StepContainer } from "@/components/onboarding/step-container";
 import { useSession } from "@/contexts/auth-context";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { updateProfile } from "@/services/profile-service";
+import { COLORS } from "@/lib/constants";
 
 type GenderOption = "man" | "woman" | "non-binary" | "more";
 
@@ -90,8 +91,8 @@ export default function GenderScreen() {
               key={option.key}
               className={`rounded-xl border-2 px-6 py-4 ${
                 selected === option.key
-                  ? "border-purple-600 bg-purple-50"
-                  : "border-gray-200"
+                  ? "border-primary-600 bg-primary-50"
+                  : "border-gray-300"
               }`}
               onPress={() => setSelected(option.key)}
               accessibilityRole="radio"
@@ -101,7 +102,7 @@ export default function GenderScreen() {
               <Text
                 className={`text-base font-medium ${
                   selected === option.key
-                    ? "text-purple-700"
+                    ? "text-primary-700"
                     : "text-gray-900"
                 }`}
               >
@@ -113,9 +114,9 @@ export default function GenderScreen() {
 
         {selected === "more" ? (
           <TextInput
-            className="mt-3 rounded-xl border-2 border-gray-200 px-6 py-4 text-base text-gray-900 focus:border-purple-600"
+            className="mt-3 rounded-xl border-2 border-gray-300 px-6 py-4 text-base text-gray-900 focus:border-primary-600"
             placeholder="How do you identify?"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={COLORS.gray[400]}
             value={customGender}
             onChangeText={setCustomGender}
             autoFocus
@@ -132,8 +133,8 @@ export default function GenderScreen() {
           <Switch
             value={showGender}
             onValueChange={setShowGender}
-            trackColor={{ false: "#D1D5DB", true: "#9333EA" }}
-            thumbColor="#FFFFFF"
+            trackColor={{ false: COLORS.gray[300], true: COLORS.primary[600] }}
+            thumbColor={COLORS.white}
             accessibilityLabel="Show gender on profile"
           />
         </View>
@@ -145,17 +146,22 @@ export default function GenderScreen() {
 
       <Pressable
         className={`mb-8 rounded-xl py-4 ${
-          canContinue ? "bg-purple-600" : "bg-gray-300"
+          canContinue ? "bg-primary-600" : "bg-gray-300"
         }`}
         onPress={handleContinue}
         disabled={!canContinue}
         accessibilityRole="button"
         accessibilityLabel="Continue"
+        accessibilityState={{ disabled: !canContinue }}
       >
         {isSaving ? (
-          <ActivityIndicator color="#FFFFFF" />
+          <ActivityIndicator color={COLORS.white} />
         ) : (
-          <Text className="text-center text-lg font-semibold text-white">
+          <Text
+            className={`text-center text-lg font-semibold ${
+              canContinue ? "text-white" : "text-gray-500"
+            }`}
+          >
             Continue
           </Text>
         )}

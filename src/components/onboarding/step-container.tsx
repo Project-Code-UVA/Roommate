@@ -12,8 +12,8 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { COLORS } from "@/lib/constants";
 
 type StepContainerProps = {
   readonly title: string;
@@ -31,38 +31,36 @@ export function StepContainer({
   children,
 }: StepContainerProps) {
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
-        <View className="flex-1 px-6">
-          {showBack && onBack ? (
-            <Pressable
-              onPress={onBack}
-              className="mb-4 mt-2 h-10 w-10 items-center justify-center rounded-full"
-              accessibilityLabel="Go back"
-              accessibilityRole="button"
-            >
-              <Ionicons name="arrow-back" size={24} color="#111827" />
-            </Pressable>
-          ) : (
-            <View className="mb-4 mt-2 h-10" />
-          )}
+    <KeyboardAvoidingView
+      className="flex-1 bg-white"
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <View className="flex-1 px-6">
+        {showBack && onBack ? (
+          <Pressable
+            onPress={onBack}
+            className="mb-4 mt-2 h-10 w-10 items-center justify-center rounded-full"
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+          >
+            <Ionicons name="arrow-back" size={24} color={COLORS.gray[900]} />
+          </Pressable>
+        ) : (
+          <View className="mb-4 mt-2 h-10" />
+        )}
 
-          <Text className="mb-2 text-2xl font-bold text-gray-900">
-            {title}
-          </Text>
+        <Text className="mb-2 text-2xl font-bold text-gray-900">
+          {title}
+        </Text>
 
-          {subtitle ? (
-            <Text className="mb-6 text-base text-gray-500">{subtitle}</Text>
-          ) : (
-            <View className="mb-6" />
-          )}
+        {subtitle ? (
+          <Text className="mb-6 text-base text-gray-500">{subtitle}</Text>
+        ) : (
+          <View className="mb-6" />
+        )}
 
-          <View className="flex-1">{children}</View>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        <View className="flex-1">{children}</View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }

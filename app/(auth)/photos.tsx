@@ -20,6 +20,7 @@ import { StepContainer } from "@/components/onboarding/step-container";
 import { PhotoGrid, type PhotoSlot } from "@/components/onboarding/photo-grid";
 import { useSession } from "@/contexts/auth-context";
 import { useOnboarding } from "@/hooks/use-onboarding";
+import { COLORS } from "@/lib/constants";
 import {
   deletePhoto,
   pickImage,
@@ -270,7 +271,7 @@ export default function PhotosScreen() {
         onBack={() => router.back()}
       >
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#9333EA" />
+          <ActivityIndicator size="large" color={COLORS.primary[600]} />
         </View>
       </StepContainer>
     );
@@ -300,17 +301,22 @@ export default function PhotosScreen() {
 
       <Pressable
         className={`mb-8 rounded-xl py-4 ${
-          canContinue ? "bg-purple-600" : "bg-gray-300"
+          canContinue ? "bg-primary-600" : "bg-gray-300"
         }`}
         onPress={handleContinue}
         disabled={!canContinue}
         accessibilityRole="button"
         accessibilityLabel="Continue"
+        accessibilityState={{ disabled: !canContinue }}
       >
         {isSaving ? (
-          <ActivityIndicator color="#FFFFFF" />
+          <ActivityIndicator color={COLORS.white} />
         ) : (
-          <Text className="text-center text-lg font-semibold text-white">
+          <Text
+            className={`text-center text-lg font-semibold ${
+              canContinue ? "text-white" : "text-gray-500"
+            }`}
+          >
             Continue
           </Text>
         )}

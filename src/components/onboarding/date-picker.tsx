@@ -7,6 +7,7 @@
 
 import { View } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { COLORS } from "@/lib/constants";
 
 type DatePickerProps = {
   readonly value: Date;
@@ -40,7 +41,7 @@ export function DatePicker({
             onChange(selectedDate);
           }
         }}
-        textColor="#111827"
+        textColor={COLORS.gray[900]}
       />
     </View>
   );

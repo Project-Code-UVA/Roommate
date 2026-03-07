@@ -22,6 +22,7 @@ import { useSession } from "@/contexts/auth-context";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { updateProfile } from "@/services/profile-service";
 import { markOnboardingComplete } from "@/services/auth-service";
+import { COLORS } from "@/lib/constants";
 
 const MAX_BIO_LENGTH = 300;
 const WARNING_THRESHOLD = 280;
@@ -89,11 +90,11 @@ export default function BioScreen() {
     >
       <View className="flex-1">
         <TextInput
-          className={`min-h-[120px] rounded-xl border p-4 text-base text-gray-900 ${
-            isFocused ? "border-purple-600" : "border-gray-300"
+          className={`min-h-[120px] rounded-xl border-2 p-4 text-base text-gray-900 ${
+            isFocused ? "border-primary-600" : "border-gray-300"
           }`}
           placeholder="What should your future roommate know about you?"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={COLORS.gray[400]}
           multiline
           textAlignVertical="top"
           maxLength={MAX_BIO_LENGTH}
@@ -116,17 +117,22 @@ export default function BioScreen() {
 
       <Pressable
         className={`mb-8 rounded-xl py-4 ${
-          canComplete ? "bg-purple-600" : "bg-gray-300"
+          canComplete ? "bg-primary-600" : "bg-gray-300"
         }`}
         onPress={handleComplete}
         disabled={!canComplete}
         accessibilityRole="button"
         accessibilityLabel="Complete Profile"
+        accessibilityState={{ disabled: !canComplete }}
       >
         {isSubmitting ? (
-          <ActivityIndicator color="#FFFFFF" />
+          <ActivityIndicator color={COLORS.white} />
         ) : (
-          <Text className="text-center text-lg font-semibold text-white">
+          <Text
+            className={`text-center text-lg font-semibold ${
+              canComplete ? "text-white" : "text-gray-500"
+            }`}
+          >
             Complete Profile
           </Text>
         )}

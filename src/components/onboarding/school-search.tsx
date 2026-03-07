@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Pressable,
   Text,
@@ -18,6 +19,7 @@ import { Ionicons } from "@expo/vector-icons";
 import type { Tables } from "@/types/database.types";
 
 import { searchSchools } from "@/services/school-service";
+import { COLORS } from "@/lib/constants";
 
 type School = Tables<"schools">;
 
@@ -89,19 +91,19 @@ export function SchoolSearch({
   return (
     <View>
       {/* Search input */}
-      <View className="flex-row items-center rounded-xl border-2 border-gray-200 px-4 py-3">
-        <Ionicons name="search" size={20} color="#9CA3AF" />
+      <View className="flex-row items-center rounded-xl border-2 border-gray-300 px-4 py-3">
+        <Ionicons name="search" size={20} color={COLORS.gray[400]} />
         <TextInput
           className="ml-2 flex-1 text-base text-gray-900"
           placeholder="Search for your school..."
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={COLORS.gray[400]}
           value={query}
           onChangeText={setQuery}
           autoCorrect={false}
           accessibilityLabel="Search schools"
         />
         {isSearching ? (
-          <Ionicons name="hourglass-outline" size={18} color="#9CA3AF" />
+          <ActivityIndicator size="small" color={COLORS.gray[400]} />
         ) : null}
       </View>
 
@@ -133,9 +135,9 @@ export function SchoolSearch({
             {selectedSchools.map((school) => (
               <View
                 key={school.id}
-                className="flex-row items-center rounded-full bg-purple-100 px-3 py-1"
+                className="flex-row items-center rounded-full bg-primary-100 px-3 py-1"
               >
-                <Text className="mr-1 text-sm font-medium text-purple-700">
+                <Text className="mr-1 text-sm font-medium text-primary-700">
                   {school.name}
                 </Text>
                 <Pressable
@@ -144,7 +146,7 @@ export function SchoolSearch({
                   accessibilityRole="button"
                   accessibilityLabel={`Remove ${school.name}`}
                 >
-                  <Ionicons name="close" size={16} color="#7C3AED" />
+                  <Ionicons name="close" size={16} color={COLORS.primary[600]} />
                 </Pressable>
               </View>
             ))}

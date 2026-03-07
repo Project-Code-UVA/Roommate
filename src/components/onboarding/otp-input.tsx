@@ -118,7 +118,7 @@ export function OtpInput({ onComplete, length = 6 }: OtpInputProps) {
           textContentType={index === 0 ? "oneTimeCode" : "none"}
           className={`h-14 w-12 rounded-xl border-2 text-center text-2xl font-bold ${
             digits[index]
-              ? "border-purple-600 text-gray-900"
+              ? "border-primary-600 text-gray-900"
               : "border-gray-300 text-gray-900"
           }`}
           accessibilityLabel={`Digit ${index + 1} of ${length}`}

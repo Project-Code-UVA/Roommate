@@ -93,25 +93,22 @@ export default function PhoneScreen() {
     >
       <View className="mt-4">
         {/* Phone input row */}
-        <View
-          className="rounded-xl border-2 border-gray-300 px-4"
-          style={{ justifyContent: "center", height: 56 }}
-        >
+        <View className="h-14 justify-center rounded-xl border-2 border-gray-300 px-4">
           <TextInput
+            className="text-base text-gray-900"
             value={formatPhone(rawDigits)}
             onChangeText={handleChangeText}
             keyboardType="phone-pad"
             placeholder={`${PREFIX}(555) 555-5555`}
             placeholderTextColor={COLORS.gray[400]}
-            style={{ fontSize: 17, color: "#111827", paddingVertical: 0 }}
+            style={{ paddingVertical: 0 }}
             maxLength={19}
             accessibilityLabel="Phone number"
             autoFocus
-            selection={
-              rawDigits.length === 0
-                ? { start: PREFIX.length, end: PREFIX.length }
-                : undefined
-            }
+            selection={{
+              start: formatPhone(rawDigits).length,
+              end: formatPhone(rawDigits).length,
+            }}
           />
         </View>
 
@@ -128,14 +125,14 @@ export default function PhoneScreen() {
         onPress={handleSendCode}
         disabled={!isValid || isLoading}
         className={`mb-8 w-full rounded-xl py-4 ${
-          isValid && !isLoading ? "bg-purple-600" : "bg-gray-300"
+          isValid && !isLoading ? "bg-primary-600" : "bg-gray-300"
         }`}
         accessibilityRole="button"
         accessibilityLabel="Send Code"
         accessibilityState={{ disabled: !isValid || isLoading }}
       >
         {isLoading ? (
-          <ActivityIndicator color="#ffffff" />
+          <ActivityIndicator color={COLORS.white} />
         ) : (
           <Text
             className={`text-center text-lg font-semibold ${

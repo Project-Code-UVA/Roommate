@@ -19,6 +19,7 @@ import { StepContainer } from "@/components/onboarding/step-container";
 import { useSession } from "@/contexts/auth-context";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { updateProfile } from "@/services/profile-service";
+import { COLORS } from "@/lib/constants";
 
 const MAX_NAME_LENGTH = 30;
 
@@ -62,9 +63,9 @@ export default function NameScreen() {
     >
       <View className="flex-1">
         <TextInput
-          className="border-b-2 border-gray-300 pb-2 text-2xl font-semibold text-gray-900 focus:border-purple-600"
+          className="border-b-2 border-gray-300 pb-2 text-2xl font-semibold text-gray-900 focus:border-primary-600"
           placeholder="First name"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={COLORS.gray[400]}
           value={name}
           onChangeText={setName}
           autoFocus
@@ -81,17 +82,22 @@ export default function NameScreen() {
 
       <Pressable
         className={`mb-8 rounded-xl py-4 ${
-          canContinue ? "bg-purple-600" : "bg-gray-300"
+          canContinue ? "bg-primary-600" : "bg-gray-300"
         }`}
         onPress={handleContinue}
         disabled={!canContinue}
         accessibilityRole="button"
         accessibilityLabel="Continue"
+        accessibilityState={{ disabled: !canContinue }}
       >
         {isSaving ? (
-          <ActivityIndicator color="#FFFFFF" />
+          <ActivityIndicator color={COLORS.white} />
         ) : (
-          <Text className="text-center text-lg font-semibold text-white">
+          <Text
+            className={`text-center text-lg font-semibold ${
+              canContinue ? "text-white" : "text-gray-500"
+            }`}
+          >
             Continue
           </Text>
         )}

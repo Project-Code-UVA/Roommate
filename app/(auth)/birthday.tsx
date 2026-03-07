@@ -60,7 +60,7 @@ export default function BirthdayScreen() {
 
       <Pressable
         onPress={handleContinue}
-        className="mb-8 w-full rounded-xl bg-purple-600 py-4"
+        className="mb-8 w-full rounded-xl bg-primary-600 py-4"
         accessibilityRole="button"
         accessibilityLabel="Continue"
       >

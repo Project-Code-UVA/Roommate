@@ -25,6 +25,7 @@ import Animated, {
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
+import { COLORS } from "@/lib/constants";
 
 export type PhotoSlot = {
   readonly id: string;
@@ -166,7 +167,7 @@ function DraggableSlot({
         accessibilityRole="button"
         accessibilityLabel={`Add photo ${index + 1}`}
       >
-        <Ionicons name="add" size={32} color="#9CA3AF" />
+        <Ionicons name="add" size={32} color={COLORS.gray[400]} />
       </Pressable>
     );
   }
@@ -197,13 +198,13 @@ function DraggableSlot({
             accessibilityLabel={`Remove photo ${index + 1}`}
             hitSlop={8}
           >
-            <Ionicons name="close" size={14} color="#FFFFFF" />
+            <Ionicons name="close" size={14} color={COLORS.white} />
           </Pressable>
 
           {/* Profile photo badge */}
           {index === 0 ? (
             <View className="absolute bottom-1 left-1/2 -translate-x-1/2">
-              <View className="rounded-full bg-purple-600 px-2 py-0.5">
+              <View className="rounded-full bg-primary-600 px-2 py-0.5">
                 <Text className="text-xs font-medium text-white">Profile</Text>
               </View>
             </View>
