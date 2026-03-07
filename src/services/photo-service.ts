@@ -11,24 +11,29 @@ import { decode } from "base64-arraybuffer";
 import { supabase } from "@/lib/supabase";
 
 /**
- * Launch image picker (camera or gallery) with square crop.
+ * Launch image picker (camera or gallery).
+ * Camera: single image with square crop.
+ * Gallery: multi-select (up to `selectionLimit`), no crop (iOS limitation).
  */
 export async function pickImage(
   source: "camera" | "gallery",
+  selectionLimit = 9,
 ): Promise<ImagePicker.ImagePickerResult> {
-  const launcher =
-    source === "camera"
-      ? ImagePicker.launchCameraAsync
-      : ImagePicker.launchImageLibraryAsync;
+  if (source === "camera") {
+    return ImagePicker.launchCameraAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+  }
 
-  const result = await launcher({
+  return ImagePicker.launchImageLibraryAsync({
     mediaTypes: ["images"],
-    allowsEditing: true,
-    aspect: [1, 1],
+    allowsMultipleSelection: true,
+    selectionLimit,
     quality: 0.8,
   });
-
-  return result;
 }
 
 /**

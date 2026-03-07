@@ -20,20 +20,13 @@ import { sendOtp } from "@/services/auth-service";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { COLORS } from "@/lib/constants";
 
-const PREFIX = "+1  ";
-
-/** Format raw digits as +1  (xxx) xxx-xxxx for display. */
+/** Format raw digits as +1 (xxx) xxx-xxxx for display. */
 function formatPhone(raw: string): string {
   const digits = raw.replace(/\D/g, "").slice(0, 10);
-  if (digits.length === 0) return PREFIX;
-  if (digits.length <= 3) return `${PREFIX}(${digits}`;
-  if (digits.length <= 6) return `${PREFIX}(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-  return `${PREFIX}(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-}
-
-/** Extract raw digits from formatted phone. */
-function extractDigits(formatted: string): string {
-  return formatted.replace(/\D/g, "").slice(0, 10);
+  if (digits.length === 0) return "+1 ";
+  if (digits.length <= 3) return `+1 (${digits}`;
+  if (digits.length <= 6) return `+1 (${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `+1 (${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
 }
 
 export default function PhoneScreen() {
@@ -47,9 +40,8 @@ export default function PhoneScreen() {
   const isValid = rawDigits.length === 10;
 
   function handleChangeText(text: string) {
-    // Ensure prefix can't be deleted — strip the country code digit from extraction
     const allDigits = text.replace(/\D/g, "");
-    // Remove the leading "1" from the prefix if present
+    // Strip the leading "1" from the country code prefix
     const digits = allDigits.startsWith("1") ? allDigits.slice(1).slice(0, 10) : allDigits.slice(0, 10);
     setRawDigits(digits);
     if (errorMessage) setErrorMessage(null);
@@ -95,14 +87,13 @@ export default function PhoneScreen() {
         {/* Phone input row */}
         <View className="h-14 justify-center rounded-xl border-2 border-gray-300 px-4">
           <TextInput
-            className="text-base text-gray-900"
+            style={{ fontSize: 18, color: '#111827', paddingVertical: 0 }}
             value={formatPhone(rawDigits)}
             onChangeText={handleChangeText}
             keyboardType="phone-pad"
-            placeholder={`${PREFIX}(555) 555-5555`}
+            placeholder="+1 (555) 555-5555"
             placeholderTextColor={COLORS.gray[400]}
-            style={{ paddingVertical: 0 }}
-            maxLength={19}
+            maxLength={18}
             accessibilityLabel="Phone number"
             autoFocus
             selection={{

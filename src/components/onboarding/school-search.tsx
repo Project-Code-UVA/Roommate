@@ -94,7 +94,7 @@ export function SchoolSearch({
       <View className="flex-row items-center rounded-xl border-2 border-gray-300 px-4 py-3">
         <Ionicons name="search" size={20} color={COLORS.gray[400]} />
         <TextInput
-          className="ml-2 flex-1 text-base text-gray-900"
+          className="ml-2 flex-1 text-lg text-gray-900"
           placeholder="Search for your school..."
           placeholderTextColor={COLORS.gray[400]}
           value={query}

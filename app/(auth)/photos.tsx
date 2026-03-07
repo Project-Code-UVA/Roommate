@@ -104,40 +104,23 @@ export default function PhotosScreen() {
     [session?.user.id, photos],
   );
 
-  const handlePickImage = useCallback(
-    async (source: "camera" | "gallery", slotIndex: number) => {
+  const uploadSinglePhoto = useCallback(
+    async (uri: string, slotIndex: number) => {
       if (!session?.user.id) return;
-
-      const result = await pickImage(source);
-
-      if (result.canceled || !result.assets?.[0]) return;
-
-      const uri = result.assets[0].uri;
 
       // Mark slot as uploading
       setUploading((prev) => new Set([...prev, slotIndex]));
 
-      // Set local preview immediately
-      const previewSlot: PhotoSlot = {
-        id: `temp-${Date.now()}`,
-        uri,
-        uploaded: false,
-      };
-
+      // Set local preview immediately — use slot index for unique temp key
       setPhotos((prev) => {
         const updated = [...prev];
-        updated[slotIndex] = previewSlot;
+        updated[slotIndex] = { id: `temp-${slotIndex}-${Date.now()}`, uri, uploaded: false };
         return updated;
       });
 
-      const { url, error } = await uploadPhoto(
-        session.user.id,
-        uri,
-        slotIndex,
-      );
+      const { url, error } = await uploadPhoto(session.user.id, uri, slotIndex);
 
       if (error) {
-        // Revert on error
         setPhotos((prev) => {
           const updated = [...prev];
           updated[slotIndex] = null;
@@ -152,7 +135,6 @@ export default function PhotosScreen() {
         return;
       }
 
-      // Fetch the inserted photo record to get its ID
       const { data: photoRecord } = await supabase
         .from("photos")
         .select("id")
@@ -177,6 +159,52 @@ export default function PhotosScreen() {
       });
     },
     [session?.user.id],
+  );
+
+  const handlePickImage = useCallback(
+    async (source: "camera" | "gallery", slotIndex: number) => {
+      if (!session?.user.id) return;
+
+      const filledCount = photos.filter((p) => p !== null).length;
+      const maxRemaining = Math.max(1, 9 - filledCount);
+      const result = await pickImage(source, maxRemaining);
+
+      if (result.canceled || !result.assets?.length) return;
+
+      const assets = result.assets;
+
+      if (assets.length === 1) {
+        await uploadSinglePhoto(assets[0].uri, slotIndex);
+        return;
+      }
+
+      // Multiple photos — collect empty slot indices, expand if needed
+      const emptySlots: number[] = [];
+      const currentLength = Math.max(photos.length, MIN_PHOTOS);
+      for (let i = 0; i < currentLength && emptySlots.length < assets.length; i++) {
+        if (photos[i] === null) emptySlots.push(i);
+      }
+      // Expand beyond current length if we still need more slots
+      for (let i = currentLength; emptySlots.length < assets.length && i < 9; i++) {
+        emptySlots.push(i);
+      }
+
+      // Expand photos array to accommodate new slots
+      const maxSlot = emptySlots.length > 0 ? emptySlots[emptySlots.length - 1] : 0;
+      if (maxSlot >= photos.length) {
+        setPhotos((prev) => {
+          const expanded = [...prev];
+          while (expanded.length <= maxSlot) expanded.push(null);
+          return expanded;
+        });
+      }
+
+      // Upload each asset into its assigned slot
+      for (let i = 0; i < assets.length && i < emptySlots.length; i++) {
+        uploadSinglePhoto(assets[i].uri, emptySlots[i]);
+      }
+    },
+    [session?.user.id, photos, uploadSinglePhoto],
   );
 
   const handleAdd = useCallback(
