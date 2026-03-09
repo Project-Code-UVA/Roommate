@@ -34,16 +34,26 @@ jest.mock("expo-linear-gradient", () => {
 });
 
 // ---------------------------------------------------------------------------
-// react-native-confetti-cannon mock (needed once installed in Plan 01)
+// react-native-confetti-cannon mock
 // ---------------------------------------------------------------------------
-jest.mock(
-  "react-native-confetti-cannon",
-  () => {
-    const { View } = require("react-native");
-    return View;
-  },
-  { virtual: true },
-);
+jest.mock("react-native-confetti-cannon", () => {
+  const { View } = require("react-native");
+  return View;
+});
+
+// ---------------------------------------------------------------------------
+// @gorhom/bottom-sheet mock
+// ---------------------------------------------------------------------------
+jest.mock("@gorhom/bottom-sheet", () => {
+  const { View, ScrollView } = require("react-native");
+  return {
+    __esModule: true,
+    default: View,
+    BottomSheetModal: View,
+    BottomSheetScrollView: ScrollView,
+    BottomSheetBackdrop: View,
+  };
+});
 
 // ---------------------------------------------------------------------------
 // AsyncStorage mock
