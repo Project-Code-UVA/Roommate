@@ -31,19 +31,19 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **DISC-02**: User can swipe right to like profiles
 - [ ] **DISC-03**: User can save/bookmark profiles (separate from like)
 - [ ] **DISC-04**: User can tap photo zones to navigate carousel (loops at end)
-- [ ] **DISC-05**: User sees only profiles from shared schools (server-enforced)
-- [ ] **DISC-06**: User can set roommate preference filters (sleep, cleanliness, guests, smoking, budget, partying)
-- [ ] **DISC-07**: User can mark filters as preferences vs dealbreakers
-- [ ] **DISC-08**: User can set mode status (looking for roommate / found roommate)
-- [ ] **DISC-09**: User with "found roommate" status is removed from Discovery stack
-- [ ] **DISC-10**: User sees appropriate empty state when no more profiles available
+- [x] **DISC-05**: User sees only profiles from shared schools (server-enforced)
+- [x] **DISC-06**: User can set roommate preference filters (sleep, cleanliness, guests, smoking, budget, partying)
+- [x] **DISC-07**: User can mark filters as preferences vs dealbreakers
+- [x] **DISC-08**: User can set mode status (looking for roommate / found roommate)
+- [x] **DISC-09**: User with "found roommate" status is removed from Discovery stack
+- [x] **DISC-10**: User sees appropriate empty state when no more profiles available
 
 ### Matching
 
-- [ ] **MTCH-01**: Match is created atomically when both users have liked each other
+- [x] **MTCH-01**: Match is created atomically when both users have liked each other
 - [ ] **MTCH-02**: User sees "It's a Match" modal when match occurs
 - [ ] **MTCH-03**: Messaging thread is auto-created upon match
-- [ ] **MTCH-04**: User can unmatch, permanently removing thread and preventing re-matching
+- [x] **MTCH-04**: User can unmatch, permanently removing thread and preventing re-matching
 
 ### Messaging
 
@@ -157,16 +157,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DISC-02 | Phase 4 | Pending |
 | DISC-03 | Phase 4 | Pending |
 | DISC-04 | Phase 4 | Pending |
-| DISC-05 | Phase 3 | Pending |
-| DISC-06 | Phase 3 | Pending |
-| DISC-07 | Phase 3 | Pending |
-| DISC-08 | Phase 3 | Pending |
-| DISC-09 | Phase 3 | Pending |
-| DISC-10 | Phase 3 | Pending |
-| MTCH-01 | Phase 3 | Pending |
+| DISC-05 | Phase 3 | Complete |
+| DISC-06 | Phase 3 | Complete |
+| DISC-07 | Phase 3 | Complete |
+| DISC-08 | Phase 3 | Complete |
+| DISC-09 | Phase 3 | Complete |
+| DISC-10 | Phase 3 | Complete |
+| MTCH-01 | Phase 3 | Complete |
 | MTCH-02 | Phase 4 | Pending |
 | MTCH-03 | Phase 4 | Pending |
-| MTCH-04 | Phase 3 | Pending |
+| MTCH-04 | Phase 3 | Complete |
 | MSG-01 | Phase 5 | Pending |
 | MSG-02 | Phase 5 | Pending |
 | MSG-03 | Phase 5 | Pending |
