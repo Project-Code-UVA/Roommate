@@ -9,6 +9,43 @@
  */
 
 // ---------------------------------------------------------------------------
+// react-native-reanimated mock
+// ---------------------------------------------------------------------------
+jest.mock("react-native-reanimated", () =>
+  require("react-native-reanimated/mock"),
+);
+
+// ---------------------------------------------------------------------------
+// expo-haptics mock
+// ---------------------------------------------------------------------------
+jest.mock("expo-haptics", () => ({
+  impactAsync: jest.fn(),
+  ImpactFeedbackStyle: { Heavy: "heavy", Medium: "medium", Light: "light" },
+  notificationAsync: jest.fn(),
+  selectionAsync: jest.fn(),
+}));
+
+// ---------------------------------------------------------------------------
+// expo-linear-gradient mock
+// ---------------------------------------------------------------------------
+jest.mock("expo-linear-gradient", () => {
+  const { View } = require("react-native");
+  return { LinearGradient: View };
+});
+
+// ---------------------------------------------------------------------------
+// react-native-confetti-cannon mock (needed once installed in Plan 01)
+// ---------------------------------------------------------------------------
+jest.mock(
+  "react-native-confetti-cannon",
+  () => {
+    const { View } = require("react-native");
+    return View;
+  },
+  { virtual: true },
+);
+
+// ---------------------------------------------------------------------------
 // AsyncStorage mock
 // ---------------------------------------------------------------------------
 const asyncStorageStore: Record<string, string> = {};
