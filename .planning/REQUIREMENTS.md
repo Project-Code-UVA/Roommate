@@ -27,10 +27,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Discovery
 
-- [ ] **DISC-01**: User can swipe left to dismiss profiles
-- [ ] **DISC-02**: User can swipe right to like profiles
-- [ ] **DISC-03**: User can save/bookmark profiles (separate from like)
-- [ ] **DISC-04**: User can tap photo zones to navigate carousel (loops at end)
+- [x] **DISC-01**: User can swipe left to dismiss profiles
+- [x] **DISC-02**: User can swipe right to like profiles
+- [x] **DISC-03**: User can save/bookmark profiles (separate from like)
+- [x] **DISC-04**: User can tap photo zones to navigate carousel (loops at end)
 - [x] **DISC-05**: User sees only profiles from shared schools (server-enforced)
 - [x] **DISC-06**: User can set roommate preference filters (sleep, cleanliness, guests, smoking, budget, partying)
 - [x] **DISC-07**: User can mark filters as preferences vs dealbreakers
@@ -41,8 +41,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Matching
 
 - [x] **MTCH-01**: Match is created atomically when both users have liked each other
-- [ ] **MTCH-02**: User sees "It's a Match" modal when match occurs
-- [ ] **MTCH-03**: Messaging thread is auto-created upon match
+- [x] **MTCH-02**: User sees "It's a Match" modal when match occurs
+- [x] **MTCH-03**: Messaging thread is auto-created upon match
 - [x] **MTCH-04**: User can unmatch, permanently removing thread and preventing re-matching
 
 ### Messaging
@@ -153,10 +153,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-06 | Phase 2 | Complete |
 | AUTH-07 | Phase 7 | Pending |
 | AUTH-08 | Phase 2 | Complete |
-| DISC-01 | Phase 4 | Pending |
-| DISC-02 | Phase 4 | Pending |
-| DISC-03 | Phase 4 | Pending |
-| DISC-04 | Phase 4 | Pending |
+| DISC-01 | Phase 4 | Complete |
+| DISC-02 | Phase 4 | Complete |
+| DISC-03 | Phase 4 | Complete |
+| DISC-04 | Phase 4 | Complete |
 | DISC-05 | Phase 3 | Complete |
 | DISC-06 | Phase 3 | Complete |
 | DISC-07 | Phase 3 | Complete |
@@ -164,8 +164,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DISC-09 | Phase 3 | Complete |
 | DISC-10 | Phase 3 | Complete |
 | MTCH-01 | Phase 3 | Complete |
-| MTCH-02 | Phase 4 | Pending |
-| MTCH-03 | Phase 4 | Pending |
+| MTCH-02 | Phase 4 | Complete |
+| MTCH-03 | Phase 4 | Complete |
 | MTCH-04 | Phase 3 | Complete |
 | MSG-01 | Phase 5 | Pending |
 | MSG-02 | Phase 5 | Pending |
