@@ -85,11 +85,12 @@ Plans:
   2. User can save/bookmark a profile as a distinct action from liking
   3. User can tap photo zones to navigate the image carousel, which loops from last photo back to first
   4. User sees an "It's a Match" modal when a mutual match occurs, with a messaging thread auto-created
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
+- [ ] 04-00-PLAN.md — Wave 0: test stubs, @testing-library/react-native, reanimated/haptics mocks
+- [ ] 04-01-PLAN.md — Discovery hook, swipe card deck, photo carousel, action buttons, empty state
+- [ ] 04-02-PLAN.md — Match modal with confetti/haptics, profile bottom sheet, photo viewer, Discovery screen wiring
 
 ### Phase 5: Messaging
 **Goal**: Matched users can communicate in real-time with rich messaging features and in-chat safety controls
@@ -181,7 +182,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | 1. Foundation & Schema | 3/3 | Complete | 2026-03-05 |
 | 2. Auth & Onboarding | 2/5 | In Progress|  |
 | 3. Discovery Engine | 0/3 | Not started | - |
-| 4. Swipe UI & Match Experience | 0/? | Not started | - |
+| 4. Swipe UI & Match Experience | 0/3 | Not started | - |
 | 5. Messaging | 0/? | Not started | - |
 | 6. Explore & Likes | 0/? | Not started | - |
 | 7. Trust, Safety & Verification | 0/? | Not started | - |
