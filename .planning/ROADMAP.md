@@ -69,11 +69,12 @@ Plans:
   3. User who sets status to "found roommate" is removed from all other users' Discovery stacks
   4. When both users have liked each other, a match is created atomically with no race conditions
   5. User can unmatch, permanently removing the thread and preventing re-matching
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [ ] 03-00-PLAN.md — Wave 0: test stubs, TypeScript types/constants, and schema migrations (dismissal tracking, match soft-delete, GIN index, ranking seeds)
+- [ ] 03-01-PLAN.md — Postgres RPC functions: discovery stack query, like+match, unmatch, mode status, dismiss
+- [ ] 03-02-PLAN.md — Client services: discovery-service, filter-service, match-service with full test coverage
 
 ### Phase 4: Swipe UI & Match Experience
 **Goal**: Users can browse and interact with the Discovery stack through a polished swipe interface with photo carousel and match celebration
@@ -179,7 +180,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 |-------|----------------|--------|-----------|
 | 1. Foundation & Schema | 3/3 | Complete | 2026-03-05 |
 | 2. Auth & Onboarding | 2/5 | In Progress|  |
-| 3. Discovery Engine | 0/? | Not started | - |
+| 3. Discovery Engine | 0/3 | Not started | - |
 | 4. Swipe UI & Match Experience | 0/? | Not started | - |
 | 5. Messaging | 0/? | Not started | - |
 | 6. Explore & Likes | 0/? | Not started | - |
