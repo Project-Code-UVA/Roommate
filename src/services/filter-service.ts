@@ -6,6 +6,7 @@
  */
 
 import { supabase } from "@/lib/supabase";
+import type { Json } from "@/types/database.types";
 import type { FilterCategory, NittyGritty } from "@/types/filters";
 import { FILTER_OPTIONS } from "@/constants/filter-options";
 
@@ -88,7 +89,7 @@ async function readAndUpdate(
   // Write back
   const { error: writeError } = await supabase
     .from("profiles")
-    .update({ nitty_gritty: updated })
+    .update({ nitty_gritty: updated as unknown as Json })
     .eq("user_id", userId);
 
   return { error: writeError?.message ?? null };

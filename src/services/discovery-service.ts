@@ -8,6 +8,10 @@
 import { supabase } from "@/lib/supabase";
 import type { DiscoveryProfile } from "@/types/filters";
 
+// Cast for RPC functions not yet in generated database types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const rpc = supabase.rpc.bind(supabase) as any;
+
 // ---------------------------------------------------------------------------
 // Discovery stack
 // ---------------------------------------------------------------------------
@@ -22,7 +26,7 @@ export async function getDiscoveryStack(
   limit = 20,
   offset = 0,
 ): Promise<DiscoveryStackResult> {
-  const { data, error } = await supabase.rpc("get_discovery_stack", {
+  const { data, error } = await rpc("get_discovery_stack", {
     p_user_id: userId,
     p_limit: limit,
     p_offset: offset,
@@ -45,7 +49,7 @@ export async function updateModeStatus(
   userId: string,
   status: ModeStatus,
 ): Promise<{ error: string | null }> {
-  const { error } = await supabase.rpc("update_mode_status", {
+  const { error } = await rpc("update_mode_status", {
     p_user_id: userId,
     p_new_status: status,
   });
@@ -61,7 +65,7 @@ export async function dismissProfile(
   userId: string,
   dismissedId: string,
 ): Promise<{ error: string | null }> {
-  const { error } = await supabase.rpc("dismiss_profile", {
+  const { error } = await rpc("dismiss_profile", {
     p_user_id: userId,
     p_dismissed_id: dismissedId,
   });
