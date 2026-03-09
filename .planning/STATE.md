@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-current_phase: 03-discovery-engine (Plan 00 complete)
-current_plan: 0 of 3
+current_phase: 03-discovery-engine (Plan 01 complete)
+current_plan: 1 of 3
 status: executing
-last_updated: "2026-03-09T03:33:41.106Z"
+last_updated: "2026-03-09T03:38:26.583Z"
 progress:
   total_phases: 9
   completed_phases: 2
   total_plans: 11
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Session State
@@ -22,8 +22,8 @@ See: .planning/PROJECT.md
 ## Position
 
 **Milestone:** v2.0 milestone
-**Current phase:** 03-discovery-engine (Plan 00 complete)
-**Current plan:** 0 of 3
+**Current phase:** 03-discovery-engine (Plan 01 complete)
+**Current plan:** 1 of 3
 **Status:** Executing
 
 ## Session Log
@@ -37,6 +37,7 @@ See: .planning/PROJECT.md
 - 2026-03-06: Plan 02-03 completed — Name/gender/school onboarding screens with debounced school autocomplete (2min)
 - 2026-03-07: Plan 02-04 completed — Photo upload grid, bio screen, onboarding completion flow (4min)
 - 2026-03-09: Plan 03-00 completed — Filter types, constants, 4 schema migrations, 45 test stubs (2min)
+- 2026-03-09: Plan 03-01 completed — 5 Postgres RPC functions (discovery stack, like, unmatch, mode, dismiss) (3min)
 
 ## Decisions
 
@@ -57,3 +58,7 @@ See: .planning/PROJECT.md
 - [Phase 02]: 300ms debounce for school search autocomplete
 - [Phase 02]: Alert.alert for camera/gallery ActionSheet; optimistic photo reorder; char counter red at 280/300
 - [Phase 03]: 45 test stubs (plan said 36 but plan body specified 45 -- followed detailed content)
+- [Phase 03]: CTE structure for discovery query (candidates -> scored -> ranked) for readability
+- [Phase 03]: Compatibility score only over categories with overlap; 0.5 neutral when no overlap
+- [Phase 03]: Popularity normalized by school avg likes (not global) to prevent cross-school bias
+- [Phase 03]: unmatch_user returns error if no active match (not silent success)
