@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-current_phase: 03-discovery-engine (Plan 01 complete)
-current_plan: 1 of 3
+current_phase: 03-discovery-engine (Plan 02 complete - Phase complete)
+current_plan: 3 of 3
 status: executing
-last_updated: "2026-03-09T03:38:26.583Z"
+last_updated: "2026-03-09T03:40:20.678Z"
 progress:
   total_phases: 9
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # Session State
@@ -38,6 +38,7 @@ See: .planning/PROJECT.md
 - 2026-03-07: Plan 02-04 completed — Photo upload grid, bio screen, onboarding completion flow (4min)
 - 2026-03-09: Plan 03-00 completed — Filter types, constants, 4 schema migrations, 45 test stubs (2min)
 - 2026-03-09: Plan 03-01 completed — 5 Postgres RPC functions (discovery stack, like, unmatch, mode, dismiss) (3min)
+- 2026-03-09: Plan 03-02 completed — 3 service files (discovery, filter, match) with 12 exports and 47 tests (4min)
 
 ## Decisions
 
@@ -61,4 +62,6 @@ See: .planning/PROJECT.md
 - [Phase 03]: CTE structure for discovery query (candidates -> scored -> ranked) for readability
 - [Phase 03]: Compatibility score only over categories with overlap; 0.5 neutral when no overlap
 - [Phase 03]: Popularity normalized by school avg likes (not global) to prevent cross-school bias
+- [Phase 03]: `supabase.rpc.bind(supabase) as any` cast for RPC functions not yet in generated types
+- [Phase 03]: NittyGritty cast through `unknown as Json` for readonly array write-back compatibility
 - [Phase 03]: unmatch_user returns error if no active match (not silent success)
