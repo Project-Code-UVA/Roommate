@@ -186,7 +186,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | 2. Auth & Onboarding | 2/5 | In Progress|  |
 | 3. Discovery Engine | 0/3 | Not started | - |
 | 4. Swipe UI & Match Experience | 2/3 | In Progress|  |
-| 5. Messaging | 0/5 | Not started | - |
+| 5. Messaging | 2/5 | In Progress|  |
 | 6. Explore & Likes | 0/? | Not started | - |
 | 7. Trust, Safety & Verification | 0/? | Not started | - |
 | 8. Notifications & Privacy | 0/? | Not started | - |
