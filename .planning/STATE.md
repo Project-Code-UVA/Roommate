@@ -86,6 +86,6 @@ See: .planning/PROJECT.md
 - [Phase 05]: Added @expo/vector-icons mock to shared test setup for Ionicons
 - [Phase 05]: Bubble tail via NativeWind conditional border-radius, no SVG
 - [Phase 05]: Union-type list items (message | date) for FlatList data preprocessing
-- [Phase 05]: [Phase 05]: Modal with transparent background for long-press overlay (proper z-index stacking)
-- [Phase 05]: [Phase 05]: Overflow menu uses invisible backdrop Pressable for outside-tap dismiss
-- [Phase 05]: [Phase 05]: PhotoPreview visual-only (no dedicated test; tested via screen integration)
+- [Phase 05]: Modal with transparent background for long-press overlay (proper z-index stacking)
+- [Phase 05]: Overflow menu uses invisible backdrop Pressable for outside-tap dismiss
+- [Phase 05]: PhotoPreview visual-only (no dedicated test; tested via screen integration)
