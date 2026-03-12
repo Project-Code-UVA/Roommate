@@ -9,6 +9,24 @@
  */
 
 // ---------------------------------------------------------------------------
+// @expo/vector-icons mock
+// ---------------------------------------------------------------------------
+jest.mock("@expo/vector-icons", () => {
+  const { Text } = require("react-native");
+  const MockIcon = ({ name, testID, ...rest }: Record<string, unknown>) => {
+    const actualTestID = testID ?? `icon-${name}`;
+    return require("react").createElement(Text, { ...rest, testID: actualTestID }, String(name));
+  };
+  return {
+    Ionicons: MockIcon,
+    MaterialIcons: MockIcon,
+    FontAwesome: MockIcon,
+    Feather: MockIcon,
+    MaterialCommunityIcons: MockIcon,
+  };
+});
+
+// ---------------------------------------------------------------------------
 // react-native-reanimated mock
 // ---------------------------------------------------------------------------
 jest.mock("react-native-reanimated", () =>
