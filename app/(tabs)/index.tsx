@@ -1,12 +1,9 @@
 /**
- * Discovery tab screen.
+ * Discovery tab screen — Hinge-style scrollable profiles.
  *
- * Renders the swipe deck with all interactions wired:
- * - Swipe right to like, left to dismiss, up for message stub
- * - Tap card to open profile bottom sheet
- * - Match modal appears on mutual match with confetti + haptics
- * - Photo viewer opens from profile sheet
- * - Empty state when no profiles remain
+ * Shows one profile at a time as a vertical scroll of photos + info cards.
+ * Floating X/Heart buttons at bottom for dismiss/like actions.
+ * First-time tutorial overlay teaches the new UX.
  */
 
 import { useState, useCallback } from "react";
@@ -17,17 +14,20 @@ import {
   Alert,
   Share,
   TouchableOpacity,
+  StyleSheet,
 } from "react-native";
 
-import { SwipeDeck } from "@/components/discovery/swipe-deck";
+import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { ProfileCard } from "@/components/discovery/profile-card";
+import { FloatingActions } from "@/components/discovery/floating-actions";
+import { SwipeTutorial } from "@/components/discovery/swipe-tutorial";
 import { EmptyState } from "@/components/discovery/empty-state";
 import { MatchModal } from "@/components/match/match-modal";
-import { ProfileSheet } from "@/components/discovery/profile-sheet";
-import { PhotoViewer } from "@/components/discovery/photo-viewer";
 import { useDiscoveryStack } from "@/hooks/use-discovery-stack";
 import { useSession } from "@/contexts/auth-context";
 import { COLORS } from "@/lib/constants";
-import type { DiscoveryProfile } from "@/types/filters";
 
 // ---------------------------------------------------------------------------
 // Component
@@ -35,27 +35,22 @@ import type { DiscoveryProfile } from "@/types/filters";
 
 export default function DiscoveryScreen() {
   const { session } = useSession();
+  const router = useRouter();
   const userId = session?.user.id ?? "";
+  const insets = useSafeAreaInsets();
+  const TAB_BAR_HEIGHT = 49 + insets.bottom;
 
   const {
     stack,
+    currentProfile,
     isLoading,
     isEmpty,
     error,
     matchData,
     dismissCurrent,
     likeCurrent,
-    saveCurrent,
     dismissMatch,
   } = useDiscoveryStack(userId);
-
-  // Profile sheet state
-  const [showProfileSheet, setShowProfileSheet] = useState(false);
-  const [selectedProfile, setSelectedProfile] =
-    useState<DiscoveryProfile | null>(null);
-
-  // Photo viewer state
-  const [photoViewerUrl, setPhotoViewerUrl] = useState<string | null>(null);
 
   // ---------------------------------------------------------------------------
   // Callbacks
@@ -69,23 +64,18 @@ export default function DiscoveryScreen() {
     dismissCurrent();
   }, [dismissCurrent]);
 
-  const handleSave = useCallback(() => {
-    saveCurrent();
-  }, [saveCurrent]);
-
-  const handleSwipeUp = useCallback(() => {
-    Alert.alert("Coming Soon", "Messaging will be available in a future update");
-  }, []);
-
-  const handleTapCard = useCallback((profile: DiscoveryProfile) => {
-    setSelectedProfile(profile);
-    setShowProfileSheet(true);
-  }, []);
-
   // Match modal callbacks
   const handleSendMessage = useCallback(() => {
-    Alert.alert("Coming Soon", "Chat will be available soon!");
-  }, []);
+    if (!matchData) return;
+
+    const { threadId, profile } = matchData;
+    const avatarUrl = profile.photos[0]?.url ?? "";
+
+    dismissMatch();
+    router.push(
+      `/chat/${threadId}?otherUserId=${profile.user_id}&otherName=${encodeURIComponent(profile.display_name)}&otherAvatar=${encodeURIComponent(avatarUrl)}` as never,
+    );
+  }, [matchData, dismissMatch, router]);
 
   const handleKeepSwiping = useCallback(() => {
     dismissMatch();
@@ -97,19 +87,6 @@ export default function DiscoveryScreen() {
     });
   }, []);
 
-  // Profile sheet callbacks
-  const handleProfileSheetDismiss = useCallback(() => {
-    setShowProfileSheet(false);
-  }, []);
-
-  const handlePhotoTap = useCallback((url: string) => {
-    setPhotoViewerUrl(url);
-  }, []);
-
-  const handlePhotoViewerClose = useCallback(() => {
-    setPhotoViewerUrl(null);
-  }, []);
-
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
@@ -117,15 +94,10 @@ export default function DiscoveryScreen() {
   // Error state
   if (error) {
     return (
-      <View className="flex-1 items-center justify-center bg-black px-8">
-        <Text className="mb-4 text-center text-base text-red-400">
-          {error}
-        </Text>
-        <TouchableOpacity
-          className="rounded-full px-6 py-3"
-          style={{ backgroundColor: COLORS.primary[600] }}
-        >
-          <Text className="text-sm font-semibold text-white">Retry</Text>
+      <View style={styles.center}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton}>
+          <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>
     );
@@ -134,7 +106,7 @@ export default function DiscoveryScreen() {
   // Loading state
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-black">
+      <View style={styles.center}>
         <ActivityIndicator size="large" color={COLORS.primary[500]} />
       </View>
     );
@@ -143,23 +115,22 @@ export default function DiscoveryScreen() {
   // Empty state
   if (isEmpty) {
     return (
-      <View className="flex-1 bg-black">
+      <View style={styles.screen}>
         <EmptyState />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-black">
-      {/* Swipe deck */}
-      <SwipeDeck
-        stack={stack}
-        onLike={handleLike}
-        onDismiss={handleDismiss}
-        onSave={handleSave}
-        onSwipeUp={handleSwipeUp}
-        onTapCard={handleTapCard}
-      />
+    <View style={[styles.screen, { paddingBottom: TAB_BAR_HEIGHT }]}>
+      {/* Scrollable profile */}
+      {currentProfile && <ProfileCard profile={currentProfile} />}
+
+      {/* Floating action buttons */}
+      <FloatingActions onDismiss={handleDismiss} onLike={handleLike} />
+
+      {/* First-time tutorial overlay */}
+      <SwipeTutorial />
 
       {/* Match modal */}
       <MatchModal
@@ -170,21 +141,41 @@ export default function DiscoveryScreen() {
         onKeepSwiping={handleKeepSwiping}
         onShare={handleShare}
       />
-
-      {/* Profile bottom sheet */}
-      <ProfileSheet
-        profile={selectedProfile}
-        visible={showProfileSheet}
-        onDismiss={handleProfileSheetDismiss}
-        onPhotoTap={handlePhotoTap}
-      />
-
-      {/* Photo viewer */}
-      <PhotoViewer
-        photoUrl={photoViewerUrl}
-        visible={photoViewerUrl !== null}
-        onClose={handlePhotoViewerClose}
-      />
     </View>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+  },
+  center: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f5f5f5",
+    paddingHorizontal: 32,
+  },
+  errorText: {
+    color: "#f87171",
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: COLORS.primary[600],
+    borderRadius: 999,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+  },
+  retryButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+});
