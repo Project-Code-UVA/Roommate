@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-current_phase: 05-messaging (Plan 01 complete)
-current_plan: 2 of 5
+current_phase: 05-messaging (Plan 03 complete)
+current_plan: 4 of 5
 status: executing
-last_updated: "2026-03-12T03:30:45.710Z"
+last_updated: "2026-03-12T03:37:15.233Z"
 progress:
   total_phases: 9
   completed_phases: 3
   total_plans: 19
-  completed_plans: 15
+  completed_plans: 17
 ---
 
 # Session State
@@ -22,8 +22,8 @@ See: .planning/PROJECT.md
 ## Position
 
 **Milestone:** v2.0 milestone
-**Current phase:** 05-messaging (Plan 01 complete)
-**Current plan:** 2 of 5
+**Current phase:** 05-messaging (Plan 03 complete)
+**Current plan:** 4 of 5
 **Status:** Executing
 
 ## Session Log
@@ -43,6 +43,8 @@ See: .planning/PROJECT.md
 - 2026-03-09: Plan 04-01 completed — useDiscoveryStack hook + 6 swipe card components, 33 tests (8min)
 - 2026-03-11: Plan 05-00 completed — 4 schema migrations, chat types, 18 icebreaker prompts, 19 test stubs (3min)
 - 2026-03-12: Plan 05-01 completed — 5 services + 3 hooks for messaging with 44 tests (8min)
+- 2026-03-12: Plan 05-02 completed — 8 chat UI components (bubble, list, composer, icebreaker + 4 atomic) with 44 tests (4min)
+- 2026-03-12: Plan 05-03 completed — 4 interaction components (long-press, GIF panel, photo preview, chat header) with 31 tests (4min)
 
 ## Decisions
 
@@ -81,3 +83,9 @@ See: .planning/PROJECT.md
 - [Phase 05]: UUID v4 polyfill in useMessageActions (crypto.randomUUID unavailable in all RN envs)
 - [Phase 05]: expo-clipboard for copy-to-clipboard functionality
 - [Phase 05]: 300ms debounce for GIF search consistent with school search pattern
+- [Phase 05]: Added @expo/vector-icons mock to shared test setup for Ionicons
+- [Phase 05]: Bubble tail via NativeWind conditional border-radius, no SVG
+- [Phase 05]: Union-type list items (message | date) for FlatList data preprocessing
+- [Phase 05]: [Phase 05]: Modal with transparent background for long-press overlay (proper z-index stacking)
+- [Phase 05]: [Phase 05]: Overflow menu uses invisible backdrop Pressable for outside-tap dismiss
+- [Phase 05]: [Phase 05]: PhotoPreview visual-only (no dedicated test; tested via screen integration)
