@@ -47,16 +47,16 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Messaging
 
-- [ ] **MSG-01**: User can send and receive real-time text messages with matches
-- [ ] **MSG-02**: User can see message timestamps
-- [ ] **MSG-03**: User can see delivery indicators (sent/delivered)
-- [ ] **MSG-04**: User can react to messages with emoji
-- [ ] **MSG-05**: User can reply to specific messages (threading)
-- [ ] **MSG-06**: User can send photos and GIFs in chat
-- [ ] **MSG-07**: User can block from chat (full visibility removal)
-- [ ] **MSG-08**: User can report from chat
-- [ ] **MSG-09**: User sees icebreaker prompt suggestions on new match
-- [ ] **MSG-10**: Messaging eligibility enforced server-side (mutual match + shared school + no enforcement + no block)
+- [x] **MSG-01**: User can send and receive real-time text messages with matches
+- [x] **MSG-02**: User can see message timestamps
+- [x] **MSG-03**: User can see delivery indicators (sent/delivered)
+- [x] **MSG-04**: User can react to messages with emoji
+- [x] **MSG-05**: User can reply to specific messages (threading)
+- [x] **MSG-06**: User can send photos and GIFs in chat
+- [x] **MSG-07**: User can block from chat (full visibility removal)
+- [x] **MSG-08**: User can report from chat
+- [x] **MSG-09**: User sees icebreaker prompt suggestions on new match
+- [x] **MSG-10**: Messaging eligibility enforced server-side (mutual match + shared school + no enforcement + no block)
 
 ### Explore
 
@@ -167,16 +167,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MTCH-02 | Phase 4 | Complete |
 | MTCH-03 | Phase 4 | Complete |
 | MTCH-04 | Phase 3 | Complete |
-| MSG-01 | Phase 5 | Pending |
-| MSG-02 | Phase 5 | Pending |
-| MSG-03 | Phase 5 | Pending |
-| MSG-04 | Phase 5 | Pending |
-| MSG-05 | Phase 5 | Pending |
-| MSG-06 | Phase 5 | Pending |
-| MSG-07 | Phase 5 | Pending |
-| MSG-08 | Phase 5 | Pending |
-| MSG-09 | Phase 5 | Pending |
-| MSG-10 | Phase 5 | Pending |
+| MSG-01 | Phase 5 | Complete |
+| MSG-02 | Phase 5 | Complete |
+| MSG-03 | Phase 5 | Complete |
+| MSG-04 | Phase 5 | Complete |
+| MSG-05 | Phase 5 | Complete |
+| MSG-06 | Phase 5 | Complete |
+| MSG-07 | Phase 5 | Complete |
+| MSG-08 | Phase 5 | Complete |
+| MSG-09 | Phase 5 | Complete |
+| MSG-10 | Phase 5 | Complete |
 | EXPL-01 | Phase 6 | Pending |
 | EXPL-02 | Phase 6 | Pending |
 | EXPL-03 | Phase 6 | Pending |

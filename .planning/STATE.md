@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-current_phase: 04-swipe-ui-match-experience (Plan 01 complete)
-current_plan: 2 of 3
+current_phase: 05-messaging (Plan 00 complete)
+current_plan: 1 of 4
 status: executing
-last_updated: "2026-03-09T17:21:00.000Z"
+last_updated: "2026-03-12T03:25:39.362Z"
 progress:
   total_phases: 9
   completed_phases: 3
-  total_plans: 14
-  completed_plans: 13
+  total_plans: 19
+  completed_plans: 14
 ---
 
 # Session State
@@ -41,6 +41,7 @@ See: .planning/PROJECT.md
 - 2026-03-09: Plan 03-02 completed — 3 service files (discovery, filter, match) with 12 exports and 47 tests (4min)
 - 2026-03-09: Plan 04-00 completed — 40 test stubs, @testing-library/react-native, reanimated/haptics mocks (2min)
 - 2026-03-09: Plan 04-01 completed — useDiscoveryStack hook + 6 swipe card components, 33 tests (8min)
+- 2026-03-11: Plan 05-00 completed — 4 schema migrations, chat types, 18 icebreaker prompts, 19 test stubs (3min)
 
 ## Decisions
 
@@ -73,3 +74,5 @@ See: .planning/PROJECT.md
 - [Phase 04]: Gesture.Race(pan, tap) with pan.activeOffsetX([-10,10]) to prevent tap/pan conflict
 - [Phase 04]: hasReachedEnd ref prevents re-fetching when server returns < PAGE_SIZE profiles
 - [Phase 04]: jest.resetAllMocks() in tests to properly reset mockResolvedValueOnce queues
+- [Phase 05]: 19 test stubs (plan header said 20 but detailed list specifies 19 unique files)
+- [Phase 05]: 18 icebreaker prompts (10 roommate, 8 social) for balanced mix
