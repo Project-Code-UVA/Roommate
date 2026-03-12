@@ -392,10 +392,12 @@ export default function ChatScreen() {
             isLoading={isLoading}
             ListEmptyComponent={
               showIcebreaker ? (
-                <IcebreakerCard
-                  onSelectPrompt={handleSelectPrompt}
-                  onDismiss={handleDismissIcebreaker}
-                />
+                <View style={styles.icebreakerWrapper}>
+                  <IcebreakerCard
+                    onSelectPrompt={handleSelectPrompt}
+                    onDismiss={handleDismissIcebreaker}
+                  />
+                </View>
               ) : undefined
             }
           />
@@ -512,6 +514,9 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
+  },
+  icebreakerWrapper: {
+    transform: [{ scaleY: -1 }],
   },
   imageViewerBackdrop: {
     flex: 1,

@@ -23,25 +23,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useSession } from "@/contexts/auth-context";
 import { COLORS } from "@/lib/constants";
-import { getThreads } from "@/services/thread-service";
+import { getThreads, type EnrichedThread } from "@/services/thread-service";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type ThreadItem = {
-  readonly id: string;
-  readonly user_a_id: string;
-  readonly user_b_id: string;
-  readonly status: string;
-  readonly created_at: string;
-  readonly last_message_body: string | null;
-  readonly last_message_at: string | null;
-  readonly unread_count: number;
-  readonly other_user_id: string;
-  readonly other_user_display_name: string;
-  readonly other_user_avatar_url: string | null;
-};
+type ThreadItem = EnrichedThread;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -175,33 +163,7 @@ export default function MessagesScreen() {
     const { data, error } = await getThreads(userId);
 
     if (!error && data) {
-      // Map raw thread records to ThreadItem shape
-      const mapped: readonly ThreadItem[] = (
-        data as readonly Record<string, unknown>[]
-      ).map((t) => {
-        const otherUserId =
-          t.user_a_id === userId
-            ? (t.user_b_id as string)
-            : (t.user_a_id as string);
-
-        return {
-          id: t.id as string,
-          user_a_id: t.user_a_id as string,
-          user_b_id: t.user_b_id as string,
-          status: t.status as string,
-          created_at: t.created_at as string,
-          last_message_body: (t.last_message_body as string | null) ?? null,
-          last_message_at: (t.last_message_at as string | null) ?? null,
-          unread_count: (t.unread_count as number) ?? 0,
-          other_user_id: otherUserId,
-          other_user_display_name:
-            (t.other_user_display_name as string) ?? "Unknown",
-          other_user_avatar_url:
-            (t.other_user_avatar_url as string | null) ?? null,
-        };
-      });
-
-      setThreads(mapped);
+      setThreads(data);
     }
 
     setIsLoading(false);

@@ -7,6 +7,8 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
@@ -86,18 +88,24 @@ export type Database = {
           dismissed_id: string
           dismisser_id: string
           id: string
+          last_dismissed_at: string
+          view_count: number
         }
         Insert: {
           created_at?: string
           dismissed_id: string
           dismisser_id: string
           id?: string
+          last_dismissed_at?: string
+          view_count?: number
         }
         Update: {
           created_at?: string
           dismissed_id?: string
           dismisser_id?: string
           id?: string
+          last_dismissed_at?: string
+          view_count?: number
         }
         Relationships: [
           {
@@ -191,22 +199,35 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          unmatched_at: string | null
+          unmatched_by: string | null
           user_a_id: string
           user_b_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          unmatched_at?: string | null
+          unmatched_by?: string | null
           user_a_id: string
           user_b_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          unmatched_at?: string | null
+          unmatched_by?: string | null
           user_a_id?: string
           user_b_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "matches_unmatched_by_fkey"
+            columns: ["unmatched_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "matches_user_a_id_fkey"
             columns: ["user_a_id"]
@@ -223,6 +244,45 @@ export type Database = {
           },
         ]
       }
+      message_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           body: string | null
@@ -231,6 +291,7 @@ export type Database = {
           id: string
           media_url: string | null
           read_at: string | null
+          reply_to_id: string | null
           sender_id: string
           thread_id: string
         }
@@ -241,6 +302,7 @@ export type Database = {
           id?: string
           media_url?: string | null
           read_at?: string | null
+          reply_to_id?: string | null
           sender_id: string
           thread_id: string
         }
@@ -251,10 +313,18 @@ export type Database = {
           id?: string
           media_url?: string | null
           read_at?: string | null
+          reply_to_id?: string | null
           sender_id?: string
           thread_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "messages_sender_id_fkey"
             columns: ["sender_id"]
@@ -634,10 +704,44 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      dismiss_profile: {
+        Args: { p_dismissed_id: string; p_user_id: string }
+        Returns: Json
+      }
+      get_discovery_stack: {
+        Args: { p_limit?: number; p_offset?: number; p_user_id: string }
+        Returns: Json
+      }
       is_blocked: { Args: { user_a: string; user_b: string }; Returns: boolean }
+      like_profile: {
+        Args: { p_liked_id: string; p_liker_id: string }
+        Returns: Json
+      }
+      send_message: {
+        Args: {
+          p_body?: string
+          p_media_url?: string
+          p_message_id?: string
+          p_reply_to_id?: string
+          p_sender_id: string
+          p_thread_id: string
+        }
+        Returns: Json
+      }
       shares_school: {
         Args: { user_a: string; user_b: string }
         Returns: boolean
+      }
+      unmatch_user: {
+        Args: { p_block_too?: boolean; p_other_id: string; p_user_id: string }
+        Returns: Json
+      }
+      update_mode_status: {
+        Args: {
+          p_new_status: Database["public"]["Enums"]["mode_status"]
+          p_user_id: string
+        }
+        Returns: Json
       }
     }
     Enums: {
