@@ -102,11 +102,14 @@ Plans:
   3. User can react to messages with emoji and reply to specific messages in a thread
   4. User can send photos and GIFs in chat
   5. User can block or report another user from within the chat, with block causing full visibility removal
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [ ] 05-00-PLAN.md — Wave 0: schema migrations (reply_to, reactions, send_message RPC, Realtime), chat types, icebreaker prompts, 20 test stubs
+- [ ] 05-01-PLAN.md — Service layer (message, thread, GIF, block, report) and hooks (chat messages, message actions, GIF search)
+- [ ] 05-02-PLAN.md — Core chat components: message bubble, delivery indicator, date separator, reactions, reply preview, message list, composer, icebreaker card
+- [ ] 05-03-PLAN.md — Interaction components: long-press menu, GIF search panel, photo preview, chat header with overflow
+- [ ] 05-04-PLAN.md — Screen assembly: thread list, chat screen, match modal navigation wiring, human verification
 
 ### Phase 6: Explore & Likes
 **Goal**: Users can browse same-school profiles in a grid view ranked by a weighted algorithm, and view their likes/matches activity
@@ -183,7 +186,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | 2. Auth & Onboarding | 2/5 | In Progress|  |
 | 3. Discovery Engine | 0/3 | Not started | - |
 | 4. Swipe UI & Match Experience | 2/3 | In Progress|  |
-| 5. Messaging | 0/? | Not started | - |
+| 5. Messaging | 0/5 | Not started | - |
 | 6. Explore & Likes | 0/? | Not started | - |
 | 7. Trust, Safety & Verification | 0/? | Not started | - |
 | 8. Notifications & Privacy | 0/? | Not started | - |
