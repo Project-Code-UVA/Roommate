@@ -1,0 +1,62 @@
+appId: host.exp.Exponent
+---
+# Browse flow: test Discovery screen + tab navigation
+# Requires authenticated user (which is the current state)
+
+# Launch and open Room
+- launchApp
+- waitForAnimationToEnd
+- tapOn:
+    text: "Room"
+    index: 0
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "COMPATIBLE"
+    timeout: 30000
+
+# Verify Discovery screen has a profile
+- assertVisible: "COMPATIBLE"
+- assertVisible:
+    id: "action-dismiss"
+- assertVisible:
+    id: "action-like"
+- takeScreenshot: browse_discovery
+
+# Navigate to Explore tab (accessibility text: "Explore, tab, 1 of 5")
+- tapOn:
+    text: "Explore, tab.*"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "explore-title"
+- takeScreenshot: browse_explore
+
+# Navigate to Likes tab
+- tapOn:
+    text: "Likes, tab.*"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "likes-title"
+- takeScreenshot: browse_likes
+
+# Navigate to Messages tab
+- tapOn:
+    text: "Messages, tab.*"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "messages-title"
+- takeScreenshot: browse_messages
+
+# Navigate to Profile tab
+- tapOn:
+    text: "Profile, tab.*"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "profile-title"
+- takeScreenshot: browse_profile
+
+# Navigate back to Discovery
+- tapOn:
+    text: "Discovery, tab.*"
+- waitForAnimationToEnd
+- assertVisible: "COMPATIBLE"
+- takeScreenshot: browse_back_to_discovery

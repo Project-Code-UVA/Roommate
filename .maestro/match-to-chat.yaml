@@ -1,0 +1,38 @@
+appId: host.exp.Exponent
+---
+# Match-to-chat flow: like a profile, check for match modal, verify Send a Message
+# PRE-REQUISITE: Authenticated user with profiles available in discovery stack.
+# NOTE: Match modal only appears on mutual likes, so this may not trigger every run.
+
+# Launch and open Room
+- launchApp
+- waitForAnimationToEnd
+- tapOn:
+    text: "Room"
+    index: 0
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "COMPATIBLE"
+    timeout: 30000
+
+# Verify discovery screen
+- assertVisible: "COMPATIBLE"
+- takeScreenshot: match_to_chat_discovery
+
+# Tap like button
+- tapOn:
+    id: "action-like"
+- waitForAnimationToEnd
+- takeScreenshot: match_to_chat_after_like
+
+# If match modal appeared, test Send a Message button
+- tapOn:
+    id: "match-send-message"
+    optional: true
+- waitForAnimationToEnd
+
+# If we navigated to chat, verify chat screen
+- assertVisible:
+    id: "chat-header-back"
+    optional: true
+- takeScreenshot: match_to_chat_result

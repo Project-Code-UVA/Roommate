@@ -1,0 +1,78 @@
+appId: host.exp.Exponent
+---
+# Messaging flow: verify thread list, chat screen, composer, overflow menu
+# PRE-REQUISITE: User must be authenticated.
+
+# Launch and open Room
+- launchApp
+- waitForAnimationToEnd
+- tapOn:
+    text: "Room"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+
+# Dismiss Expo dev tools popup if present
+- tapOn:
+    text: "Continue"
+    optional: true
+- waitForAnimationToEnd
+
+# Dismiss swipe tutorial if present
+- tapOn:
+    text: "Tap to continue"
+    optional: true
+- waitForAnimationToEnd
+
+# Wait for app to fully load (either discovery or any tab)
+- extendedWaitUntil:
+    visible:
+        text: "Messages, tab.*"
+    timeout: 30000
+
+# ─── THREAD LIST ───
+- tapOn:
+    text: "Messages, tab.*"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "messages-title"
+- takeScreenshot: messaging_01_thread_list
+
+# ─── OPEN A THREAD ───
+# Tap on the thread row area (threads loaded, tap first item by point)
+- tapOn:
+    point: "50%,20%"
+- waitForAnimationToEnd
+
+# ─── CHAT SCREEN ───
+- extendedWaitUntil:
+    visible:
+        id: "chat-header-back"
+    timeout: 10000
+- assertVisible:
+    id: "chat-header-overflow"
+- takeScreenshot: messaging_02_chat_screen
+
+# Verify composer is present
+- assertVisible:
+    id: "composer-camera-btn"
+- assertVisible:
+    id: "composer-gif-btn"
+- takeScreenshot: messaging_03_composer
+
+# ─── OVERFLOW MENU ───
+- tapOn:
+    id: "chat-header-overflow"
+- waitForAnimationToEnd
+- takeScreenshot: messaging_04_overflow_menu
+
+# Dismiss overflow menu by tapping elsewhere
+- tapOn:
+    point: "20%,50%"
+- waitForAnimationToEnd
+
+# ─── BACK TO THREADS ───
+- tapOn:
+    id: "chat-header-back"
+- waitForAnimationToEnd
+- takeScreenshot: messaging_05_after_back

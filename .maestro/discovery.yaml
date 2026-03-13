@@ -1,0 +1,40 @@
+appId: host.exp.Exponent
+---
+# Discovery interaction flow: test like/dismiss actions
+
+# Launch and open Room
+- launchApp
+- waitForAnimationToEnd
+- tapOn:
+    text: "Room"
+    index: 0
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "COMPATIBLE"
+    timeout: 30000
+
+# Verify initial profile card is visible
+- assertVisible: "COMPATIBLE"
+- takeScreenshot: discovery_first_profile
+
+# Scroll down to see more profile content
+- scroll
+- takeScreenshot: discovery_scrolled
+
+# Scroll back up
+- scrollUntilVisible:
+    element: "COMPATIBLE"
+    direction: UP
+
+# Tap the dismiss button (X)
+- tapOn:
+    id: "action-dismiss"
+- waitForAnimationToEnd
+- takeScreenshot: discovery_after_dismiss
+
+# If there's another profile, try the like button
+- tapOn:
+    id: "action-like"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: discovery_after_like

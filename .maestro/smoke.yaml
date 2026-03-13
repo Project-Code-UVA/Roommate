@@ -1,0 +1,29 @@
+appId: host.exp.Exponent
+---
+# Smoke test: verify app launches and main screen renders
+# User is authenticated — app shows Discovery tab
+
+# Launch Expo Go and navigate to Room app
+- launchApp
+- waitForAnimationToEnd
+- tapOn:
+    text: "Room"
+    index: 0
+
+# Wait for app bundle to load fully
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "COMPATIBLE"
+    timeout: 30000
+
+# Verify discovery screen has profile content
+- assertVisible: "COMPATIBLE"
+
+# Verify the floating action buttons
+- assertVisible:
+    id: "action-dismiss"
+- assertVisible:
+    id: "action-like"
+
+# Take a screenshot
+- takeScreenshot: smoke_discovery

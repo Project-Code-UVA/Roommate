@@ -1,0 +1,70 @@
+appId: host.exp.Exponent
+---
+# Helper: Log in as Jeff (admin dev account)
+# Dev mode uses phone 7575323390 -> dev-7575323390@room-dev.local
+# Any 6-digit OTP works in dev mode
+
+# Launch and open Room
+- launchApp
+- waitForAnimationToEnd
+
+# Tap Room project in Expo Go (if on Expo Go home)
+- tapOn:
+    text: "Room"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+
+# Dismiss Expo dev tools popup if present
+- tapOn:
+    text: "Continue"
+    optional: true
+- waitForAnimationToEnd
+
+# Wait for welcome screen
+- extendedWaitUntil:
+    visible: "Find your perfect roommate"
+    timeout: 15000
+
+# Tap Sign in
+- tapOn:
+    id: "welcome-sign-in"
+- waitForAnimationToEnd
+
+# Phone screen — enter Jeff's dev phone
+- extendedWaitUntil:
+    visible: "What's your phone number?"
+    timeout: 5000
+- tapOn:
+    id: "phone-input"
+- inputText: "7575323390"
+
+# Dismiss the phone-pad keyboard (no Done button on iOS phone-pad)
+# Tap on a point well above the keyboard to dismiss it
+- tapOn:
+    point: "50%,50%"
+- waitForAnimationToEnd
+
+# Now the Send Code button should be visible — tap it
+- tapOn:
+    text: "Send Code"
+- waitForAnimationToEnd
+
+# OTP screen — enter verification code one digit at a time
+- extendedWaitUntil:
+    visible: "Enter verification code"
+    timeout: 10000
+- tapOn:
+    id: "otp-digit-0"
+- inputText: "1"
+- inputText: "2"
+- inputText: "3"
+- inputText: "4"
+- inputText: "5"
+- inputText: "6"
+
+# Wait for auth to complete — app should route to tabs
+- extendedWaitUntil:
+    visible: "COMPATIBLE"
+    timeout: 30000
+- takeScreenshot: login_jeff_success

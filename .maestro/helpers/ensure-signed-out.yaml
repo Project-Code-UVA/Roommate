@@ -1,0 +1,21 @@
+appId: host.exp.Exponent
+---
+# Helper: ensure user is signed out and on welcome screen.
+# If already on welcome, this is a no-op.
+# If authenticated, navigates to Profile tab and taps sign out.
+
+- launchApp
+- waitForAnimationToEnd
+- tapOn:
+    text: "Room"
+    index: 0
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Try tapping Profile tab (only works if authenticated with tab bar)
+- tapOn:
+    text: "Profile, tab.*"
+- waitForAnimationToEnd
+- tapOn:
+    id: "dev-sign-out"
+- waitForAnimationToEnd

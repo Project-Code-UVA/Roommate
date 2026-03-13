@@ -8,9 +8,11 @@
 import { useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   Pressable,
   Text,
   TextInput,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -83,57 +85,63 @@ export default function PhoneScreen() {
       subtitle="We'll send you a verification code"
       onBack={handleBack}
     >
-      <View className="mt-4">
-        {/* Phone input row */}
-        <View className="h-14 justify-center rounded-xl border-2 border-gray-300 px-4">
-          <TextInput
-            style={{ fontSize: 18, color: '#111827', paddingVertical: 0 }}
-            value={formatPhone(rawDigits)}
-            onChangeText={handleChangeText}
-            keyboardType="phone-pad"
-            placeholder="+1 (555) 555-5555"
-            placeholderTextColor={COLORS.gray[400]}
-            maxLength={18}
-            accessibilityLabel="Phone number"
-            autoFocus
-            selection={{
-              start: formatPhone(rawDigits).length,
-              end: formatPhone(rawDigits).length,
-            }}
-          />
-        </View>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <View className="flex-1">
+          <View className="mt-4">
+            {/* Phone input row */}
+            <View className="h-14 justify-center rounded-xl border-2 border-gray-300 px-4">
+              <TextInput
+                style={{ fontSize: 18, color: '#111827', paddingVertical: 0 }}
+                value={formatPhone(rawDigits)}
+                onChangeText={handleChangeText}
+                keyboardType="phone-pad"
+                placeholder="+1 (555) 555-5555"
+                placeholderTextColor={COLORS.gray[400]}
+                maxLength={18}
+                accessibilityLabel="Phone number"
+                testID="phone-input"
+                autoFocus
+                selection={{
+                  start: formatPhone(rawDigits).length,
+                  end: formatPhone(rawDigits).length,
+                }}
+              />
+            </View>
 
-        {/* Error message */}
-        {errorMessage ? (
-          <Text className="mt-2 text-sm text-red-500">{errorMessage}</Text>
-        ) : null}
-      </View>
+            {/* Error message */}
+            {errorMessage ? (
+              <Text className="mt-2 text-sm text-red-500">{errorMessage}</Text>
+            ) : null}
+          </View>
 
-      <View className="flex-1" />
+          <View className="flex-1" />
 
-      {/* Send Code button */}
-      <Pressable
-        onPress={handleSendCode}
-        disabled={!isValid || isLoading}
-        className={`mb-8 w-full rounded-xl py-4 ${
-          isValid && !isLoading ? "bg-primary-600" : "bg-gray-300"
-        }`}
-        accessibilityRole="button"
-        accessibilityLabel="Send Code"
-        accessibilityState={{ disabled: !isValid || isLoading }}
-      >
-        {isLoading ? (
-          <ActivityIndicator color={COLORS.white} />
-        ) : (
-          <Text
-            className={`text-center text-lg font-semibold ${
-              isValid ? "text-white" : "text-gray-500"
+          {/* Send Code button */}
+          <Pressable
+            onPress={handleSendCode}
+            disabled={!isValid || isLoading}
+            className={`mb-8 w-full rounded-xl py-4 ${
+              isValid && !isLoading ? "bg-primary-600" : "bg-gray-300"
             }`}
+            accessibilityRole="button"
+            accessibilityLabel="Send Code"
+            accessibilityState={{ disabled: !isValid || isLoading }}
+            testID="phone-send-code"
           >
-            Send Code
-          </Text>
-        )}
-      </Pressable>
+            {isLoading ? (
+              <ActivityIndicator color={COLORS.white} />
+            ) : (
+              <Text
+                className={`text-center text-lg font-semibold ${
+                  isValid ? "text-white" : "text-gray-500"
+                }`}
+              >
+                Send Code
+              </Text>
+            )}
+          </Pressable>
+        </View>
+      </TouchableWithoutFeedback>
     </StepContainer>
   );
 }

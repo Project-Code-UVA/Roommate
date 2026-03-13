@@ -17,8 +17,8 @@ type Props = {
   readonly onPress: () => void;
 };
 
-function truncateBody(body: string | null, maxLength: number = 100): string {
-  if (body === null) {
+function truncateBody(body: string | null | undefined, maxLength: number = 100): string {
+  if (!body) {
     return "";
   }
   if (body.length <= maxLength) {

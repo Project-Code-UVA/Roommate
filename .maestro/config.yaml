@@ -1,0 +1,7 @@
+# Maestro configuration for Room app
+# Uses Expo Go since this is a managed Expo project
+#
+# To run: maestro test .maestro/
+# To run single flow: maestro test .maestro/smoke.yaml
+
+appId: host.exp.Exponent

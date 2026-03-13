@@ -1,0 +1,30 @@
+appId: host.exp.Exponent
+---
+# Sign out the current user. Run this before onboarding/login/signup tests.
+# Assumes user is currently authenticated.
+
+- launchApp
+- waitForAnimationToEnd
+- tapOn:
+    text: "Room"
+    index: 0
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "COMPATIBLE"
+    timeout: 30000
+
+# Navigate to Profile tab and sign out
+- tapOn:
+    text: "Profile, tab.*"
+- waitForAnimationToEnd
+- tapOn:
+    id: "dev-sign-out"
+- waitForAnimationToEnd
+
+# Verify we're on welcome screen
+- extendedWaitUntil:
+    visible: "Find your perfect roommate"
+    timeout: 10000
+- assertVisible:
+    id: "welcome-get-started"
+- takeScreenshot: signed_out

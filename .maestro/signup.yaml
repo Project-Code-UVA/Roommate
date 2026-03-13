@@ -1,0 +1,64 @@
+appId: host.exp.Exponent
+---
+# Signup flow: sign out -> welcome -> full onboarding navigation test
+
+# Launch and open Room
+- launchApp
+- waitForAnimationToEnd
+- tapOn:
+    text: "Room"
+    index: 0
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "COMPATIBLE"
+    timeout: 30000
+
+# Sign out via dev button
+- tapOn:
+    text: "Profile, tab.*"
+- waitForAnimationToEnd
+- tapOn:
+    id: "dev-sign-out"
+- waitForAnimationToEnd
+
+# Should be on welcome screen
+- extendedWaitUntil:
+    visible: "Find your perfect roommate"
+    timeout: 10000
+- takeScreenshot: signup_01_welcome
+
+# Get Started -> Birthday
+- tapOn:
+    id: "welcome-get-started"
+- waitForAnimationToEnd
+- assertVisible: "When's your birthday?"
+
+# Test back navigation: Birthday -> Welcome
+- tapOn:
+    id: "step-back"
+- waitForAnimationToEnd
+- assertVisible: "Find your perfect roommate"
+- takeScreenshot: signup_02_back_to_welcome
+
+# Go forward again: Welcome -> Birthday -> Phone
+- tapOn:
+    id: "welcome-get-started"
+- waitForAnimationToEnd
+- tapOn:
+    id: "birthday-continue"
+- waitForAnimationToEnd
+- assertVisible: "What's your phone number?"
+
+# Test back navigation: Phone -> Birthday
+- tapOn:
+    id: "step-back"
+- waitForAnimationToEnd
+- assertVisible: "When's your birthday?"
+- takeScreenshot: signup_03_back_to_birthday
+
+# Forward again to phone
+- tapOn:
+    id: "birthday-continue"
+- waitForAnimationToEnd
+- assertVisible: "What's your phone number?"
+- takeScreenshot: signup_04_phone

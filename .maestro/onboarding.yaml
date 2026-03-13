@@ -1,0 +1,102 @@
+appId: host.exp.Exponent
+---
+# Onboarding flow: walks through signup screens starting from welcome.
+# PRE-REQUISITE: Run sign-out.yaml first if user is authenticated.
+#   maestro test .maestro/sign-out.yaml && maestro test .maestro/onboarding.yaml
+
+# Launch and open Room (should land on welcome since signed out)
+- launchApp
+- waitForAnimationToEnd
+- tapOn:
+    text: "Room"
+    index: 0
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Find your perfect roommate"
+    timeout: 30000
+
+# Welcome screen
+- assertVisible:
+    id: "welcome-get-started"
+- takeScreenshot: onboarding_01_welcome
+
+# Birthday screen
+- tapOn:
+    id: "welcome-get-started"
+- waitForAnimationToEnd
+- assertVisible: "When's your birthday?"
+
+# Scroll year column down (toward older years) to ensure 18+
+- swipe:
+    start: 80%, 55%
+    end: 80%, 70%
+- swipe:
+    start: 80%, 55%
+    end: 80%, 70%
+- swipe:
+    start: 80%, 55%
+    end: 80%, 70%
+- swipe:
+    start: 80%, 55%
+    end: 80%, 70%
+- waitForAnimationToEnd
+- takeScreenshot: onboarding_02_birthday
+
+- tapOn:
+    id: "birthday-continue"
+- waitForAnimationToEnd
+
+# Phone screen
+- extendedWaitUntil:
+    visible: "What's your phone number?"
+    timeout: 10000
+- tapOn:
+    id: "phone-input"
+- inputText: "5550001111"
+- takeScreenshot: onboarding_03_phone
+# Tap empty area to dismiss phone keyboard
+- tapOn:
+    point: 50%, 45%
+- waitForAnimationToEnd
+- tapOn:
+    id: "phone-send-code"
+- waitForAnimationToEnd
+
+# OTP screen
+- extendedWaitUntil:
+    visible: "Enter verification code"
+    timeout: 10000
+- takeScreenshot: onboarding_04_otp
+- tapOn:
+    id: "otp-digit-0"
+- inputText: "123456"
+- waitForAnimationToEnd
+
+# Name screen
+- extendedWaitUntil:
+    visible: "What's your first name?"
+    timeout: 15000
+- takeScreenshot: onboarding_05_name
+- tapOn:
+    id: "name-input"
+- inputText: "TestUser"
+- tapOn:
+    id: "name-continue"
+- waitForAnimationToEnd
+
+# Gender screen
+- extendedWaitUntil:
+    visible: "What's your gender?"
+    timeout: 10000
+- takeScreenshot: onboarding_06_gender
+- tapOn:
+    id: "gender-option-man"
+- tapOn:
+    id: "gender-continue"
+- waitForAnimationToEnd
+
+# School screen
+- extendedWaitUntil:
+    visible: "Where do you go to school?"
+    timeout: 10000
+- takeScreenshot: onboarding_07_school

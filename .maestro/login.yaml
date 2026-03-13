@@ -1,0 +1,50 @@
+appId: host.exp.Exponent
+---
+# Login flow: sign out -> welcome -> sign in -> phone -> OTP
+
+# Launch and open Room
+- launchApp
+- waitForAnimationToEnd
+- tapOn:
+    text: "Room"
+    index: 0
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "COMPATIBLE"
+    timeout: 30000
+
+# Sign out via dev button
+- tapOn:
+    text: "Profile, tab.*"
+- waitForAnimationToEnd
+- tapOn:
+    id: "dev-sign-out"
+- waitForAnimationToEnd
+
+# Should be on welcome screen
+- extendedWaitUntil:
+    visible: "Find your perfect roommate"
+    timeout: 10000
+
+# Tap "Sign in" link
+- tapOn:
+    id: "welcome-sign-in"
+- waitForAnimationToEnd
+
+# Phone screen
+- assertVisible: "What's your phone number?"
+- tapOn:
+    id: "phone-input"
+- inputText: "5559876543"
+- takeScreenshot: login_phone_filled
+
+# Verify Send Code button
+- assertVisible:
+    id: "phone-send-code"
+
+# Back navigation
+- tapOn:
+    id: "step-back"
+- waitForAnimationToEnd
+- assertVisible: "Find your perfect roommate"
+- takeScreenshot: login_back_to_welcome
