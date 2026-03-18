@@ -1,14 +1,132 @@
 /**
- * Test stubs for explore-service.
- * Covers: EXPL-02 (explore feed fetching).
+ * Tests for explore-service.
+ * Covers: EXPL-02 (explore feed fetching), EXPL-04 (profile detail).
  */
 
-// import { getExploreFeed } from "@/services/explore-service";
+import { resetAllMocks, mockSupabase } from "../setup";
+import {
+  getExploreFeed,
+  getProfileDetail,
+} from "@/services/explore-service";
+
+const TEST_USER_ID = "test-user-id";
+const TARGET_USER_ID = "target-user-id";
 
 describe("explore-service", () => {
-  it.todo("calls get_explore_feed RPC with correct params");
-  it.todo("returns empty array on error");
-  it.todo("passes seed parameter for shuffle");
-  it.todo("paginates with offset");
-  it.todo("returns ExploreProfile[] shaped data");
+  beforeEach(resetAllMocks);
+
+  describe("getExploreFeed", () => {
+    it("calls get_explore_feed RPC with correct params", async () => {
+      mockSupabase.rpc.mockResolvedValueOnce({ data: [], error: null });
+
+      await getExploreFeed(TEST_USER_ID);
+
+      expect(mockSupabase.rpc).toHaveBeenCalledWith("get_explore_feed", {
+        p_user_id: TEST_USER_ID,
+        p_limit: 24,
+        p_offset: 0,
+        p_seed: 0,
+      });
+    });
+
+    it("returns empty array on error", async () => {
+      mockSupabase.rpc.mockResolvedValueOnce({
+        data: null,
+        error: { message: "RPC failed" },
+      });
+
+      const result = await getExploreFeed(TEST_USER_ID);
+
+      expect(result.data).toEqual([]);
+      expect(result.error).toBe("RPC failed");
+    });
+
+    it("passes seed parameter for shuffle", async () => {
+      mockSupabase.rpc.mockResolvedValueOnce({ data: [], error: null });
+
+      await getExploreFeed(TEST_USER_ID, 24, 0, 12345);
+
+      expect(mockSupabase.rpc).toHaveBeenCalledWith("get_explore_feed", {
+        p_user_id: TEST_USER_ID,
+        p_limit: 24,
+        p_offset: 0,
+        p_seed: 12345,
+      });
+    });
+
+    it("paginates with offset", async () => {
+      mockSupabase.rpc.mockResolvedValueOnce({ data: [], error: null });
+
+      await getExploreFeed(TEST_USER_ID, 24, 48);
+
+      expect(mockSupabase.rpc).toHaveBeenCalledWith("get_explore_feed", {
+        p_user_id: TEST_USER_ID,
+        p_limit: 24,
+        p_offset: 48,
+        p_seed: 0,
+      });
+    });
+
+    it("returns ExploreProfile[] shaped data", async () => {
+      const profiles = [
+        {
+          user_id: "u1",
+          display_name: "Alice",
+          year: "Junior",
+          photo_url: "https://example.com/a.jpg",
+          selfie_verified: true,
+        },
+        {
+          user_id: "u2",
+          display_name: "Bob",
+          year: null,
+          photo_url: "https://example.com/b.jpg",
+          selfie_verified: false,
+        },
+      ];
+      mockSupabase.rpc.mockResolvedValueOnce({ data: profiles, error: null });
+
+      const result = await getExploreFeed(TEST_USER_ID);
+
+      expect(result.data).toEqual(profiles);
+      expect(result.error).toBeNull();
+    });
+  });
+
+  describe("getProfileDetail", () => {
+    it("fetches full profile data for a single user", async () => {
+      const fullProfile = {
+        user_id: TARGET_USER_ID,
+        display_name: "Alice",
+        bio: "Hello",
+        year: "Junior",
+        hometown: "Austin",
+        nitty_gritty: null,
+        completion_score: 0.9,
+        mode_status: "roommate",
+        selfie_verified: true,
+        last_active_at: "2026-03-17T00:00:00Z",
+        rank_score: 0,
+        photos: [{ id: "p1", url: "https://example.com/p1.jpg", position: 0 }],
+      };
+      mockSupabase.rpc.mockResolvedValueOnce({ data: fullProfile, error: null });
+
+      const result = await getProfileDetail(TEST_USER_ID, TARGET_USER_ID);
+
+      expect(result.data).toEqual(fullProfile);
+      expect(result.error).toBeNull();
+    });
+
+    it("returns null data on error", async () => {
+      mockSupabase.rpc.mockResolvedValueOnce({
+        data: null,
+        error: { message: "Not found" },
+      });
+
+      const result = await getProfileDetail(TEST_USER_ID, TARGET_USER_ID);
+
+      expect(result.data).toBeNull();
+      expect(result.error).toBe("Not found");
+    });
+  });
 });
