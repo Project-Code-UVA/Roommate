@@ -61,8 +61,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Explore
 
 - [ ] **EXPL-01**: User can browse grid of profiles from shared schools
-- [ ] **EXPL-02**: Profiles ranked by weighted algorithm (30% completeness, 25% activity, 20% verification, 15% interactions, 10% freshness)
-- [ ] **EXPL-03**: Ranking weights are configurable server-side
+- [x] **EXPL-02**: Profiles ranked by weighted algorithm (30% completeness, 25% activity, 20% verification, 15% interactions, 10% freshness)
+- [x] **EXPL-03**: Ranking weights are configurable server-side
 - [ ] **EXPL-04**: User can like and save profiles from Explore
 - [ ] **EXPL-05**: Matching rules identical to Discovery
 
@@ -178,8 +178,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MSG-09 | Phase 5 | Complete |
 | MSG-10 | Phase 5 | Complete |
 | EXPL-01 | Phase 6 | Pending |
-| EXPL-02 | Phase 6 | Pending |
-| EXPL-03 | Phase 6 | Pending |
+| EXPL-02 | Phase 6 | Complete |
+| EXPL-03 | Phase 6 | Complete |
 | EXPL-04 | Phase 6 | Pending |
 | EXPL-05 | Phase 6 | Pending |
 | LIKE-01 | Phase 6 | Pending |

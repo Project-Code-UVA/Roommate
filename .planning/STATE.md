@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-current_phase: 05-messaging (Plan 03 complete)
-current_plan: 4 of 5
+current_phase: 06-explore-likes (Plan 00 complete)
+current_plan: 1 of 3
 status: executing
-last_updated: "2026-03-12T03:37:15.233Z"
+last_updated: "2026-03-18T00:37:41Z"
 progress:
   total_phases: 9
   completed_phases: 3
   total_plans: 19
-  completed_plans: 17
+  completed_plans: 18
 ---
 
 # Session State
@@ -22,8 +22,8 @@ See: .planning/PROJECT.md
 ## Position
 
 **Milestone:** v2.0 milestone
-**Current phase:** 05-messaging (Plan 03 complete)
-**Current plan:** 4 of 5
+**Current phase:** 06-explore-likes (Plan 00 complete)
+**Current plan:** 1 of 3
 **Status:** Executing
 
 ## Session Log
@@ -45,6 +45,7 @@ See: .planning/PROJECT.md
 - 2026-03-12: Plan 05-01 completed — 5 services + 3 hooks for messaging with 44 tests (8min)
 - 2026-03-12: Plan 05-02 completed — 8 chat UI components (bubble, list, composer, icebreaker + 4 atomic) with 44 tests (4min)
 - 2026-03-12: Plan 05-03 completed — 4 interaction components (long-press, GIF panel, photo preview, chat header) with 31 tests (4min)
+- 2026-03-17: Plan 06-00 completed — Explore types, 4 RPC migrations, explore weight seeds, 36 test stubs (3min)
 
 ## Decisions
 
@@ -89,3 +90,8 @@ See: .planning/PROJECT.md
 - [Phase 05]: Modal with transparent background for long-press overlay (proper z-index stacking)
 - [Phase 05]: Overflow menu uses invisible backdrop Pressable for outside-tap dismiss
 - [Phase 05]: PhotoPreview visual-only (no dedicated test; tested via screen integration)
+- [Phase 06]: Explore feed shows ANY school profiles (not shared-school gated) per user decision
+- [Phase 06]: Five-factor explore scoring: engagement 35%, activity 25%, completeness 20%, verification 10%, freshness 10%
+- [Phase 06]: Deterministic shuffle via setseed for consistent pagination
+- [Phase 06]: Free users get no display_name in liked-me RPC (server-side data gating)
+- [Phase 06]: Matches use LEAST/GREATEST for ordered pair matching (user_a < user_b constraint)
