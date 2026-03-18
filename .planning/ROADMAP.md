@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: Discovery Engine** - Server-side discovery stack query, filtering, matching logic, and mode/dealbreaker enforcement
 - [ ] **Phase 4: Swipe UI & Match Experience** - Custom swipe deck, photo carousel, save/bookmark, and match modal
 - [ ] **Phase 5: Messaging** - Real-time chat, delivery indicators, reactions, threading, media, block/report from chat
-- [ ] **Phase 6: Explore & Likes** - Grid browse with engagement ranking, Likes tab with My Likes/Liked Me/Matches
+- [x] **Phase 6: Explore & Likes** - Grid browse with engagement ranking, Likes tab with My Likes/Liked Me/Matches (completed 2026-03-18)
 - [ ] **Phase 7: Trust, Safety & Verification** - Enforcement escalation, reporting system, selfie verification, verified badge
 - [ ] **Phase 8: Notifications & Privacy** - Push notifications for matches/messages, privacy controls, account deletion
 - [ ] **Phase 9: Monetization & Ads** - Subscriptions, paid features, ad integration with engagement gating
@@ -188,7 +188,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | 3. Discovery Engine | 0/3 | Not started | - |
 | 4. Swipe UI & Match Experience | 2/3 | In Progress|  |
 | 5. Messaging | 4/5 | In Progress|  |
-| 6. Explore & Likes | 1/3 | In Progress |  |
+| 6. Explore & Likes | 3/3 | Complete   | 2026-03-18 |
 | 7. Trust, Safety & Verification | 0/? | Not started | - |
 | 8. Notifications & Privacy | 0/? | Not started | - |
 | 9. Monetization & Ads | 0/? | Not started | - |

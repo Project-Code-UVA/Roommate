@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-current_phase: 06-explore-likes (Plan 00 complete)
-current_plan: 1 of 3
+current_phase: 06-explore-likes (Plan 02 complete)
+current_plan: 3 of 3
 status: executing
-last_updated: "2026-03-18T00:37:41Z"
+last_updated: "2026-03-18T00:48:00Z"
 progress:
   total_phases: 9
-  completed_phases: 3
-  total_plans: 19
-  completed_plans: 18
+  completed_phases: 6
+  total_plans: 22
+  completed_plans: 22
 ---
 
 # Session State
@@ -46,6 +46,8 @@ See: .planning/PROJECT.md
 - 2026-03-12: Plan 05-02 completed — 8 chat UI components (bubble, list, composer, icebreaker + 4 atomic) with 44 tests (4min)
 - 2026-03-12: Plan 05-03 completed — 4 interaction components (long-press, GIF panel, photo preview, chat header) with 31 tests (4min)
 - 2026-03-17: Plan 06-00 completed — Explore types, 4 RPC migrations, explore weight seeds, 36 test stubs (3min)
+- 2026-03-17: Plan 06-02 completed — Likes tab: service, hook, 4 components, screen, tab badge, 35 tests (5min)
+- 2026-03-18: Plan 06-01 completed — Explore tab: service, hook, 2 components, screen with 19 tests (5min)
 
 ## Decisions
 
@@ -95,3 +97,10 @@ See: .planning/PROJECT.md
 - [Phase 06]: Deterministic shuffle via setseed for consistent pagination
 - [Phase 06]: Free users get no display_name in liked-me RPC (server-side data gating)
 - [Phase 06]: Matches use LEAST/GREATEST for ordered pair matching (user_a < user_b constraint)
+- [Phase 06]: expo-blur BlurView (intensity=60, tint=light) for liked-me free-tier content gating
+- [Phase 06]: 60s polling interval for liked-me badge (lower frequency than 30s message badge)
+- [Phase 06]: ScrollView with manual sections (not SectionList) for grid layout within Likes tab
+- [Phase 06]: getProfileDetail uses separate RPC for single profile fetch on tap
+- [Phase 06]: Seed stored in useRef to persist across re-renders without triggering effects
+- [Phase 06]: Grid card aspect ratio 1:1.3 for portrait feel in compact grid
+- [Phase 06]: require() inside jest.mock factories to avoid NativeWind _ReactNativeCSSInterop scope issue

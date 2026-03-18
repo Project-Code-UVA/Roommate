@@ -68,10 +68,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Likes
 
-- [ ] **LIKE-01**: User can view My Likes list
-- [ ] **LIKE-02**: User can view Matches list with last message preview and unread indicator
-- [ ] **LIKE-03**: Free users see blurred Liked Me grid
-- [ ] **LIKE-04**: Paid users see full Liked Me with identity revealed
+- [x] **LIKE-01**: User can view My Likes list
+- [x] **LIKE-02**: User can view Matches list with last message preview and unread indicator
+- [x] **LIKE-03**: Free users see blurred Liked Me grid
+- [x] **LIKE-04**: Paid users see full Liked Me with identity revealed
 
 ### Trust & Safety
 
@@ -182,10 +182,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXPL-03 | Phase 6 | Complete |
 | EXPL-04 | Phase 6 | Pending |
 | EXPL-05 | Phase 6 | Pending |
-| LIKE-01 | Phase 6 | Pending |
-| LIKE-02 | Phase 6 | Pending |
-| LIKE-03 | Phase 6 | Pending |
-| LIKE-04 | Phase 6 | Pending |
+| LIKE-01 | Phase 6 | Complete |
+| LIKE-02 | Phase 6 | Complete |
+| LIKE-03 | Phase 6 | Complete |
+| LIKE-04 | Phase 6 | Complete |
 | SAFE-01 | Phase 7 | Pending |
 | SAFE-02 | Phase 7 | Pending |
 | SAFE-03 | Phase 7 | Pending |
