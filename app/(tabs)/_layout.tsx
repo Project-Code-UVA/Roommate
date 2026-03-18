@@ -6,6 +6,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { BRAND_COLOR } from "@/lib/constants";
 import { useSession } from "@/contexts/auth-context";
 import { getTotalUnreadCount } from "@/services/thread-service";
+import { getLikedMeCount } from "@/services/likes-service";
 
 function UnreadBadge({ count }: { readonly count: number }) {
   if (count <= 0) return null;
@@ -40,6 +41,7 @@ const badgeStyles = StyleSheet.create({
 export default function TabLayout() {
   const { session, isLoading, onboardingComplete } = useSession();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [likedMeCount, setLikedMeCount] = useState(0);
 
   const fetchUnread = useCallback(async () => {
     if (!session?.user.id) return;
@@ -47,12 +49,24 @@ export default function TabLayout() {
     setUnreadCount(count);
   }, [session?.user.id]);
 
+  const fetchLikedMeCount = useCallback(async () => {
+    if (!session?.user.id) return;
+    const { count } = await getLikedMeCount(session.user.id);
+    setLikedMeCount(count);
+  }, [session?.user.id]);
+
   useEffect(() => {
     fetchUnread();
+    fetchLikedMeCount();
     // Poll every 30 seconds for unread count
-    const interval = setInterval(fetchUnread, 30_000);
-    return () => clearInterval(interval);
-  }, [fetchUnread]);
+    const unreadInterval = setInterval(fetchUnread, 30_000);
+    // Poll every 60 seconds for liked-me count (changes less frequently)
+    const likedMeInterval = setInterval(fetchLikedMeCount, 60_000);
+    return () => {
+      clearInterval(unreadInterval);
+      clearInterval(likedMeInterval);
+    };
+  }, [fetchUnread, fetchLikedMeCount]);
 
   // Keep splash screen visible while loading
   if (isLoading) {
@@ -102,11 +116,14 @@ export default function TabLayout() {
         options={{
           title: "Likes",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "heart" : "heart-outline"}
-              size={24}
-              color={color}
-            />
+            <View>
+              <Ionicons
+                name={focused ? "heart" : "heart-outline"}
+                size={24}
+                color={color}
+              />
+              <UnreadBadge count={likedMeCount} />
+            </View>
           ),
         }}
       />
