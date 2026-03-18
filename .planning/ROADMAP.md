@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: Discovery Engine** - Server-side discovery stack query, filtering, matching logic, and mode/dealbreaker enforcement
 - [ ] **Phase 4: Swipe UI & Match Experience** - Custom swipe deck, photo carousel, save/bookmark, and match modal
 - [ ] **Phase 5: Messaging** - Real-time chat, delivery indicators, reactions, threading, media, block/report from chat
-- [ ] **Phase 6: Explore & Likes** - Grid browse with weighted ranking, Likes tab with My Likes/Liked Me/Matches
+- [ ] **Phase 6: Explore & Likes** - Grid browse with engagement ranking, Likes tab with My Likes/Liked Me/Matches
 - [ ] **Phase 7: Trust, Safety & Verification** - Enforcement escalation, reporting system, selfie verification, verified badge
 - [ ] **Phase 8: Notifications & Privacy** - Push notifications for matches/messages, privacy controls, account deletion
 - [ ] **Phase 9: Monetization & Ads** - Subscriptions, paid features, ad integration with engagement gating
@@ -112,20 +112,21 @@ Plans:
 - [ ] 05-04-PLAN.md — Screen assembly: thread list, chat screen, match modal navigation wiring, human verification
 
 ### Phase 6: Explore & Likes
-**Goal**: Users can browse same-school profiles in a grid view ranked by a weighted algorithm, and view their likes/matches activity
+**Goal**: Users can browse any-school profiles in an engagement-ranked grid and view their likes/matches activity with blur paywall on Liked Me
 **Depends on**: Phase 5
 **Requirements**: EXPL-01, EXPL-02, EXPL-03, EXPL-04, EXPL-05, LIKE-01, LIKE-02, LIKE-03, LIKE-04
 **Success Criteria** (what must be TRUE):
-  1. User can browse a grid of profiles from shared schools, ranked by the weighted algorithm (completeness, activity, verification, interactions, freshness)
+  1. User can browse a 3-column grid of profiles from any school, ranked by engagement/popularity with random profiles mixed in
   2. Ranking weights are configurable server-side without code deployment
   3. User can like and save profiles from Explore, with matching rules identical to Discovery
   4. User can view My Likes list, Matches list with last message preview and unread indicator
   5. Free users see blurred Liked Me grid; paid users see revealed identities
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
+- [ ] 06-00-PLAN.md — Wave 0: TypeScript types, 4 Supabase RPC migrations (explore feed, my likes, liked me, explore weights), 10 test stub files
+- [ ] 06-01-PLAN.md — Explore tab: service, hook, grid card, profile view, screen assembly with match modal
+- [ ] 06-02-PLAN.md — Likes tab: service, hook, 4 components (matches row, liked-me card, my-likes card, upgrade banner), screen assembly, tab badge
 
 ### Phase 7: Trust, Safety & Verification
 **Goal**: The platform enforces graduated moderation, comprehensive reporting, and optional selfie verification for trust signals
@@ -187,7 +188,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | 3. Discovery Engine | 0/3 | Not started | - |
 | 4. Swipe UI & Match Experience | 2/3 | In Progress|  |
 | 5. Messaging | 4/5 | In Progress|  |
-| 6. Explore & Likes | 0/? | Not started | - |
+| 6. Explore & Likes | 0/3 | Not started | - |
 | 7. Trust, Safety & Verification | 0/? | Not started | - |
 | 8. Notifications & Privacy | 0/? | Not started | - |
 | 9. Monetization & Ads | 0/? | Not started | - |
