@@ -82,7 +82,7 @@ export function ProfileSheet({
   );
 
   const renderBackdrop = useCallback(
-    (props: Record<string, unknown>) => (
+    (props: React.ComponentProps<typeof BottomSheetBackdrop>) => (
       <BottomSheetBackdrop
         {...props}
         disappearsOnIndex={-1}

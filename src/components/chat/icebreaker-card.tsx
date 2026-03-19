@@ -70,7 +70,7 @@ export function IcebreakerCard({ onSelectPrompt, onDismiss }: Props): React.JSX.
       ))}
 
       {/* More button */}
-      <Pressable onPress={handleMore} className="items-center pt-1">
+      <Pressable testID="icebreaker-more" onPress={handleMore} className="items-center pt-1">
         <Text className="text-sm font-semibold text-violet-600">More</Text>
       </Pressable>
     </View>

@@ -112,12 +112,12 @@ export function ChatHeader({
             testID="chat-header-menu-backdrop"
           />
           <View style={styles.menuDropdown}>
-            <Pressable style={styles.menuItem} onPress={handleBlock}>
+            <Pressable style={styles.menuItem} onPress={handleBlock} testID="chat-menu-block" accessibilityLabel="Block">
               <Ionicons name="ban-outline" size={18} color="#ef4444" />
               <Text style={[styles.menuLabel, styles.menuLabelDanger]}>Block</Text>
             </Pressable>
             <View style={styles.menuSeparator} />
-            <Pressable style={styles.menuItem} onPress={handleReport}>
+            <Pressable style={styles.menuItem} onPress={handleReport} testID="chat-menu-report" accessibilityLabel="Report">
               <Ionicons name="flag-outline" size={18} color="#374151" />
               <Text style={styles.menuLabel}>Report</Text>
             </Pressable>

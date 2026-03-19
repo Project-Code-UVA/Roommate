@@ -98,6 +98,7 @@ export function MessageComposer({
           {/* Text input */}
           <View className="flex-1">
             <TextInput
+              testID="composer-input"
               className="bg-gray-100 rounded-2xl px-4 py-2 text-base text-gray-900 max-h-[120px]"
               placeholder="Type a message..."
               placeholderTextColor={COLORS.gray[400]}

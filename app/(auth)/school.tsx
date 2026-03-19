@@ -151,6 +151,7 @@ export default function SchoolScreen() {
         accessibilityRole="button"
         accessibilityLabel="Continue"
         accessibilityState={{ disabled: !canContinue }}
+        testID="school-continue"
       >
         {isSaving ? (
           <ActivityIndicator color={COLORS.white} />

@@ -336,6 +336,7 @@ export default function PhotosScreen() {
         accessibilityRole="button"
         accessibilityLabel="Continue"
         accessibilityState={{ disabled: !canContinue }}
+        testID="photos-continue"
       >
         {isSaving ? (
           <ActivityIndicator color={COLORS.white} />

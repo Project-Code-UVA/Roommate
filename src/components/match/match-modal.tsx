@@ -157,6 +157,7 @@ export function MatchModal({
           className="mb-4 w-full rounded-full py-4"
           style={{ backgroundColor: COLORS.primary[600] }}
           activeOpacity={0.8}
+          testID="match-send-message"
         >
           <Text className="text-center text-base font-semibold text-white">
             Send a Message
@@ -164,7 +165,7 @@ export function MatchModal({
         </TouchableOpacity>
 
         {/* Keep Swiping — secondary link */}
-        <TouchableOpacity onPress={onKeepSwiping} className="mb-3 py-2">
+        <TouchableOpacity onPress={onKeepSwiping} className="mb-3 py-2" testID="match-keep-swiping">
           <Text className="text-center text-base font-medium text-white">
             Keep Swiping
           </Text>

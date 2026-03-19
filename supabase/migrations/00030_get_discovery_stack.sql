@@ -165,7 +165,18 @@ BEGIN
       s.mode_status,
       s.selfie_verified,
       s.last_active_at,
-      (s.compat_score * v_w_compat + s.activity_score * v_w_activity + s.pop_score * v_w_popularity) AS rank_score
+      (s.compat_score * v_w_compat + s.activity_score * v_w_activity + s.pop_score * v_w_popularity) AS rank_score,
+      -- Aggregate user photos (approved only, ordered by position)
+      COALESCE(
+        (SELECT jsonb_agg(
+          jsonb_build_object('id', ph.id, 'url', ph.url, 'position', ph.order_index)
+          ORDER BY ph.order_index
+        )
+        FROM photos ph
+        WHERE ph.user_id = s.user_id
+          AND ph.moderation_status = 'approved'),
+        '[]'::jsonb
+      ) AS photos
     FROM scored s
     ORDER BY (s.compat_score * v_w_compat + s.activity_score * v_w_activity + s.pop_score * v_w_popularity) DESC
     LIMIT p_limit

@@ -25,6 +25,8 @@ import { FloatingActions } from "@/components/discovery/floating-actions";
 import { SwipeTutorial } from "@/components/discovery/swipe-tutorial";
 import { EmptyState } from "@/components/discovery/empty-state";
 import { MatchModal } from "@/components/match/match-modal";
+import { ProfileSheet } from "@/components/discovery/profile-sheet";
+import { PhotoViewer } from "@/components/discovery/photo-viewer";
 import { useDiscoveryStack } from "@/hooks/use-discovery-stack";
 import { useSession } from "@/contexts/auth-context";
 import { COLORS } from "@/lib/constants";
@@ -52,9 +54,29 @@ export default function DiscoveryScreen() {
     dismissMatch,
   } = useDiscoveryStack(userId);
 
+  // Profile sheet & photo viewer state
+  const [showProfileSheet, setShowProfileSheet] = useState(false);
+  const [photoViewerUrl, setPhotoViewerUrl] = useState<string | null>(null);
+
   // ---------------------------------------------------------------------------
   // Callbacks
   // ---------------------------------------------------------------------------
+
+  const handleProfileTap = useCallback(() => {
+    setShowProfileSheet(true);
+  }, []);
+
+  const handleDismissSheet = useCallback(() => {
+    setShowProfileSheet(false);
+  }, []);
+
+  const handlePhotoTap = useCallback((photoUrl: string) => {
+    setPhotoViewerUrl(photoUrl);
+  }, []);
+
+  const handleClosePhotoViewer = useCallback(() => {
+    setPhotoViewerUrl(null);
+  }, []);
 
   const handleLike = useCallback(() => {
     likeCurrent();
@@ -63,6 +85,24 @@ export default function DiscoveryScreen() {
   const handleDismiss = useCallback(() => {
     dismissCurrent();
   }, [dismissCurrent]);
+
+  const handleMessage = useCallback(() => {
+    if (!currentProfile) return;
+    Alert.alert(
+      "Send a Message",
+      `Start a conversation with ${currentProfile.display_name}?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Message",
+          onPress: () => {
+            // Like + navigate to chat (same as swipe-up intent)
+            likeCurrent();
+          },
+        },
+      ],
+    );
+  }, [currentProfile, likeCurrent]);
 
   // Match modal callbacks
   const handleSendMessage = useCallback(() => {
@@ -115,19 +155,21 @@ export default function DiscoveryScreen() {
   // Empty state
   if (isEmpty) {
     return (
-      <View style={styles.screen}>
+      <View style={styles.screen} testID="discovery-empty">
         <EmptyState />
       </View>
     );
   }
 
   return (
-    <View style={[styles.screen, { paddingBottom: TAB_BAR_HEIGHT }]}>
+    <View style={[styles.screen, { paddingBottom: TAB_BAR_HEIGHT }]} testID="discovery-screen">
       {/* Scrollable profile */}
-      {currentProfile && <ProfileCard profile={currentProfile} />}
+      {currentProfile && (
+        <ProfileCard profile={currentProfile} onProfileTap={handleProfileTap} />
+      )}
 
       {/* Floating action buttons */}
-      <FloatingActions onDismiss={handleDismiss} onLike={handleLike} />
+      <FloatingActions onDismiss={handleDismiss} onMessage={handleMessage} onLike={handleLike} />
 
       {/* First-time tutorial overlay */}
       <SwipeTutorial />
@@ -140,6 +182,21 @@ export default function DiscoveryScreen() {
         onSendMessage={handleSendMessage}
         onKeepSwiping={handleKeepSwiping}
         onShare={handleShare}
+      />
+
+      {/* Profile detail sheet */}
+      <ProfileSheet
+        profile={currentProfile}
+        visible={showProfileSheet}
+        onDismiss={handleDismissSheet}
+        onPhotoTap={handlePhotoTap}
+      />
+
+      {/* Full-screen photo viewer */}
+      <PhotoViewer
+        photoUrl={photoViewerUrl}
+        visible={photoViewerUrl !== null}
+        onClose={handleClosePhotoViewer}
       />
     </View>
   );

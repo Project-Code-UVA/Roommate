@@ -66,7 +66,7 @@ export default function WelcomeScreen() {
       <SafeAreaView style={styles.safeArea}>
         {/* Logo area */}
         <View style={styles.logoArea}>
-          <Text style={styles.logoText}>Room</Text>
+          <Text style={styles.logoText} testID="welcome-logo">Room</Text>
           <Text style={styles.tagline}>Find your perfect roommate</Text>
         </View>
 
@@ -82,6 +82,7 @@ export default function WelcomeScreen() {
             style={styles.button}
             accessibilityRole="button"
             accessibilityLabel="Get Started"
+            testID="welcome-get-started"
           >
             <Text style={styles.buttonText}>{"Get Started -->"}</Text>
           </Pressable>
@@ -91,6 +92,7 @@ export default function WelcomeScreen() {
             style={styles.signInButton}
             accessibilityRole="link"
             accessibilityLabel="Sign in"
+            testID="welcome-sign-in"
           >
             <Text style={styles.signInText}>Sign in</Text>
           </Pressable>

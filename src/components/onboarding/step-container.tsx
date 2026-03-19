@@ -42,6 +42,7 @@ export function StepContainer({
             className="mb-4 mt-2 h-10 w-10 items-center justify-center rounded-full"
             accessibilityLabel="Go back"
             accessibilityRole="button"
+            testID="step-back"
           >
             <Ionicons name="arrow-back" size={24} color={COLORS.gray[900]} />
           </Pressable>

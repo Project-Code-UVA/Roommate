@@ -200,7 +200,7 @@ export default function MessagesScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Messages</Text>
+        <Text style={styles.headerTitle} testID="messages-title">Messages</Text>
       </View>
 
       {/* Thread list */}

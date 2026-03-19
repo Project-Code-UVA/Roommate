@@ -63,6 +63,7 @@ export default function BirthdayScreen() {
         className="mb-8 w-full rounded-xl bg-primary-600 py-4"
         accessibilityRole="button"
         accessibilityLabel="Continue"
+        testID="birthday-continue"
       >
         <Text className="text-center text-lg font-semibold text-white">
           Continue

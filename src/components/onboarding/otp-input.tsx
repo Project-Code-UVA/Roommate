@@ -122,6 +122,7 @@ export function OtpInput({ onComplete, length = 6 }: OtpInputProps) {
               : "border-gray-300 text-gray-900"
           }`}
           accessibilityLabel={`Digit ${index + 1} of ${length}`}
+          testID={`otp-digit-${index}`}
         />
       ))}
     </View>

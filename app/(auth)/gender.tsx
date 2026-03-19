@@ -98,6 +98,7 @@ export default function GenderScreen() {
               accessibilityRole="radio"
               accessibilityState={{ selected: selected === option.key }}
               accessibilityLabel={option.label}
+              testID={`gender-option-${option.key}`}
             >
               <Text
                 className={`text-base font-medium ${
@@ -123,6 +124,7 @@ export default function GenderScreen() {
             maxLength={MAX_CUSTOM_GENDER_LENGTH}
             editable={!isSaving}
             accessibilityLabel="Custom gender identity"
+            testID="gender-custom-input"
           />
         ) : null}
 
@@ -153,6 +155,7 @@ export default function GenderScreen() {
         accessibilityRole="button"
         accessibilityLabel="Continue"
         accessibilityState={{ disabled: !canContinue }}
+        testID="gender-continue"
       >
         {isSaving ? (
           <ActivityIndicator color={COLORS.white} />

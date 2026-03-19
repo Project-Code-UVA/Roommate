@@ -104,6 +104,7 @@ export default function BioScreen() {
           onBlur={() => setIsFocused(false)}
           accessibilityLabel="Bio"
           accessibilityHint={`Write about yourself, ${MAX_BIO_LENGTH} characters maximum`}
+          testID="bio-input"
         />
 
         <Text
@@ -124,6 +125,7 @@ export default function BioScreen() {
         accessibilityRole="button"
         accessibilityLabel="Complete Profile"
         accessibilityState={{ disabled: !canComplete }}
+        testID="bio-complete"
       >
         {isSubmitting ? (
           <ActivityIndicator color={COLORS.white} />

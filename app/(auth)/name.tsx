@@ -73,6 +73,7 @@ export default function NameScreen() {
           maxLength={MAX_NAME_LENGTH}
           editable={!isSaving}
           accessibilityLabel="First name"
+          testID="name-input"
         />
 
         {error ? (
@@ -89,6 +90,7 @@ export default function NameScreen() {
         accessibilityRole="button"
         accessibilityLabel="Continue"
         accessibilityState={{ disabled: !canContinue }}
+        testID="name-continue"
       >
         {isSaving ? (
           <ActivityIndicator color={COLORS.white} />
