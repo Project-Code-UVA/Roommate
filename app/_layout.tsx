@@ -5,6 +5,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
+import { supabase } from "@/lib/supabase";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -26,10 +27,8 @@ function RootNavigator() {
         router.replace("/(auth)/welcome");
       }
     } else if (!onboarded) {
-      // Signed in but hasn't completed onboarding → start at birthday (age gate)
-      if (!inAuthGroup) {
-        router.replace("/(auth)/birthday");
-      }
+      // Signed in but hasn't completed onboarding → sign out and send to welcome
+      supabase.auth.signOut();
     } else {
       // Signed in and onboarded → send to main app
       if (inAuthGroup) {
