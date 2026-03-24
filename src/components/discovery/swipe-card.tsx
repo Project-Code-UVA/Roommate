@@ -10,16 +10,18 @@
  * Gesture: activeOffsetX: [-15, 15] to avoid competing with vertical scroll.
  * Swipe threshold: 30% screen width.
  * Rotation: max 12 degrees.
+ *
+ * Per D-09/D-10: overflow menu with block/report in top-right corner.
+ * Overflow menu zIndex 20 to sit above swipe glow overlays (zIndex 10).
  */
 
-import { useCallback } from "react";
-import { View, ScrollView, Dimensions, StyleSheet } from "react-native";
+import { useCallback, useState } from "react";
+import { Modal, View, ScrollView, Dimensions, StyleSheet } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  withTiming,
   interpolate,
   runOnJS,
 } from "react-native-reanimated";
@@ -27,7 +29,15 @@ import * as Haptics from "expo-haptics";
 
 import { PhotoCarousel } from "@/components/discovery/photo-carousel";
 import { ProfileInfo } from "@/components/discovery/profile-info";
+import { OverflowMenu } from "@/components/shared/overflow-menu";
+import { ReportSheet } from "@/components/safety/report-sheet";
+import { showBlockConfirmDialog } from "@/components/safety/block-confirm-dialog";
+import { blockUser } from "@/services/block-service";
+import { submitReport } from "@/services/report-service";
+import { useSession } from "@/contexts/auth-context";
 import type { DiscoveryProfile } from "@/types/filters";
+import type { OverflowMenuItem } from "@/types/safety";
+import type { ReportCategory } from "@/types/chat";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -46,15 +56,22 @@ type SwipeCardProps = {
   readonly profile: DiscoveryProfile;
   readonly onSwipeRight: () => void;
   readonly onSwipeLeft: () => void;
+  readonly onBlock?: () => void;
 };
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function SwipeCard({ profile, onSwipeRight, onSwipeLeft }: SwipeCardProps) {
+export function SwipeCard({ profile, onSwipeRight, onSwipeLeft, onBlock }: SwipeCardProps) {
   const translateX = useSharedValue(0);
   const isAnimating = useSharedValue(false);
+
+  // Block/report state
+  const [reportVisible, setReportVisible] = useState(false);
+  const [isReporting, setIsReporting] = useState(false);
+  const { session } = useSession();
+  const userId = session?.user.id ?? "";
 
   const triggerLike = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -66,9 +83,34 @@ export function SwipeCard({ profile, onSwipeRight, onSwipeLeft }: SwipeCardProps
     onSwipeLeft();
   }, [onSwipeLeft]);
 
-  const resetCard = useCallback(() => {
-    // no-op, card is removed from stack
+  // Block/report handlers
+  const handleBlock = useCallback(() => {
+    showBlockConfirmDialog(profile.display_name, async () => {
+      const result = await blockUser(userId, profile.user_id);
+      if (result.success) {
+        onBlock?.();
+      }
+    });
+  }, [profile, userId, onBlock]);
+
+  const handleReport = useCallback(() => {
+    setReportVisible(true);
   }, []);
+
+  const handleReportSubmit = useCallback(
+    async (category: ReportCategory, description: string) => {
+      setIsReporting(true);
+      await submitReport(userId, profile.user_id, category, description);
+      setIsReporting(false);
+      setReportVisible(false);
+    },
+    [profile, userId],
+  );
+
+  const overflowItems: readonly OverflowMenuItem[] = [
+    { label: "Block", icon: "ban-outline", onPress: handleBlock, destructive: true },
+    { label: "Report", icon: "flag-outline", onPress: handleReport },
+  ];
 
   const panGesture = Gesture.Pan()
     .activeOffsetX([-15, 15])
@@ -82,7 +124,7 @@ export function SwipeCard({ profile, onSwipeRight, onSwipeLeft }: SwipeCardProps
       if (isAnimating.value) return;
 
       if (event.translationX > SWIPE_THRESHOLD) {
-        // Swipe right — like
+        // Swipe right -- like
         isAnimating.value = true;
         translateX.value = withSpring(
           FLY_OUT_X,
@@ -92,7 +134,7 @@ export function SwipeCard({ profile, onSwipeRight, onSwipeLeft }: SwipeCardProps
           },
         );
       } else if (event.translationX < -SWIPE_THRESHOLD) {
-        // Swipe left — dismiss
+        // Swipe left -- dismiss
         isAnimating.value = true;
         translateX.value = withSpring(
           -FLY_OUT_X,
@@ -146,40 +188,58 @@ export function SwipeCard({ profile, onSwipeRight, onSwipeLeft }: SwipeCardProps
   });
 
   return (
-    <GestureDetector gesture={panGesture}>
-      <Animated.View style={[styles.card, cardStyle]}>
-        {/* Like glow overlay */}
-        <Animated.View
-          style={[styles.overlay, styles.likeOverlay, likeOverlayStyle]}
-          pointerEvents="none"
-        />
-        {/* Pass glow overlay */}
-        <Animated.View
-          style={[styles.overlay, styles.passOverlay, passOverlayStyle]}
-          pointerEvents="none"
-        />
+    <>
+      <GestureDetector gesture={panGesture}>
+        <Animated.View style={[styles.card, cardStyle]}>
+          {/* Overflow menu -- zIndex 20, above swipe overlays (zIndex 10) */}
+          <View style={styles.overflowMenuContainer}>
+            <OverflowMenu items={overflowItems} testIDPrefix="swipe-card" />
+          </View>
 
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          bounces
-        >
-          {/* Photo carousel — all photos */}
-          <PhotoCarousel
-            photos={profile.photos}
-            displayName={profile.display_name}
-            year={profile.year}
-            selfieVerified={profile.selfie_verified}
-            hometown={profile.hometown}
-            profileId={profile.user_id}
+          {/* Like glow overlay */}
+          <Animated.View
+            style={[styles.overlay, styles.likeOverlay, likeOverlayStyle]}
+            pointerEvents="none"
+          />
+          {/* Pass glow overlay */}
+          <Animated.View
+            style={[styles.overlay, styles.passOverlay, passOverlayStyle]}
+            pointerEvents="none"
           />
 
-          {/* Profile info sections */}
-          <ProfileInfo profile={profile} />
-        </ScrollView>
-      </Animated.View>
-    </GestureDetector>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            bounces
+          >
+            {/* Photo carousel -- all photos */}
+            <PhotoCarousel
+              photos={profile.photos}
+              displayName={profile.display_name}
+              year={profile.year}
+              selfieVerified={profile.selfie_verified}
+              hometown={profile.hometown}
+              profileId={profile.user_id}
+            />
+
+            {/* Profile info sections */}
+            <ProfileInfo profile={profile} />
+          </ScrollView>
+        </Animated.View>
+      </GestureDetector>
+
+      {/* Report sheet -- rendered outside GestureDetector to avoid gesture conflicts */}
+      <Modal transparent visible={reportVisible} animationType="none">
+        <ReportSheet
+          visible={reportVisible}
+          userName={profile.display_name}
+          onSubmit={handleReportSubmit}
+          onClose={() => setReportVisible(false)}
+          isSubmitting={isReporting}
+        />
+      </Modal>
+    </>
   );
 }
 
@@ -198,6 +258,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
+  },
+  overflowMenuContainer: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    zIndex: 20,
   },
   scroll: {
     flex: 1,

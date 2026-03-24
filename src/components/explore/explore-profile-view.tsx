@@ -4,15 +4,26 @@
  * Modal presentation with stacked SwipeCards from Discovery.
  * The next profile is rendered behind the current one and becomes
  * visible during a partial swipe. Swipe right = like, left = dismiss.
+ *
+ * Per D-09/D-10: overflow menu with block/report in top-right corner.
  */
 
+import { useCallback, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Modal, View, Pressable, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { SwipeCard } from "@/components/discovery/swipe-card";
+import { OverflowMenu } from "@/components/shared/overflow-menu";
+import { ReportSheet } from "@/components/safety/report-sheet";
+import { showBlockConfirmDialog } from "@/components/safety/block-confirm-dialog";
+import { blockUser } from "@/services/block-service";
+import { submitReport } from "@/services/report-service";
+import { useSession } from "@/contexts/auth-context";
 import type { DiscoveryProfile } from "@/types/filters";
+import type { OverflowMenuItem } from "@/types/safety";
+import type { ReportCategory } from "@/types/chat";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -26,6 +37,7 @@ type ExploreProfileViewProps = {
   readonly onMessage: () => void;
   readonly onClose: () => void;
   readonly visible: boolean;
+  readonly onBlock?: () => void;
 };
 
 // ---------------------------------------------------------------------------
@@ -39,7 +51,46 @@ export function ExploreProfileView({
   onDismiss,
   onClose,
   visible,
+  onBlock,
 }: ExploreProfileViewProps) {
+  // Block/report state
+  const [reportVisible, setReportVisible] = useState(false);
+  const [isReporting, setIsReporting] = useState(false);
+  const { session } = useSession();
+  const userId = session?.user.id ?? "";
+
+  // Block/report handlers
+  const handleBlock = useCallback(() => {
+    if (!profile) return;
+    showBlockConfirmDialog(profile.display_name, async () => {
+      const result = await blockUser(userId, profile.user_id);
+      if (result.success) {
+        onClose();
+        onBlock?.();
+      }
+    });
+  }, [profile, userId, onClose, onBlock]);
+
+  const handleReport = useCallback(() => {
+    setReportVisible(true);
+  }, []);
+
+  const handleReportSubmit = useCallback(
+    async (category: ReportCategory, description: string) => {
+      if (!profile) return;
+      setIsReporting(true);
+      await submitReport(userId, profile.user_id, category, description);
+      setIsReporting(false);
+      setReportVisible(false);
+    },
+    [profile, userId],
+  );
+
+  const overflowItems: readonly OverflowMenuItem[] = [
+    { label: "Block", icon: "ban-outline", onPress: handleBlock, destructive: true },
+    { label: "Report", icon: "flag-outline", onPress: handleReport },
+  ];
+
   if (!profile) return null;
 
   return (
@@ -61,7 +112,12 @@ export function ExploreProfileView({
             <Ionicons name="chevron-back" size={28} color="#1f2937" />
           </Pressable>
 
-          {/* Card stack — next card behind, current card on top */}
+          {/* Overflow menu -- top-right, mirror of back button */}
+          <View style={styles.overflowMenuContainer}>
+            <OverflowMenu items={overflowItems} testIDPrefix="explore-profile" />
+          </View>
+
+          {/* Card stack -- next card behind, current card on top */}
           <View style={styles.cardStack}>
             {/* Next profile (behind) */}
             {nextProfile && (
@@ -87,6 +143,15 @@ export function ExploreProfileView({
           </View>
         </SafeAreaView>
       </GestureHandlerRootView>
+
+      {/* Report sheet */}
+      <ReportSheet
+        visible={reportVisible}
+        userName={profile.display_name}
+        onSubmit={handleReportSubmit}
+        onClose={() => setReportVisible(false)}
+        isSubmitting={isReporting}
+      />
     </Modal>
   );
 }
@@ -120,6 +185,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 4,
+  },
+  overflowMenuContainer: {
+    position: "absolute",
+    top: 56,
+    right: 12,
+    zIndex: 100,
   },
   cardStack: {
     flex: 1,
