@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-current_phase: 06-explore-likes (Plan 00 complete)
-current_plan: 1 of 3
-status: planning
-last_updated: "2026-03-18T00:52:19.149Z"
+current_phase: 07
+current_plan: 1
+status: executing
+last_updated: "2026-03-24T20:25:37.819Z"
 progress:
   total_phases: 9
   completed_phases: 6
-  total_plans: 22
-  completed_plans: 22
+  total_plans: 27
+  completed_plans: 23
 ---
 
 # Session State
@@ -22,9 +22,9 @@ See: .planning/PROJECT.md
 ## Position
 
 **Milestone:** v2.0 milestone
-**Current phase:** 06-explore-likes (Plan 00 complete)
-**Current plan:** 1 of 3
-**Status:** Ready to plan
+**Current phase:** 07
+**Current plan:** 1
+**Status:** Executing Phase 07
 
 ## Session Log
 
@@ -48,6 +48,7 @@ See: .planning/PROJECT.md
 - 2026-03-17: Plan 06-00 completed — Explore types, 4 RPC migrations, explore weight seeds, 36 test stubs (3min)
 - 2026-03-17: Plan 06-02 completed — Likes tab: service, hook, 4 components, screen, tab badge, 35 tests (5min)
 - 2026-03-18: Plan 06-01 completed — Explore tab: service, hook, 2 components, screen with 19 tests (5min)
+- 2026-03-24: Plan 07-00 completed — 4 migrations (block RPC, enforcement RPC, selfie storage, enforcement fix), safety types, 12 test stubs (3min)
 
 ## Decisions
 
@@ -104,3 +105,8 @@ See: .planning/PROJECT.md
 - [Phase 06]: Seed stored in useRef to persist across re-renders without triggering effects
 - [Phase 06]: Grid card aspect ratio 1:1.3 for portrait feel in compact grid
 - [Phase 06]: require() inside jest.mock factories to avoid NativeWind _ReactNativeCSSInterop scope issue
+- [Phase 07]: block_user RPC is standalone (no match required) -- works from any surface
+- [Phase 07]: Warning state allows messaging and liking (D-07); dm_ban blocks messaging only; suspended/banned block both
+- [Phase 07]: Selfie bucket is public for verified badge display; upload restricted to user folder via RLS
+- [Phase 07]: apply_enforcement_action uses CASE for end_at duration calculation
+- [Phase 07]: Integration test stubs use commented-out imports (consistent with Phase 4/6 pattern)

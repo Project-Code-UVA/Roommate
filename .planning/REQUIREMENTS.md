@@ -22,7 +22,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **AUTH-04**: User can select at least one school during onboarding
 - [x] **AUTH-05**: User can complete required profile fields (name, year, bio)
 - [x] **AUTH-06**: User who fails verification requirements cannot appear in Discovery, Explore, or message
-- [ ] **AUTH-07**: User can complete selfie verification for verified badge
+- [x] **AUTH-07**: User can complete selfie verification for verified badge
 - [x] **AUTH-08**: Progressive onboarding flow (age -> phone -> photos -> school -> profile -> selfie)
 
 ### Discovery
@@ -75,11 +75,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Trust & Safety
 
-- [ ] **SAFE-01**: Shared-school gating enforced server-side on all visibility queries
-- [ ] **SAFE-02**: Block hides user from Discovery, Explore, Likes, and Messages (server-enforced)
+- [x] **SAFE-01**: Shared-school gating enforced server-side on all visibility queries
+- [x] **SAFE-02**: Block hides user from Discovery, Explore, Likes, and Messages (server-enforced)
 - [ ] **SAFE-03**: Report system with 8 categories (harassment, sexual content, hate speech, spam, impersonation, underage, safety threat, other)
-- [ ] **SAFE-04**: Enforcement escalation (warning -> 48hr DM ban -> 7-day suspension -> permanent ban)
-- [ ] **SAFE-05**: Enforcement state checked before allowing new conversations
+- [x] **SAFE-04**: Enforcement escalation (warning -> 48hr DM ban -> 7-day suspension -> permanent ban)
+- [x] **SAFE-05**: Enforcement state checked before allowing new conversations
 - [ ] **SAFE-06**: Under-18 accounts blocked at signup, "Underage" report category available
 
 ### Monetization
@@ -151,7 +151,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-04 | Phase 2 | Complete |
 | AUTH-05 | Phase 2 | Complete |
 | AUTH-06 | Phase 2 | Complete |
-| AUTH-07 | Phase 7 | Pending |
+| AUTH-07 | Phase 7 | Complete |
 | AUTH-08 | Phase 2 | Complete |
 | DISC-01 | Phase 4 | Complete |
 | DISC-02 | Phase 4 | Complete |
@@ -186,11 +186,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LIKE-02 | Phase 6 | Complete |
 | LIKE-03 | Phase 6 | Complete |
 | LIKE-04 | Phase 6 | Complete |
-| SAFE-01 | Phase 7 | Pending |
-| SAFE-02 | Phase 7 | Pending |
+| SAFE-01 | Phase 7 | Complete |
+| SAFE-02 | Phase 7 | Complete |
 | SAFE-03 | Phase 7 | Pending |
-| SAFE-04 | Phase 7 | Pending |
-| SAFE-05 | Phase 7 | Pending |
+| SAFE-04 | Phase 7 | Complete |
+| SAFE-05 | Phase 7 | Complete |
 | SAFE-06 | Phase 7 | Pending |
 | PAID-01 | Phase 9 | Pending |
 | PAID-02 | Phase 9 | Pending |
