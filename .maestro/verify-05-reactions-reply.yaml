@@ -1,0 +1,92 @@
+appId: host.exp.Exponent
+---
+# Verify Phase 05 — Tests 6 & 7: Message Reactions (Long Press) + Reply
+# PRE-REQUISITE: Authenticated user with at least one conversation containing messages.
+
+# Launch Expo Go and open Room
+- launchApp
+- waitForAnimationToEnd
+- tapOn:
+    text: "Room"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+
+# Dismiss Expo dev tools popup if present
+- tapOn:
+    text: "Continue"
+    optional: true
+- waitForAnimationToEnd
+
+# Dismiss swipe tutorial if present
+- tapOn:
+    text: "Tap to continue"
+    optional: true
+- waitForAnimationToEnd
+
+# Wait for app to fully load
+- extendedWaitUntil:
+    visible:
+        text: "Messages, tab.*"
+    timeout: 30000
+
+# Navigate to Messages tab
+- tapOn:
+    text: "Messages, tab.*"
+- waitForAnimationToEnd
+
+# Open first conversation
+- tapOn:
+    point: "50%,20%"
+- waitForAnimationToEnd
+
+# Verify chat screen loaded
+- extendedWaitUntil:
+    visible:
+        id: "chat-header-back"
+    timeout: 10000
+
+# ─── TEST 6: Long-press reactions ───
+# Long-press on a message bubble
+- longPressOn:
+    id: "bubble-sender"
+- waitForAnimationToEnd
+
+# Verify long-press overlay appeared — screenshot to confirm visually
+- takeScreenshot: verify_05_long_press_overlay
+
+# Tap a reaction emoji (heart — top-left of the card)
+- tapOn:
+    point: "18%,28%"
+- waitForAnimationToEnd
+- takeScreenshot: verify_05_after_reaction
+
+# ─── TEST 7: Reply to a message ───
+# Long-press again to open overlay
+- longPressOn:
+    id: "bubble-sender"
+- waitForAnimationToEnd
+
+# Tap Reply action by point (first action row below emoji bar)
+- tapOn:
+    point: "30%,32%"
+- waitForAnimationToEnd
+
+# Verify reply preview appears above composer
+- assertVisible:
+    id: "composer-dismiss-reply"
+- takeScreenshot: verify_05_reply_preview
+
+# Type and send reply
+- tapOn:
+    id: "composer-input"
+- inputText: "Maestro reply test"
+- tapOn:
+    id: "composer-send-btn"
+- waitForAnimationToEnd
+
+# Dismiss keyboard
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+- takeScreenshot: verify_05_reply_sent

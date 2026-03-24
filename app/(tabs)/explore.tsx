@@ -92,6 +92,7 @@ export default function ExploreScreen() {
   const {
     profiles,
     selectedProfile,
+    nextProfile,
     isLoading,
     isRefreshing,
     hasMore,
@@ -226,12 +227,14 @@ export default function ExploreScreen() {
       {/* Full profile view modal */}
       <ExploreProfileView
         profile={selectedProfile}
+        nextProfile={nextProfile}
         onLike={handleLike}
         onDismiss={handleDismiss}
         onMessage={handleMessage}
         onClose={clearSelected}
         visible={selectedProfile !== null}
       />
+
 
       {/* Match modal */}
       <MatchModal

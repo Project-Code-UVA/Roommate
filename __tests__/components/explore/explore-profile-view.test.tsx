@@ -11,41 +11,45 @@ jest.mock("react-native-safe-area-context", () => ({
   SafeAreaView: require("react-native").View,
 }));
 
-jest.mock("@/components/discovery/profile-card", () => ({
-  ProfileCard: (props: Record<string, unknown>) => {
-    const RN = require("react-native");
-    const profile = props.profile as Record<string, string>;
-    return require("react").createElement(
-      RN.View,
-      { testID: "profile-card" },
-      require("react").createElement(RN.Text, {}, profile.display_name),
-    );
-  },
+jest.mock("react-native-gesture-handler", () => ({
+  GestureHandlerRootView: require("react-native").View,
+  Gesture: { Pan: () => ({ activeOffsetX: () => ({ onUpdate: () => ({ onEnd: () => ({}) }) }) }) },
+  GestureDetector: ({ children }: { children: React.ReactNode }) => children,
 }));
 
-jest.mock("@/components/discovery/floating-actions", () => ({
-  FloatingActions: (props: Record<string, () => void>) => {
-    const RN = require("react-native");
-    const R = require("react");
-    return R.createElement(
-      RN.View,
-      { testID: "floating-actions" },
-      R.createElement(
-        RN.Pressable,
-        { testID: "action-dismiss", onPress: props.onDismiss },
-        R.createElement(RN.Text, {}, "X"),
-      ),
-      R.createElement(
-        RN.Pressable,
-        { testID: "action-like", onPress: props.onLike },
-        R.createElement(RN.Text, {}, "Heart"),
-      ),
-      R.createElement(
-        RN.Pressable,
-        { testID: "action-message", onPress: props.onMessage },
-        R.createElement(RN.Text, {}, "Msg"),
-      ),
-    );
+jest.mock("react-native-reanimated", () => {
+  const RN = require("react-native");
+  return {
+    default: {
+      View: RN.View,
+      createAnimatedComponent: (c: unknown) => c,
+    },
+    useSharedValue: (v: unknown) => ({ value: v }),
+    useAnimatedStyle: () => ({}),
+    withSpring: (v: unknown) => v,
+    withTiming: (v: unknown) => v,
+    interpolate: () => 0,
+    runOnJS: (fn: () => void) => fn,
+  };
+});
+
+jest.mock("expo-haptics", () => ({
+  impactAsync: jest.fn(),
+  ImpactFeedbackStyle: { Medium: "medium" },
+}));
+
+jest.mock("expo-linear-gradient", () => ({
+  LinearGradient: require("react-native").View,
+}));
+
+jest.mock("@/components/discovery/photo-indicator", () => ({
+  PhotoIndicator: () => null,
+}));
+
+jest.mock("@/lib/constants", () => ({
+  COLORS: {
+    primary: { 50: "#f0f", 400: "#a0a", 500: "#909", 600: "#808" },
+    gray: { 200: "#ccc", 300: "#aaa", 400: "#888", 700: "#333", 900: "#111" },
   },
 }));
 
@@ -70,11 +74,27 @@ const mockProfile: DiscoveryProfile = {
   photos: [{ id: "p1", url: "https://example.com/bob.jpg", position: 0 }],
 };
 
+const mockNextProfile: DiscoveryProfile = {
+  user_id: "user-789",
+  display_name: "Alice",
+  bio: "Hi there",
+  year: "Junior",
+  hometown: "Seattle",
+  nitty_gritty: null,
+  completion_score: 0.85,
+  mode_status: "roommate",
+  selfie_verified: false,
+  last_active_at: "2026-03-16T00:00:00Z",
+  rank_score: 0.6,
+  photos: [{ id: "p2", url: "https://example.com/alice.jpg", position: 0 }],
+};
+
 describe("ExploreProfileView", () => {
-  it("renders ProfileCard with full profile data", () => {
-    const { getByTestId, getByText } = render(
+  it("renders the current profile name", () => {
+    const { getByText } = render(
       <ExploreProfileView
         profile={mockProfile}
+        nextProfile={null}
         onLike={jest.fn()}
         onDismiss={jest.fn()}
         onMessage={jest.fn()}
@@ -83,14 +103,32 @@ describe("ExploreProfileView", () => {
       />,
     );
 
-    expect(getByTestId("profile-card")).toBeTruthy();
     expect(getByText("Bob")).toBeTruthy();
   });
 
-  it("renders FloatingActions with like/dismiss/message", () => {
+  it("renders back button", () => {
+    const onClose = jest.fn();
     const { getByTestId } = render(
       <ExploreProfileView
         profile={mockProfile}
+        nextProfile={null}
+        onLike={jest.fn()}
+        onDismiss={jest.fn()}
+        onMessage={jest.fn()}
+        onClose={onClose}
+        visible
+      />,
+    );
+
+    fireEvent.press(getByTestId("explore-profile-back"));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders next profile behind current when provided", () => {
+    const { getByText } = render(
+      <ExploreProfileView
+        profile={mockProfile}
+        nextProfile={mockNextProfile}
         onLike={jest.fn()}
         onDismiss={jest.fn()}
         onMessage={jest.fn()}
@@ -99,32 +137,15 @@ describe("ExploreProfileView", () => {
       />,
     );
 
-    expect(getByTestId("floating-actions")).toBeTruthy();
-    expect(getByTestId("action-dismiss")).toBeTruthy();
-    expect(getByTestId("action-like")).toBeTruthy();
-  });
-
-  it("calls onLike when like pressed", () => {
-    const onLike = jest.fn();
-    const { getByTestId } = render(
-      <ExploreProfileView
-        profile={mockProfile}
-        onLike={onLike}
-        onDismiss={jest.fn()}
-        onMessage={jest.fn()}
-        onClose={jest.fn()}
-        visible
-      />,
-    );
-
-    fireEvent.press(getByTestId("action-like"));
-    expect(onLike).toHaveBeenCalledTimes(1);
+    expect(getByText("Bob")).toBeTruthy();
+    expect(getByText("Alice")).toBeTruthy();
   });
 
   it("renders nothing when profile is null", () => {
-    const { queryByTestId } = render(
+    const { toJSON } = render(
       <ExploreProfileView
         profile={null}
+        nextProfile={null}
         onLike={jest.fn()}
         onDismiss={jest.fn()}
         onMessage={jest.fn()}
@@ -133,6 +154,6 @@ describe("ExploreProfileView", () => {
       />,
     );
 
-    expect(queryByTestId("profile-card")).toBeNull();
+    expect(toJSON()).toBeNull();
   });
 });

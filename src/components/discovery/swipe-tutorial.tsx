@@ -26,7 +26,7 @@ import { Ionicons } from "@expo/vector-icons";
 // Constants
 // ---------------------------------------------------------------------------
 
-const STORAGE_KEY = "room:discovery_tutorial_seen_v3";
+const STORAGE_KEY = "room:discovery_tutorial_seen_v4";
 
 type Step = {
   readonly icon: keyof typeof Ionicons.glyphMap;
@@ -38,25 +38,25 @@ type Step = {
 
 const STEPS: readonly Step[] = [
   {
+    icon: "arrow-forward-circle",
+    iconColor: "#4ade80",
+    title: "Swipe right to like",
+    subtitle: "Show interest in a potential roommate",
+    animType: "bounce",
+  },
+  {
+    icon: "arrow-back-circle",
+    iconColor: "#ef4444",
+    title: "Swipe left to pass",
+    subtitle: "Skip this profile and see the next one",
+    animType: "pulse",
+  },
+  {
     icon: "swap-vertical",
     iconColor: "#fff",
     title: "Scroll to explore",
     subtitle: "Browse photos and profile details",
     animType: "scroll",
-  },
-  {
-    icon: "close-circle",
-    iconColor: "#ef4444",
-    title: "Tap X to pass",
-    subtitle: "Skip this profile and see the next one",
-    animType: "pulse",
-  },
-  {
-    icon: "heart-circle",
-    iconColor: "#4ade80",
-    title: "Tap ♥ to like",
-    subtitle: "Show interest in a potential roommate",
-    animType: "bounce",
   },
 ];
 

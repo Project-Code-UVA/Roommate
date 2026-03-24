@@ -1,9 +1,10 @@
 /**
- * Discovery tab screen — Hinge-style scrollable profiles.
+ * Discovery tab screen — swipe-based roommate discovery.
  *
- * Shows one profile at a time as a vertical scroll of photos + info cards.
- * Floating X/Heart buttons at bottom for dismiss/like actions.
- * First-time tutorial overlay teaches the new UX.
+ * Shows one profile at a time as a swipeable card.
+ * Swipe right = like, swipe left = pass.
+ * Photo carousel at top, profile info below.
+ * Floating action buttons for dismiss/like/message.
  */
 
 import { useState, useCallback } from "react";
@@ -20,13 +21,11 @@ import {
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { ProfileCard } from "@/components/discovery/profile-card";
+import { SwipeCard } from "@/components/discovery/swipe-card";
 import { FloatingActions } from "@/components/discovery/floating-actions";
 import { SwipeTutorial } from "@/components/discovery/swipe-tutorial";
 import { EmptyState } from "@/components/discovery/empty-state";
 import { MatchModal } from "@/components/match/match-modal";
-import { ProfileSheet } from "@/components/discovery/profile-sheet";
-import { PhotoViewer } from "@/components/discovery/photo-viewer";
 import { useDiscoveryStack } from "@/hooks/use-discovery-stack";
 import { useSession } from "@/contexts/auth-context";
 import { COLORS } from "@/lib/constants";
@@ -43,7 +42,6 @@ export default function DiscoveryScreen() {
   const TAB_BAR_HEIGHT = 49 + insets.bottom;
 
   const {
-    stack,
     currentProfile,
     isLoading,
     isEmpty,
@@ -54,29 +52,9 @@ export default function DiscoveryScreen() {
     dismissMatch,
   } = useDiscoveryStack(userId);
 
-  // Profile sheet & photo viewer state
-  const [showProfileSheet, setShowProfileSheet] = useState(false);
-  const [photoViewerUrl, setPhotoViewerUrl] = useState<string | null>(null);
-
   // ---------------------------------------------------------------------------
   // Callbacks
   // ---------------------------------------------------------------------------
-
-  const handleProfileTap = useCallback(() => {
-    setShowProfileSheet(true);
-  }, []);
-
-  const handleDismissSheet = useCallback(() => {
-    setShowProfileSheet(false);
-  }, []);
-
-  const handlePhotoTap = useCallback((photoUrl: string) => {
-    setPhotoViewerUrl(photoUrl);
-  }, []);
-
-  const handleClosePhotoViewer = useCallback(() => {
-    setPhotoViewerUrl(null);
-  }, []);
 
   const handleLike = useCallback(() => {
     likeCurrent();
@@ -96,7 +74,6 @@ export default function DiscoveryScreen() {
         {
           text: "Message",
           onPress: () => {
-            // Like + navigate to chat (same as swipe-up intent)
             likeCurrent();
           },
         },
@@ -162,10 +139,18 @@ export default function DiscoveryScreen() {
   }
 
   return (
-    <View style={[styles.screen, { paddingBottom: TAB_BAR_HEIGHT }]} testID="discovery-screen">
-      {/* Scrollable profile */}
+    <View
+      style={[styles.screen, { paddingTop: insets.top, paddingBottom: TAB_BAR_HEIGHT }]}
+      testID="discovery-screen"
+    >
+      {/* Swipeable profile card */}
       {currentProfile && (
-        <ProfileCard profile={currentProfile} onProfileTap={handleProfileTap} />
+        <SwipeCard
+          key={currentProfile.user_id}
+          profile={currentProfile}
+          onSwipeRight={handleLike}
+          onSwipeLeft={handleDismiss}
+        />
       )}
 
       {/* Floating action buttons */}
@@ -183,21 +168,6 @@ export default function DiscoveryScreen() {
         onKeepSwiping={handleKeepSwiping}
         onShare={handleShare}
       />
-
-      {/* Profile detail sheet */}
-      <ProfileSheet
-        profile={currentProfile}
-        visible={showProfileSheet}
-        onDismiss={handleDismissSheet}
-        onPhotoTap={handlePhotoTap}
-      />
-
-      {/* Full-screen photo viewer */}
-      <PhotoViewer
-        photoUrl={photoViewerUrl}
-        visible={photoViewerUrl !== null}
-        onClose={handleClosePhotoViewer}
-      />
     </View>
   );
 }
@@ -210,6 +180,7 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: "#f5f5f5",
+    paddingHorizontal: 8,
   },
   center: {
     flex: 1,

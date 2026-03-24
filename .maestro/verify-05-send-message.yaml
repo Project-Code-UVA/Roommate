@@ -1,0 +1,71 @@
+appId: host.exp.Exponent
+---
+# Verify Phase 05 — Test 4: Send a Message
+# PRE-REQUISITE: Authenticated user with at least one existing conversation thread.
+
+# Launch Expo Go and open Room
+- launchApp
+- waitForAnimationToEnd
+- tapOn:
+    text: "Room"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+
+# Dismiss Expo dev tools popup if present
+- tapOn:
+    text: "Continue"
+    optional: true
+- waitForAnimationToEnd
+
+# Dismiss swipe tutorial if present
+- tapOn:
+    text: "Tap to continue"
+    optional: true
+- waitForAnimationToEnd
+
+# Wait for app to fully load
+- extendedWaitUntil:
+    visible:
+        text: "Messages, tab.*"
+    timeout: 30000
+
+# Navigate to Messages tab
+- tapOn:
+    text: "Messages, tab.*"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "messages-title"
+
+# Open first conversation thread
+- tapOn:
+    point: "50%,20%"
+- waitForAnimationToEnd
+
+# Verify chat screen loaded
+- extendedWaitUntil:
+    visible:
+        id: "chat-header-back"
+    timeout: 10000
+
+# Type a message in the composer
+- tapOn:
+    id: "composer-input"
+- inputText: "Hello from Maestro verify!"
+- waitForAnimationToEnd
+- takeScreenshot: verify_05_send_message_typed
+
+# Tap send button
+- tapOn:
+    id: "composer-send-btn"
+- waitForAnimationToEnd
+
+# Dismiss keyboard by tapping above it
+- tapOn:
+    point: "50%,30%"
+- waitForAnimationToEnd
+
+# Verify a sent bubble exists (right-aligned, our message)
+- assertVisible:
+    id: "bubble-sender"
+- takeScreenshot: verify_05_send_message_sent

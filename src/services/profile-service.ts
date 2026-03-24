@@ -16,6 +16,7 @@ export type ProfileUpdate = {
   readonly gender?: string | null;
   readonly show_gender?: boolean;
   readonly hometown?: string | null;
+  readonly show_hometown?: boolean;
   readonly nitty_gritty?: Json | null;
 };
 

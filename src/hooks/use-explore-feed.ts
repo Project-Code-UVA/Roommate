@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { Alert } from "react-native";
 
 import { getExploreFeed, getProfileDetail } from "@/services/explore-service";
 import { likeProfile } from "@/services/match-service";
@@ -34,6 +35,7 @@ type MatchData = {
 type ExploreFeedState = {
   readonly profiles: readonly ExploreProfile[];
   readonly selectedProfile: DiscoveryProfile | null;
+  readonly nextProfile: DiscoveryProfile | null;
   readonly selectedExploreProfile: ExploreProfile | null;
   readonly isLoading: boolean;
   readonly isRefreshing: boolean;
@@ -55,7 +57,9 @@ type ExploreFeedState = {
 export function useExploreFeed(userId: string): ExploreFeedState {
   const [profiles, setProfiles] = useState<readonly ExploreProfile[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<DiscoveryProfile | null>(null);
+  const [nextProfile, setNextProfile] = useState<DiscoveryProfile | null>(null);
   const [selectedExploreProfile, setSelectedExploreProfile] = useState<ExploreProfile | null>(null);
+  const selectedIndexRef = useRef(-1);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -143,6 +147,39 @@ export function useExploreFeed(userId: string): ExploreFeedState {
   }, [userId]);
 
   // -------------------------------------------------------------------------
+  // Pre-fetch next profile detail from the grid
+  // -------------------------------------------------------------------------
+
+  const prefetchNext = useCallback(
+    async (currentIndex: number) => {
+      // Find the next profile in the grid after currentIndex
+      const nextIdx = currentIndex + 1;
+      if (nextIdx >= profiles.length) {
+        setNextProfile(null);
+        return;
+      }
+
+      const nextGridProfile = profiles[nextIdx];
+      if (!nextGridProfile) {
+        setNextProfile(null);
+        return;
+      }
+
+      try {
+        const result = await getProfileDetail(userId, nextGridProfile.user_id);
+        if (result.data) {
+          setNextProfile(result.data);
+        } else {
+          setNextProfile(null);
+        }
+      } catch {
+        setNextProfile(null);
+      }
+    },
+    [userId, profiles],
+  );
+
+  // -------------------------------------------------------------------------
   // Profile selection
   // -------------------------------------------------------------------------
 
@@ -150,19 +187,73 @@ export function useExploreFeed(userId: string): ExploreFeedState {
     async (profile: ExploreProfile) => {
       setSelectedExploreProfile(profile);
 
-      const result = await getProfileDetail(userId, profile.user_id);
+      // Find index in grid
+      const idx = profiles.findIndex((p) => p.user_id === profile.user_id);
+      selectedIndexRef.current = idx;
 
-      if (result.data) {
-        setSelectedProfile(result.data);
+      try {
+        const result = await getProfileDetail(userId, profile.user_id);
+
+        if (result.error) {
+          setSelectedExploreProfile(null);
+          Alert.alert("Error", "Could not load profile. Please try again.");
+          return;
+        }
+
+        if (result.data) {
+          setSelectedProfile(result.data);
+          // Pre-fetch the next profile in the background
+          prefetchNext(idx);
+        } else {
+          setSelectedExploreProfile(null);
+          Alert.alert("Error", "Profile is no longer available.");
+        }
+      } catch {
+        setSelectedExploreProfile(null);
+        Alert.alert("Error", "Could not load profile. Please try again.");
       }
     },
-    [userId],
+    [userId, profiles, prefetchNext],
   );
 
   const clearSelected = useCallback(() => {
     setSelectedProfile(null);
+    setNextProfile(null);
     setSelectedExploreProfile(null);
+    selectedIndexRef.current = -1;
   }, []);
+
+  // -------------------------------------------------------------------------
+  // Like selected profile
+  // -------------------------------------------------------------------------
+
+  // -------------------------------------------------------------------------
+  // Advance to next profile in stack
+  // -------------------------------------------------------------------------
+
+  const advanceStack = useCallback(() => {
+    if (nextProfile) {
+      // Next becomes current
+      setSelectedProfile(nextProfile);
+      setNextProfile(null);
+
+      // Find the next profile's index in grid by user_id
+      const nextIdx = profiles.findIndex((p) => p.user_id === nextProfile.user_id);
+      selectedIndexRef.current = nextIdx >= 0 ? nextIdx : selectedIndexRef.current + 1;
+
+      // Update the selected explore profile reference
+      const nextExplore = nextIdx >= 0 ? profiles[nextIdx] : null;
+      setSelectedExploreProfile(nextExplore ?? null);
+
+      // Pre-fetch the one after that
+      prefetchNext(selectedIndexRef.current);
+    } else {
+      // No more profiles queued — close modal
+      setSelectedProfile(null);
+      setSelectedExploreProfile(null);
+      selectedIndexRef.current = -1;
+    }
+  }, [nextProfile, profiles, prefetchNext]);
 
   // -------------------------------------------------------------------------
   // Like selected profile
@@ -174,10 +265,9 @@ export function useExploreFeed(userId: string): ExploreFeedState {
     const targetId = selectedExploreProfile.user_id;
     const profile = selectedProfile;
 
-    // Optimistic: remove from feed
+    // Optimistic: remove from feed and advance stack
     setProfiles((prev) => prev.filter((p) => p.user_id !== targetId));
-    setSelectedProfile(null);
-    setSelectedExploreProfile(null);
+    advanceStack();
 
     const result = await likeProfile(userId, targetId);
 
@@ -190,7 +280,7 @@ export function useExploreFeed(userId: string): ExploreFeedState {
     }
 
     return result;
-  }, [userId, selectedExploreProfile, selectedProfile]);
+  }, [userId, selectedExploreProfile, selectedProfile, advanceStack]);
 
   // -------------------------------------------------------------------------
   // Dismiss selected profile
@@ -201,13 +291,12 @@ export function useExploreFeed(userId: string): ExploreFeedState {
 
     const targetId = selectedExploreProfile.user_id;
 
-    // Optimistic: remove from feed
+    // Optimistic: remove from feed and advance stack
     setProfiles((prev) => prev.filter((p) => p.user_id !== targetId));
-    setSelectedProfile(null);
-    setSelectedExploreProfile(null);
+    advanceStack();
 
     await dismissProfile(userId, targetId);
-  }, [userId, selectedExploreProfile]);
+  }, [userId, selectedExploreProfile, advanceStack]);
 
   // -------------------------------------------------------------------------
   // Match dismissal
@@ -224,6 +313,7 @@ export function useExploreFeed(userId: string): ExploreFeedState {
   return {
     profiles,
     selectedProfile,
+    nextProfile,
     selectedExploreProfile,
     isLoading,
     isRefreshing,
