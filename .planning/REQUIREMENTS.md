@@ -77,7 +77,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **SAFE-01**: Shared-school gating enforced server-side on all visibility queries
 - [x] **SAFE-02**: Block hides user from Discovery, Explore, Likes, and Messages (server-enforced)
-- [ ] **SAFE-03**: Report system with 8 categories (harassment, sexual content, hate speech, spam, impersonation, underage, safety threat, other)
+- [x] **SAFE-03**: Report system with 8 categories (harassment, sexual content, hate speech, spam, impersonation, underage, safety threat, other)
 - [x] **SAFE-04**: Enforcement escalation (warning -> 48hr DM ban -> 7-day suspension -> permanent ban)
 - [x] **SAFE-05**: Enforcement state checked before allowing new conversations
 - [x] **SAFE-06**: Under-18 accounts blocked at signup, "Underage" report category available
@@ -188,7 +188,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LIKE-04 | Phase 6 | Complete |
 | SAFE-01 | Phase 7 | Complete |
 | SAFE-02 | Phase 7 | Complete |
-| SAFE-03 | Phase 7 | Pending |
+| SAFE-03 | Phase 7 | Complete |
 | SAFE-04 | Phase 7 | Complete |
 | SAFE-05 | Phase 7 | Complete |
 | SAFE-06 | Phase 7 | Complete |
