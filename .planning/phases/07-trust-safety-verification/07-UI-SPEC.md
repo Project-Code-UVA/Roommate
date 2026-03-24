@@ -48,11 +48,11 @@ Exceptions: Touch targets for overflow menu button use 44px minimum (iOS HIG) ev
 | Role | Size | Weight | Line Height | Usage in Phase 7 |
 |------|------|--------|-------------|-------------------|
 | Body | 16px | 400 | 1.5 (24px) | Report description, enforcement modal body, verification instructions |
-| Label | 14px | 600 | 1.4 (20px) | Report category labels, settings row labels, badge captions |
+| Label | 14px | 700 | 1.4 (20px) | Report category labels, settings row labels, badge captions |
 | Heading | 20px | 700 | 1.2 (24px) | Modal titles ("Warning", "Account Suspended", "Verify Your Identity") |
 | Display | 28px | 700 | 1.2 (34px) | Permanent ban message on login screen only |
 
-Source: Matches existing codebase -- body 16px (chat-header displayName), label 14px (settings editText), heading 20px (section headers), display 28px (photo-carousel nameText).
+Source: Matches existing codebase -- body 16px (chat-header displayName), label 14px (settings editText), heading 20px (section headers), display 28px (photo-carousel nameText). Weight consolidated to 2 values: 400 (body) and 700 (label, heading, display).
 
 ---
 
@@ -92,7 +92,7 @@ Destructive reserved for:
 | `block-confirm-dialog.tsx` | `src/components/safety/` | Alert.alert wrapper for block confirmation. Pattern: "Block [name]?" with "Cancel" and "Block" (destructive). |
 | `enforcement-modal.tsx` | `src/components/safety/` | Full-screen modal for enforcement notifications. Variants: warning, dm-ban, suspension. Shows icon, title, body, and dismiss/acknowledge button. |
 | `ban-screen.tsx` | `src/components/safety/` | Full-screen replacement shown on login for permanently banned users. No navigation, no actions except sign-out. |
-| `selfie-capture.tsx` | `src/components/verification/` | Camera view with oval face guide overlay. Shutter button at bottom. Uses expo-camera. |
+| `selfie-capture.tsx` | `src/components/verification/` | Camera view with oval face guide overlay. Shutter button at bottom. Uses expo-camera. Primary focal point: the oval face guide frame is the visual anchor; the shutter button is the primary action target. |
 | `verification-banner.tsx` | `src/components/verification/` | Dismissable banner shown after onboarding. "Verify your identity to build trust." + "Verify Now" CTA. |
 | `verification-settings-row.tsx` | `src/components/verification/` | Settings row for selfie verification. Shows current status (verified/unverified) and action (verify/re-upload). |
 
@@ -163,6 +163,8 @@ Report categories with icons:
 
 ### Selfie Verification Flow
 
+Primary focal point: the oval face guide frame is the visual anchor; the shutter button is the primary action target.
+
 | Step | Interaction | Visual Feedback |
 |------|------------|-----------------|
 | 1a | Post-onboarding: banner appears at top of Discovery | Light purple banner (`primary-50` bg). Shield icon + "Verify your identity" + "Verify Now" CTA button (primary-600 bg, white text) + dismiss X |
@@ -199,7 +201,7 @@ Report categories with icons:
 | Icon | `chatbubble-outline` with slash overlay, 48px, red-500 (`#ef4444`) |
 | Title | "Messaging Restricted" (heading) |
 | Body | "Your account has a messaging restriction until [formatted date]. You can still browse profiles but cannot send or receive messages during this period." (body) |
-| CTA | "OK" -- full-width button, gray-200 bg, gray-900 text |
+| CTA | "Got It" -- full-width button, gray-200 bg, gray-900 text |
 
 #### Suspension Modal (7-day)
 
@@ -210,7 +212,7 @@ Report categories with icons:
 | Icon | `time-outline`, 48px, red-500 (`#ef4444`) |
 | Title | "Account Suspended" (heading) |
 | Body | "Your account has been suspended until [formatted date] for violating community guidelines. During this time you cannot interact with the app." (body) |
-| CTA | "OK" -- full-width button, gray-200 bg, gray-900 text |
+| CTA | "Got It" -- full-width button, gray-200 bg, gray-900 text |
 
 #### Permanent Ban Screen (D-08)
 
@@ -262,8 +264,10 @@ Report categories with icons:
 | Warning modal CTA | "I Understand" |
 | DM ban modal title | "Messaging Restricted" |
 | DM ban modal body | "Your account has a messaging restriction until [date]. You can still browse profiles but cannot send or receive messages during this period." |
+| DM ban modal CTA | "Got It" |
 | Suspension modal title | "Account Suspended" |
 | Suspension modal body | "Your account has been suspended until [date] for violating community guidelines. During this time you cannot interact with the app." |
+| Suspension modal CTA | "Got It" |
 | Ban screen title | "Account Permanently Suspended" |
 | Ban screen body | "Your account has been permanently suspended for violating community guidelines. This decision is final." |
 | Ban screen action | "Sign Out" |
