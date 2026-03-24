@@ -1,7 +1,8 @@
 ---
 phase: 7
 slug: trust-safety-verification
-status: draft
+status: approved
+reviewed_at: 2026-03-24
 shadcn_initialized: false
 preset: none
 created: 2026-03-24
