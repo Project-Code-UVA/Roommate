@@ -1,9 +1,9 @@
 /**
  * Tests for block-service.
- * Covers: MSG-08
+ * Covers: MSG-08, SAFE-02
  */
 
-import { resetAllMocks } from "../setup";
+import { resetAllMocks, mockSupabase } from "../setup";
 
 const mockUnmatchUser = jest.fn();
 
@@ -11,7 +11,7 @@ jest.mock("@/services/match-service", () => ({
   unmatchUser: (...args: unknown[]) => mockUnmatchUser(...args),
 }));
 
-import { blockFromChat } from "@/services/block-service";
+import { blockFromChat, blockUser } from "@/services/block-service";
 
 const TEST_USER_ID = "test-user-id";
 const OTHER_USER_ID = "other-user-id";
@@ -47,6 +47,44 @@ describe("block-service", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("Block failed");
+    });
+  });
+
+  describe("blockUser", () => {
+    it("calls supabase.rpc with block_user and returns success", async () => {
+      mockSupabase.rpc.mockResolvedValueOnce({
+        data: { success: true },
+        error: null,
+      });
+
+      const result = await blockUser(TEST_USER_ID, OTHER_USER_ID);
+
+      expect(result.success).toBe(true);
+      expect(result.error).toBeNull();
+    });
+
+    it("returns error when RPC returns error field", async () => {
+      mockSupabase.rpc.mockResolvedValueOnce({
+        data: { error: "cannot_block_self" },
+        error: null,
+      });
+
+      const result = await blockUser(TEST_USER_ID, TEST_USER_ID);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("cannot_block_self");
+    });
+
+    it("returns error when RPC call fails", async () => {
+      mockSupabase.rpc.mockResolvedValueOnce({
+        data: null,
+        error: { message: "Network error" },
+      });
+
+      const result = await blockUser(TEST_USER_ID, OTHER_USER_ID);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Network error");
     });
   });
 });
