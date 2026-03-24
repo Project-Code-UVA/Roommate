@@ -80,7 +80,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **SAFE-03**: Report system with 8 categories (harassment, sexual content, hate speech, spam, impersonation, underage, safety threat, other)
 - [x] **SAFE-04**: Enforcement escalation (warning -> 48hr DM ban -> 7-day suspension -> permanent ban)
 - [x] **SAFE-05**: Enforcement state checked before allowing new conversations
-- [ ] **SAFE-06**: Under-18 accounts blocked at signup, "Underage" report category available
+- [x] **SAFE-06**: Under-18 accounts blocked at signup, "Underage" report category available
 
 ### Monetization
 
@@ -191,7 +191,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SAFE-03 | Phase 7 | Pending |
 | SAFE-04 | Phase 7 | Complete |
 | SAFE-05 | Phase 7 | Complete |
-| SAFE-06 | Phase 7 | Pending |
+| SAFE-06 | Phase 7 | Complete |
 | PAID-01 | Phase 9 | Pending |
 | PAID-02 | Phase 9 | Pending |
 | PAID-03 | Phase 9 | Pending |
