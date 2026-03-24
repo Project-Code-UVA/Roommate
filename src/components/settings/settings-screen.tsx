@@ -2,6 +2,7 @@
  * Settings screen — account management, privacy toggles, app info.
  *
  * Sections:
+ * - Verification: selfie verification status and action
  * - Privacy: hometown visibility, gender visibility
  * - Notifications: placeholder toggles (wired in 08-03)
  * - Account: sign out, delete account (two-step confirmation)
@@ -15,6 +16,7 @@ import {
   Switch,
   Pressable,
   Alert,
+  Modal,
   SectionList,
   StyleSheet,
   Linking,
@@ -25,6 +27,8 @@ import { useRouter } from "expo-router";
 import { COLORS, APP_VERSION } from "@/lib/constants";
 import { requestAccountDeletion, signOut } from "@/services/account-service";
 import { useSession } from "@/contexts/auth-context";
+import { useProfile } from "@/hooks/use-profile";
+import { SelfieCapture } from "@/components/verification/selfie-capture";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,6 +60,9 @@ export function SettingsScreen() {
   const { session } = useSession();
   const router = useRouter();
   const userId = session?.user.id ?? "";
+
+  const { selfieVerified, refresh } = useProfile(userId);
+  const [showSelfieCapture, setShowSelfieCapture] = useState(false);
 
   // Privacy toggles (local state — persisted via profile service)
   const [showHometown, setShowHometown] = useState(true);
@@ -115,6 +122,20 @@ export function SettingsScreen() {
   }, [userId]);
 
   const sections: readonly Section[] = [
+    {
+      title: "Verification",
+      data: [
+        {
+          key: "selfie_verification",
+          type: "action",
+          label: selfieVerified ? "Re-upload Selfie" : "Verify Identity",
+          icon: "shield-checkmark-outline",
+          iconColor: "#7c3aed",
+          detail: selfieVerified ? "Verified" : "Not verified",
+          onPress: () => setShowSelfieCapture(true),
+        },
+      ],
+    },
     {
       title: "Privacy",
       data: [
@@ -239,6 +260,17 @@ export function SettingsScreen() {
         <Text style={styles.detailText}>{item.detail}</Text>
       )}
 
+      {item.type === "action" && item.detail && (
+        <Text
+          style={[
+            styles.detailText,
+            item.detail === "Verified" && styles.verifiedDetail,
+          ]}
+        >
+          {item.detail}
+        </Text>
+      )}
+
       {item.type === "action" && !item.destructive && (
         <Ionicons name="chevron-forward" size={18} color={COLORS.gray[400]} />
       )}
@@ -250,16 +282,32 @@ export function SettingsScreen() {
   );
 
   return (
-    <SectionList
-      sections={sections as Section[]}
-      keyExtractor={(item) => item.key}
-      renderItem={renderItem}
-      renderSectionHeader={renderSectionHeader}
-      contentContainerStyle={styles.listContent}
-      stickySectionHeadersEnabled={false}
-      ItemSeparatorComponent={() => <View style={styles.separator} />}
-      SectionSeparatorComponent={() => <View style={styles.sectionSeparator} />}
-    />
+    <>
+      <SectionList
+        sections={sections as Section[]}
+        keyExtractor={(item) => item.key}
+        renderItem={renderItem}
+        renderSectionHeader={renderSectionHeader}
+        contentContainerStyle={styles.listContent}
+        stickySectionHeadersEnabled={false}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        SectionSeparatorComponent={() => <View style={styles.sectionSeparator} />}
+      />
+      <Modal
+        visible={showSelfieCapture}
+        animationType="slide"
+        presentationStyle="fullScreen"
+      >
+        <SelfieCapture
+          userId={userId}
+          onComplete={() => {
+            setShowSelfieCapture(false);
+            refresh();
+          }}
+          onCancel={() => setShowSelfieCapture(false)}
+        />
+      </Modal>
+    </>
   );
 }
 
@@ -302,6 +350,9 @@ const styles = StyleSheet.create({
   detailText: {
     fontSize: 15,
     color: COLORS.gray[400],
+  },
+  verifiedDetail: {
+    color: "#4ade80",
   },
   separator: {
     height: StyleSheet.hairlineWidth,

@@ -12,6 +12,7 @@ import {
   ScrollView,
   Pressable,
   ActivityIndicator,
+  Modal,
   StyleSheet,
   RefreshControl,
 } from "react-native";
@@ -23,6 +24,8 @@ import { ProfileHeader } from "@/components/profile/profile-header";
 import { ProfileFields } from "@/components/profile/profile-fields";
 import { ModeSelector } from "@/components/profile/mode-selector";
 import { PhotoManager } from "@/components/profile/photo-manager";
+import { VerificationBanner } from "@/components/verification/verification-banner";
+import { SelfieCapture } from "@/components/verification/selfie-capture";
 import { useProfile } from "@/hooks/use-profile";
 import { useSession } from "@/contexts/auth-context";
 import { COLORS } from "@/lib/constants";
@@ -50,6 +53,8 @@ export default function ProfileScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [showPhotoManager, setShowPhotoManager] = useState(false);
   const [modeState, setModeState] = useState(modeStatus);
+  const [showBanner, setShowBanner] = useState(true);
+  const [showSelfieCapture, setShowSelfieCapture] = useState(false);
 
   // Sync mode from hook when it loads
   if (modeStatus !== "roommate" && modeState === "roommate" && !isLoading) {
@@ -99,6 +104,14 @@ export default function ProfileScreen() {
         </Pressable>
       </View>
 
+      {/* Verification banner for unverified users (D-02: dismissable) */}
+      {!selfieVerified && showBanner && (
+        <VerificationBanner
+          onVerify={() => setShowSelfieCapture(true)}
+          onDismiss={() => setShowBanner(false)}
+        />
+      )}
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -144,6 +157,23 @@ export default function ProfileScreen() {
           />
         </View>
       </ScrollView>
+
+      {/* Selfie capture modal */}
+      <Modal
+        visible={showSelfieCapture}
+        animationType="slide"
+        presentationStyle="fullScreen"
+      >
+        <SelfieCapture
+          userId={userId}
+          onComplete={() => {
+            setShowSelfieCapture(false);
+            setShowBanner(false);
+            refresh();
+          }}
+          onCancel={() => setShowSelfieCapture(false)}
+        />
+      </Modal>
     </SafeAreaView>
   );
 }

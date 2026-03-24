@@ -8,6 +8,7 @@
 
 import { LinearGradient } from "expo-linear-gradient";
 import { View, Text, Image, Pressable, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import type { ExploreProfile } from "@/types/explore";
 
@@ -50,6 +51,15 @@ export function ExploreGridCard({ profile, onPress, size }: ExploreGridCardProps
           </Text>
         )}
       </LinearGradient>
+      {profile.selfie_verified && (
+        <View
+          style={styles.verifiedBadge}
+          testID={`explore-card-verified-${profile.user_id}`}
+          accessibilityLabel="Verified"
+        >
+          <Ionicons name="checkmark-circle" size={14} color="#a78bfa" />
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -88,5 +98,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "400",
     marginTop: 1,
+  },
+  verifiedBadge: {
+    position: "absolute",
+    bottom: 4,
+    right: 4,
   },
 });
