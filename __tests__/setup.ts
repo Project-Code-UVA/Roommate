@@ -71,13 +71,25 @@ jest.mock("react-native-confetti-cannon", () => {
 // @gorhom/bottom-sheet mock
 // ---------------------------------------------------------------------------
 jest.mock("@gorhom/bottom-sheet", () => {
-  const { View, ScrollView } = require("react-native");
+  const RN = require("react-native");
+  const R = require("react");
+  const MockBottomSheetModal = R.forwardRef(
+    function MockBSM(props: Record<string, unknown>, ref: unknown) {
+      R.useImperativeHandle(ref, () => ({
+        present: jest.fn(),
+        dismiss: jest.fn(),
+        snapToIndex: jest.fn(),
+        close: jest.fn(),
+      }));
+      return R.createElement(RN.View, props);
+    },
+  );
   return {
     __esModule: true,
-    default: View,
-    BottomSheetModal: View,
-    BottomSheetScrollView: ScrollView,
-    BottomSheetBackdrop: View,
+    default: RN.View,
+    BottomSheetModal: MockBottomSheetModal,
+    BottomSheetScrollView: RN.ScrollView,
+    BottomSheetBackdrop: RN.View,
   };
 });
 
