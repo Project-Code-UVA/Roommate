@@ -51,6 +51,7 @@ See: .planning/PROJECT.md
 - 2026-03-24: Plan 07-00 completed — 4 migrations (block RPC, enforcement RPC, selfie storage, enforcement fix), safety types, 12 test stubs (3min)
 - 2026-03-24: Plan 07-01 completed — 3 safety services + 1 hook + 3 shared UI components with 38 tests (6min)
 - 2026-03-24: Plan 07-02 completed — 16 RPC integration tests across 4 surfaces with real Supabase helpers (3min)
+- 2026-03-24: Plan 07-04 completed — 3 verification components + explore badge + settings/profile integration, 17 tests (24min)
 
 ## Decisions
 
@@ -116,3 +117,7 @@ See: .planning/PROJECT.md
 - [Phase 07]: Multiple like targets per enforcement test to avoid idempotent like_profile conflicts
 - [Phase 07]: Isolated describe blocks with separate users prevent cross-test state pollution
 - [Phase 07]: BottomSheetModal mock updated to forwardRef with present/dismiss methods for test compatibility
+- [Phase 07]: SelfieCapture uses expo-image-picker (not expo-camera) per D-01 decision
+- [Phase 07]: Settings useProfile hook for selfieVerified status (consistent with profile screen)
+- [Phase 07]: Verification section at top of settings sections array for maximum visibility
+- [Phase 07]: Profile banner dismissable via local showBanner state per D-02 skip option
