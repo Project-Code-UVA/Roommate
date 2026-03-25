@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 current_phase: 07
-current_plan: 2
+current_plan: 3
 status: executing
-last_updated: "2026-03-24T20:34:05.575Z"
+last_updated: "2026-03-25T00:33:22.353Z"
 progress:
   total_phases: 9
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 27
-  completed_plans: 25
+  completed_plans: 27
 ---
 
 # Session State
@@ -23,7 +23,7 @@ See: .planning/PROJECT.md
 
 **Milestone:** v2.0 milestone
 **Current phase:** 07
-**Current plan:** 2
+**Current plan:** 3
 **Status:** Executing Phase 07
 
 ## Session Log
@@ -52,6 +52,7 @@ See: .planning/PROJECT.md
 - 2026-03-24: Plan 07-01 completed — 3 safety services + 1 hook + 3 shared UI components with 38 tests (6min)
 - 2026-03-24: Plan 07-02 completed — 16 RPC integration tests across 4 surfaces with real Supabase helpers (3min)
 - 2026-03-24: Plan 07-04 completed — 3 verification components + explore badge + settings/profile integration, 17 tests (24min)
+- 2026-03-24: Plan 07-03 completed — Block/report overflow menus on 4 profile surfaces, enforcement modals, ban screen, DM ban error surfacing (234min)
 
 ## Decisions
 
@@ -121,3 +122,7 @@ See: .planning/PROJECT.md
 - [Phase 07]: Settings useProfile hook for selfieVerified status (consistent with profile screen)
 - [Phase 07]: Verification section at top of settings sections array for maximum visibility
 - [Phase 07]: Profile banner dismissable via local showBanner state per D-02 skip option
+- [Phase 07]: ReportSheet in swipe-card wrapped in Modal outside GestureDetector to avoid gesture conflicts
+- [Phase 07]: Auth context uses single combined query for onboarding_completed and enforcement_state
+- [Phase 07]: DM ban modal shown contextually in chat screen (not globally on app open)
+- [Phase 07]: Send error propagation uses typed SendError return instead of void

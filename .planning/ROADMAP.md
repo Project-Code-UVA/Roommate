@@ -144,7 +144,7 @@ Plans:
 - [x] 07-00-PLAN.md — Wave 0: migrations (block_user RPC, apply_enforcement RPC, selfie storage, fix enforcement checks), safety types, 12 test stubs
 - [x] 07-01-PLAN.md — Services (enforcement, block extension, selfie) and shared UI components (overflow menu, report sheet, block confirm dialog)
 - [x] 07-02-PLAN.md — Integration tests: 4 RPC-level test files (discovery gating, explore blocking, message enforcement, likes blocking)
-- [ ] 07-03-PLAN.md — Surface wiring: overflow menus on 3 profile views, enforcement modals (warning/ban/suspension), ban screen, auth context enforcement
+- [x] 07-03-PLAN.md — Surface wiring: overflow menus on 3 profile views, enforcement modals (warning/ban/suspension), ban screen, auth context enforcement
 - [x] 07-04-PLAN.md — Selfie verification: capture screen, verification banner, settings row, verified badge on Explore grid card
 
 ### Phase 8: Notifications & Privacy
