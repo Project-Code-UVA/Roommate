@@ -19,11 +19,13 @@ import * as SplashScreen from "expo-splash-screen";
 import type { Session } from "@supabase/supabase-js";
 
 import { supabase } from "@/lib/supabase";
+import type { EnforcementState } from "@/types/safety";
 
 type AuthContextType = {
   readonly session: Session | null;
   readonly isLoading: boolean;
   readonly onboardingComplete: boolean;
+  readonly enforcementState: EnforcementState;
   readonly refreshOnboardingStatus: () => Promise<void>;
 };
 
@@ -31,6 +33,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   isLoading: true,
   onboardingComplete: false,
+  enforcementState: "none",
   refreshOnboardingStatus: async () => {},
 });
 
@@ -46,22 +49,35 @@ export function SessionProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [enforcementState, setEnforcementState] = useState<EnforcementState>("none");
 
-  const checkOnboardingStatus = useCallback(
-    async (userId: string): Promise<boolean> => {
+  const checkUserStatus = useCallback(
+    async (userId: string): Promise<{ onboarding: boolean; enforcement: EnforcementState }> => {
       const { data, error } = await supabase
         .from("users")
-        .select("onboarding_completed")
+        .select("onboarding_completed, enforcement_state")
         .eq("id", userId)
         .single();
 
       if (error || !data) {
-        return false;
+        return { onboarding: false, enforcement: "none" };
       }
 
-      return data.onboarding_completed;
+      return {
+        onboarding: data.onboarding_completed,
+        enforcement: (data.enforcement_state as EnforcementState) ?? "none",
+      };
     },
     [],
+  );
+
+  // Legacy compat wrapper
+  const checkOnboardingStatus = useCallback(
+    async (userId: string): Promise<boolean> => {
+      const status = await checkUserStatus(userId);
+      return status.onboarding;
+    },
+    [checkUserStatus],
   );
 
   const refreshOnboardingStatus = useCallback(async () => {
@@ -85,11 +101,10 @@ export function SessionProvider({ children }: PropsWithChildren) {
         setSession(initialSession);
 
         if (initialSession?.user.id) {
-          const isComplete = await checkOnboardingStatus(
-            initialSession.user.id,
-          );
+          const status = await checkUserStatus(initialSession.user.id);
           if (mounted) {
-            setOnboardingComplete(isComplete);
+            setOnboardingComplete(status.onboarding);
+            setEnforcementState(status.enforcement);
           }
         }
       } finally {
@@ -109,13 +124,15 @@ export function SessionProvider({ children }: PropsWithChildren) {
         setSession(newSession);
 
         if (newSession?.user.id) {
-          checkOnboardingStatus(newSession.user.id).then((isComplete) => {
+          checkUserStatus(newSession.user.id).then((status) => {
             if (mounted) {
-              setOnboardingComplete(isComplete);
+              setOnboardingComplete(status.onboarding);
+              setEnforcementState(status.enforcement);
             }
           });
         } else {
           setOnboardingComplete(false);
+          setEnforcementState("none");
         }
       }
     });
@@ -124,11 +141,11 @@ export function SessionProvider({ children }: PropsWithChildren) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [checkOnboardingStatus]);
+  }, [checkUserStatus]);
 
   return (
     <AuthContext.Provider
-      value={{ session, isLoading, onboardingComplete, refreshOnboardingStatus }}
+      value={{ session, isLoading, onboardingComplete, enforcementState, refreshOnboardingStatus }}
     >
       {children}
     </AuthContext.Provider>

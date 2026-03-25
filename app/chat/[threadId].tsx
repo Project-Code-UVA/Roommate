@@ -32,8 +32,10 @@ import { MessageComposer } from "@/components/chat/message-composer";
 import { MessageList } from "@/components/chat/message-list";
 import { MessageLongPress } from "@/components/chat/message-long-press";
 import { PhotoPreview } from "@/components/chat/photo-preview";
+import { EnforcementModal } from "@/components/safety/enforcement-modal";
 import { useSession } from "@/contexts/auth-context";
 import { useChatMessages } from "@/hooks/use-chat-messages";
+import { useEnforcement } from "@/hooks/use-enforcement";
 import { useMessageActions } from "@/hooks/use-message-actions";
 import { COLORS } from "@/lib/constants";
 import { blockFromChat } from "@/services/block-service";
@@ -96,11 +98,15 @@ export default function ChatScreen() {
     deleteForMe,
   } = useMessageActions(threadId, currentUserId);
 
+  // Enforcement info for DM ban modal (D-05)
+  const { enforcementInfo } = useEnforcement(currentUserId);
+
   // ---------------------------------------------------------------------------
   // State
   // ---------------------------------------------------------------------------
 
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [showDmBanModal, setShowDmBanModal] = useState(false);
   const [showGifPanel, setShowGifPanel] = useState(false);
   const [showLongPress, setShowLongPress] = useState(false);
   const [longPressMessage, setLongPressMessage] = useState<Message | null>(
@@ -134,9 +140,12 @@ export default function ChatScreen() {
   }, [threadId]);
 
   const handleSelectPrompt = useCallback(
-    (text: string) => {
-      // Send icebreaker text directly
-      sendText(text, replyingTo?.id);
+    async (text: string) => {
+      const result = await sendText(text, replyingTo?.id);
+      if (result.error === "under_enforcement") {
+        setShowDmBanModal(true);
+        return;
+      }
       handleDismissIcebreaker();
     },
     [sendText, replyingTo, handleDismissIcebreaker],
@@ -147,8 +156,12 @@ export default function ChatScreen() {
   // ---------------------------------------------------------------------------
 
   const handleSendText = useCallback(
-    (text: string) => {
-      sendText(text, replyingTo?.id);
+    async (text: string) => {
+      const result = await sendText(text, replyingTo?.id);
+      if (result.error === "under_enforcement") {
+        setShowDmBanModal(true);
+        return;
+      }
       setReplyingTo(null);
     },
     [sendText, replyingTo],
@@ -272,10 +285,14 @@ export default function ChatScreen() {
   }, []);
 
   const handlePhotoSend = useCallback(
-    (uri: string, caption?: string) => {
+    async (uri: string, caption?: string) => {
       // For MVP, send the local URI as media_url.
       // In production, upload to Supabase Storage first.
-      sendMedia(uri, caption);
+      const result = await sendMedia(uri, caption);
+      if (result.error === "under_enforcement") {
+        setShowDmBanModal(true);
+        return;
+      }
       setPhotoUri(null);
     },
     [sendMedia],
@@ -295,8 +312,12 @@ export default function ChatScreen() {
   }, []);
 
   const handleSelectGif = useCallback(
-    (gif: { readonly url: string }) => {
-      sendMedia(gif.url);
+    async (gif: { readonly url: string }) => {
+      const result = await sendMedia(gif.url);
+      if (result.error === "under_enforcement") {
+        setShowDmBanModal(true);
+        return;
+      }
       setShowGifPanel(false);
     },
     [sendMedia],
@@ -499,6 +520,14 @@ export default function ChatScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* DM ban enforcement modal (D-05) */}
+      <EnforcementModal
+        variant="dm_ban"
+        endDate={enforcementInfo?.endAt ?? null}
+        visible={showDmBanModal}
+        onDismiss={() => setShowDmBanModal(false)}
+      />
     </SafeAreaView>
   );
 }

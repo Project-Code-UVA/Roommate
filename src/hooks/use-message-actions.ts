@@ -29,16 +29,18 @@ function generateId(): string {
   });
 }
 
+type SendError = { readonly error: string | null };
+
 type UseMessageActionsReturn = {
-  readonly sendText: (body: string, replyToId?: string) => Promise<void>;
+  readonly sendText: (body: string, replyToId?: string) => Promise<SendError>;
   readonly sendMedia: (
     mediaUrl: string,
     caption?: string,
     replyToId?: string,
-  ) => Promise<void>;
+  ) => Promise<SendError>;
   readonly sendReaction: (messageId: string, emoji: string) => Promise<void>;
   readonly removeReaction: (reactionId: string) => Promise<void>;
-  readonly sendReply: (body: string, replyToId: string) => Promise<void>;
+  readonly sendReply: (body: string, replyToId: string) => Promise<SendError>;
   readonly copyText: (text: string) => Promise<void>;
   readonly deleteForMe: (messageId: string) => Promise<void>;
 };
@@ -48,7 +50,7 @@ export function useMessageActions(
   userId: string,
 ): UseMessageActionsReturn {
   const sendText = useCallback(
-    async (body: string, replyToId?: string) => {
+    async (body: string, replyToId?: string): Promise<SendError> => {
       const params: SendMessageParams = {
         thread_id: threadId,
         body,
@@ -57,13 +59,14 @@ export function useMessageActions(
         message_id: generateId(),
       };
 
-      await sendMessage(params, userId);
+      const result = await sendMessage(params, userId);
+      return { error: result.error };
     },
     [threadId, userId],
   );
 
   const sendMedia = useCallback(
-    async (mediaUrl: string, caption?: string, replyToId?: string) => {
+    async (mediaUrl: string, caption?: string, replyToId?: string): Promise<SendError> => {
       const params: SendMessageParams = {
         thread_id: threadId,
         body: caption ?? null,
@@ -72,7 +75,8 @@ export function useMessageActions(
         message_id: generateId(),
       };
 
-      await sendMessage(params, userId);
+      const result = await sendMessage(params, userId);
+      return { error: result.error };
     },
     [threadId, userId],
   );
@@ -89,8 +93,8 @@ export function useMessageActions(
   }, []);
 
   const sendReply = useCallback(
-    async (body: string, replyToId: string) => {
-      await sendText(body, replyToId);
+    async (body: string, replyToId: string): Promise<SendError> => {
+      return sendText(body, replyToId);
     },
     [sendText],
   );
