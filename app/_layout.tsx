@@ -51,6 +51,9 @@ function AppContent() {
         <Stack.Screen name="welcome" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ headerShown: true, presentation: "card" }} />
+        <Stack.Screen name="profile/edit" options={{ headerShown: true, presentation: "card" }} />
+        <Stack.Screen name="profile/photos" options={{ headerShown: true, presentation: "card" }} />
+        <Stack.Screen name="profile/status" options={{ headerShown: true, presentation: "card" }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />
