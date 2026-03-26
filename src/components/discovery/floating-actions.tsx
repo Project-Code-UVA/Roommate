@@ -1,12 +1,14 @@
 /**
  * Floating action buttons — fixed at bottom of discovery screen.
  *
- * Two circular buttons: X (dismiss) and Heart (like).
+ * Three circular buttons: X (dismiss), chat (message), Heart (like).
+ * Like button uses a purple-to-pink gradient (Figma design).
  * Triggers haptic feedback on press.
  */
 
 import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useCallback } from "react";
 import { View, Pressable, StyleSheet } from "react-native";
 
@@ -45,11 +47,7 @@ export function FloatingActions({ onDismiss, onMessage, onLike }: FloatingAction
       {/* Dismiss */}
       <Pressable
         onPress={handleDismiss}
-        style={({ pressed }) => [
-          styles.button,
-          styles.dismissButton,
-          pressed && styles.buttonPressed,
-        ]}
+        style={({ pressed }) => [styles.dismissButton, pressed && styles.buttonPressed]}
         testID="action-dismiss"
         accessibilityRole="button"
         accessibilityLabel="Pass"
@@ -57,34 +55,33 @@ export function FloatingActions({ onDismiss, onMessage, onLike }: FloatingAction
         <Ionicons name="close" size={28} color="#ef4444" />
       </Pressable>
 
-      {/* Message */}
+      {/* Info / profile detail */}
       <Pressable
         onPress={handleMessage}
-        style={({ pressed }) => [
-          styles.button,
-          styles.messageButton,
-          pressed && styles.buttonPressed,
-        ]}
+        style={({ pressed }) => [styles.messageButton, pressed && styles.buttonPressed]}
         testID="action-message"
         accessibilityRole="button"
-        accessibilityLabel="Message"
+        accessibilityLabel="Info"
       >
-        <Ionicons name="chatbubble-ellipses" size={24} color="#7c3aed" />
+        <Ionicons name="information-circle-outline" size={26} color="#3b82f6" />
       </Pressable>
 
-      {/* Like */}
+      {/* Like — purple-to-pink gradient */}
       <Pressable
         onPress={handleLike}
-        style={({ pressed }) => [
-          styles.button,
-          styles.likeButton,
-          pressed && styles.buttonPressed,
-        ]}
+        style={({ pressed }) => [styles.likePressable, pressed && styles.buttonPressed]}
         testID="action-like"
         accessibilityRole="button"
         accessibilityLabel="Like"
       >
-        <Ionicons name="heart" size={26} color="#4ade80" />
+        <LinearGradient
+          colors={["#a855f7", "#ec4899"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.likeGradient}
+        >
+          <Ionicons name="heart" size={26} color="#fff" />
+        </LinearGradient>
       </Pressable>
     </View>
   );
@@ -96,42 +93,52 @@ export function FloatingActions({ onDismiss, onMessage, onLike }: FloatingAction
 
 const styles = StyleSheet.create({
   container: {
-    position: "absolute",
-    bottom: 16,
-    left: 0,
-    right: 0,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    gap: 32,
-    zIndex: 50,
+    gap: 28,
+    paddingVertical: 14,
   },
-  button: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  dismissButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#fff",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 6,
   },
-  dismissButton: {
-    backgroundColor: "#fff",
-    borderWidth: 2,
-    borderColor: "#fecaca",
-  },
   messageButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "#fff",
-    borderWidth: 2,
-    borderColor: "#ddd6fe",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  likeButton: {
-    backgroundColor: "#fff",
-    borderWidth: 2,
-    borderColor: "#bbf7d0",
+  likePressable: {
+    shadowColor: "#a855f7",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
+    borderRadius: 32,
+  },
+  likeGradient: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonPressed: {
     transform: [{ scale: 0.9 }],

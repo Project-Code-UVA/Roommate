@@ -90,8 +90,7 @@ export default function TabLayout() {
         tabBarStyle: {
           position: "absolute",
           backgroundColor: "rgba(245,245,245,0.95)",
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: "rgba(0,0,0,0.08)",
+          borderTopWidth: 0,
           elevation: 0,
         },
         tabBarInactiveTintColor: "rgba(0,0,0,0.35)",
