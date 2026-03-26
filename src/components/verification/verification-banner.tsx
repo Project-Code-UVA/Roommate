@@ -1,13 +1,13 @@
 /**
- * Post-onboarding verification nudge banner.
+ * Post-onboarding verification nudge — compact inline strip.
  *
- * Horizontal banner encouraging users to verify their identity
- * with a selfie for a verified badge. Dismissable via X button.
- * Per D-02: shows after onboarding, user can skip.
+ * Shown inside the profile ScrollView so it doesn't steal above-fold space.
+ * Per D-02: dismissable, user can skip.
  */
 
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -27,8 +27,26 @@ export function VerificationBanner({
   onDismiss,
 }: VerificationBannerProps) {
   return (
-    <View style={styles.banner} testID="verification-banner">
-      {/* Dismiss X */}
+    <LinearGradient
+      colors={["#f5f3ff", "#ede9fe"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={styles.strip}
+      testID="verification-banner"
+    >
+      <Ionicons name="shield-checkmark-outline" size={18} color="#7c3aed" />
+      <Text style={styles.text} numberOfLines={1}>
+        Add a verified badge to your profile
+      </Text>
+      <Pressable
+        style={styles.verifyPill}
+        onPress={onVerify}
+        testID="verification-banner-verify"
+        accessibilityLabel="Verify your identity"
+        accessibilityRole="button"
+      >
+        <Text style={styles.verifyText}>Verify</Text>
+      </Pressable>
       <Pressable
         style={styles.dismissButton}
         onPress={onDismiss}
@@ -36,30 +54,9 @@ export function VerificationBanner({
         accessibilityLabel="Dismiss verification banner"
         accessibilityRole="button"
       >
-        <Ionicons name="close" size={18} color="#9ca3af" />
+        <Ionicons name="close" size={16} color="#9ca3af" />
       </Pressable>
-
-      {/* Shield icon */}
-      <Ionicons
-        name="shield-checkmark-outline"
-        size={24}
-        color="#7c3aed"
-        style={styles.shieldIcon}
-      />
-
-      {/* Text section */}
-      <View style={styles.textSection}>
-        <Text style={styles.heading}>Build trust with verification</Text>
-        <Text style={styles.body}>
-          Take a quick selfie to get a verified badge on your profile.
-        </Text>
-      </View>
-
-      {/* CTA button */}
-      <Pressable style={styles.ctaButton} onPress={onVerify}>
-        <Text style={styles.ctaText}>Verify Now</Text>
-      </Pressable>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -68,49 +65,33 @@ export function VerificationBanner({
 // ---------------------------------------------------------------------------
 
 const styles = StyleSheet.create({
-  banner: {
-    backgroundColor: "#f5f3ff",
-    borderRadius: 12,
-    padding: 16,
+  strip: {
     flexDirection: "row",
     alignItems: "center",
-    marginHorizontal: 16,
-    marginVertical: 8,
+    gap: 8,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 12,
+  },
+  text: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#4c1d95",
+  },
+  verifyPill: {
+    backgroundColor: "#7c3aed",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  verifyText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
   },
   dismissButton: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    zIndex: 1,
-    padding: 4,
-  },
-  shieldIcon: {
-    marginRight: 12,
-  },
-  textSection: {
-    flex: 1,
-  },
-  heading: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111827",
-  },
-  body: {
-    fontSize: 13,
-    fontWeight: "400",
-    color: "#4b5563",
-    marginTop: 2,
-  },
-  ctaButton: {
-    backgroundColor: "#7c3aed",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginLeft: 8,
-  },
-  ctaText: {
-    color: "#fff",
-    fontSize: 13,
-    fontWeight: "600",
+    padding: 2,
   },
 });

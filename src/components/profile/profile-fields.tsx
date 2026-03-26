@@ -1,7 +1,8 @@
 /**
- * Editable profile fields — bio, gender, hometown, year.
+ * Editable profile fields — directory/settings style.
  *
- * Inline editing with save on blur/submit.
+ * Grouped rows inside rounded cards. Tap a row to edit inline.
+ * Visibility toggles are shown inline on gender and hometown rows.
  */
 
 import { useState, useCallback } from "react";
@@ -33,6 +34,18 @@ type ProfileFieldsProps = {
 };
 
 // ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
+function SectionHeader({ title }: { title: string }) {
+  return <Text style={styles.sectionHeader}>{title}</Text>;
+}
+
+function Separator() {
+  return <View style={styles.separator} />;
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -61,123 +74,159 @@ export function ProfileFields({
     [editValue, onUpdate],
   );
 
-  const renderField = (
-    label: string,
-    field: string,
-    value: string | null,
-    icon: keyof typeof Ionicons.glyphMap,
-    multiline = false,
-  ) => {
-    const isEditing = editingField === field;
-
-    return (
-      <View style={styles.fieldCard} key={field}>
-        <View style={styles.fieldHeader}>
-          <Ionicons name={icon} size={18} color={COLORS.primary[500]} />
-          <Text style={styles.fieldLabel}>{label}</Text>
-        </View>
-
-        {isEditing ? (
-          <View style={styles.editRow}>
-            <TextInput
-              style={[styles.input, multiline && styles.inputMultiline]}
-              value={editValue}
-              onChangeText={setEditValue}
-              onSubmitEditing={() => saveEdit(field)}
-              onBlur={() => saveEdit(field)}
-              autoFocus
-              multiline={multiline}
-              maxLength={field === "bio" ? 500 : 100}
-              placeholder={`Enter your ${label.toLowerCase()}`}
-              placeholderTextColor={COLORS.gray[400]}
-            />
-          </View>
-        ) : (
-          <Pressable onPress={() => startEdit(field, value)} style={styles.valueRow}>
-            <Text style={value ? styles.valueText : styles.placeholderText}>
-              {value || `Add your ${label.toLowerCase()}`}
-            </Text>
-            <Ionicons name="pencil-outline" size={16} color={COLORS.gray[400]} />
-          </Pressable>
-        )}
-      </View>
-    );
-  };
-
   return (
     <View style={styles.container}>
-      {renderField("Bio", "bio", bio, "chatbubble-outline", true)}
-      {renderField("Year", "year", year, "school-outline")}
+      {/* ── ABOUT ── */}
+      <SectionHeader title="ABOUT" />
+      <View style={styles.group}>
+        {/* Bio */}
+        <Pressable
+          style={styles.row}
+          onPress={() => editingField !== "bio" && startEdit("bio", bio)}
+        >
+          <Ionicons name="chatbubble-outline" size={16} color={COLORS.primary[500]} style={styles.rowIcon} />
+          <Text style={styles.rowLabel}>Bio</Text>
+          {editingField === "bio" ? (
+            <TextInput
+              style={[styles.inlineInput, styles.inlineInputMultiline]}
+              value={editValue}
+              onChangeText={setEditValue}
+              onBlur={() => saveEdit("bio")}
+              autoFocus
+              multiline
+              maxLength={500}
+              placeholder="Tell roommates about yourself"
+              placeholderTextColor={COLORS.gray[400]}
+            />
+          ) : (
+            <View style={styles.rowRight}>
+              <Text
+                style={bio ? styles.rowValue : styles.rowPlaceholder}
+                numberOfLines={2}
+              >
+                {bio ?? "Add your bio"}
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={COLORS.gray[300]} />
+            </View>
+          )}
+        </Pressable>
 
-      {/* Gender with visibility toggle */}
-      <View style={styles.fieldCard}>
-        <View style={styles.fieldHeader}>
-          <Ionicons name="person-outline" size={18} color={COLORS.primary[500]} />
-          <Text style={styles.fieldLabel}>Gender</Text>
-        </View>
-        {editingField === "gender" ? (
-          <TextInput
-            style={styles.input}
-            value={editValue}
-            onChangeText={setEditValue}
-            onSubmitEditing={() => saveEdit("gender")}
-            onBlur={() => saveEdit("gender")}
-            autoFocus
-            maxLength={50}
-            placeholder="Enter your gender"
-            placeholderTextColor={COLORS.gray[400]}
-          />
-        ) : (
-          <Pressable onPress={() => startEdit("gender", gender)} style={styles.valueRow}>
-            <Text style={gender ? styles.valueText : styles.placeholderText}>
-              {gender || "Add your gender"}
-            </Text>
-            <Ionicons name="pencil-outline" size={16} color={COLORS.gray[400]} />
-          </Pressable>
-        )}
-        <View style={styles.toggleRow}>
-          <Text style={styles.toggleLabel}>Show on profile</Text>
-          <Switch
-            value={showGender}
-            onValueChange={(val) => { onUpdate({ show_gender: val }); }}
-            trackColor={{ true: COLORS.primary[400], false: COLORS.gray[200] }}
-          />
-        </View>
+        <Separator />
+
+        {/* Year */}
+        <Pressable
+          style={styles.row}
+          onPress={() => editingField !== "year" && startEdit("year", year)}
+        >
+          <Ionicons name="school-outline" size={16} color={COLORS.primary[500]} style={styles.rowIcon} />
+          <Text style={styles.rowLabel}>Grad year</Text>
+          {editingField === "year" ? (
+            <TextInput
+              style={styles.inlineInput}
+              value={editValue}
+              onChangeText={setEditValue}
+              onSubmitEditing={() => saveEdit("year")}
+              onBlur={() => saveEdit("year")}
+              autoFocus
+              keyboardType="number-pad"
+              maxLength={4}
+              placeholder="e.g. 2026"
+              placeholderTextColor={COLORS.gray[400]}
+            />
+          ) : (
+            <View style={styles.rowRight}>
+              <Text style={year ? styles.rowValue : styles.rowPlaceholder}>
+                {year ?? "Add"}
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={COLORS.gray[300]} />
+            </View>
+          )}
+        </Pressable>
       </View>
 
-      {/* Hometown with visibility toggle */}
-      <View style={styles.fieldCard}>
-        <View style={styles.fieldHeader}>
-          <Ionicons name="location-outline" size={18} color={COLORS.primary[500]} />
-          <Text style={styles.fieldLabel}>Hometown</Text>
-        </View>
-        {editingField === "hometown" ? (
-          <TextInput
-            style={styles.input}
-            value={editValue}
-            onChangeText={setEditValue}
-            onSubmitEditing={() => saveEdit("hometown")}
-            onBlur={() => saveEdit("hometown")}
-            autoFocus
-            maxLength={100}
-            placeholder="Enter your hometown"
-            placeholderTextColor={COLORS.gray[400]}
-          />
-        ) : (
-          <Pressable onPress={() => startEdit("hometown", hometown)} style={styles.valueRow}>
-            <Text style={hometown ? styles.valueText : styles.placeholderText}>
-              {hometown || "Add your hometown"}
-            </Text>
-            <Ionicons name="pencil-outline" size={16} color={COLORS.gray[400]} />
+      {/* ── DETAILS ── */}
+      <SectionHeader title="DETAILS" />
+      <View style={styles.group}>
+        {/* Gender */}
+        <View>
+          <Pressable
+            style={styles.row}
+            onPress={() => editingField !== "gender" && startEdit("gender", gender)}
+          >
+            <Ionicons name="person-outline" size={16} color={COLORS.primary[500]} style={styles.rowIcon} />
+            <Text style={styles.rowLabel}>Gender</Text>
+            {editingField === "gender" ? (
+              <TextInput
+                style={styles.inlineInput}
+                value={editValue}
+                onChangeText={setEditValue}
+                onSubmitEditing={() => saveEdit("gender")}
+                onBlur={() => saveEdit("gender")}
+                autoFocus
+                maxLength={50}
+                placeholder="Your gender"
+                placeholderTextColor={COLORS.gray[400]}
+              />
+            ) : (
+              <View style={styles.rowRight}>
+                <Text style={gender ? styles.rowValue : styles.rowPlaceholder}>
+                  {gender ?? "Add"}
+                </Text>
+                <Ionicons name="chevron-forward" size={16} color={COLORS.gray[300]} />
+              </View>
+            )}
           </Pressable>
-        )}
-        <View style={styles.toggleRow}>
-          <Text style={styles.toggleLabel}>Show on profile</Text>
-          <Switch
-            value={showHometown}
-            onValueChange={(val) => { onUpdate({ show_hometown: val } as ProfileUpdate); }}
-            trackColor={{ true: COLORS.primary[400], false: COLORS.gray[200] }}
-          />
+          <View style={styles.toggleRow}>
+            <Text style={styles.toggleLabel}>Visible on profile</Text>
+            <Switch
+              value={showGender}
+              onValueChange={(val) => onUpdate({ show_gender: val })}
+              trackColor={{ true: COLORS.primary[400], false: COLORS.gray[200] }}
+              thumbColor="#fff"
+            />
+          </View>
+        </View>
+
+        <Separator />
+
+        {/* Hometown */}
+        <View>
+          <Pressable
+            style={styles.row}
+            onPress={() => editingField !== "hometown" && startEdit("hometown", hometown)}
+          >
+            <Ionicons name="location-outline" size={16} color={COLORS.primary[500]} style={styles.rowIcon} />
+            <Text style={styles.rowLabel}>Hometown</Text>
+            {editingField === "hometown" ? (
+              <TextInput
+                style={styles.inlineInput}
+                value={editValue}
+                onChangeText={setEditValue}
+                onSubmitEditing={() => saveEdit("hometown")}
+                onBlur={() => saveEdit("hometown")}
+                autoFocus
+                maxLength={100}
+                placeholder="Your hometown"
+                placeholderTextColor={COLORS.gray[400]}
+              />
+            ) : (
+              <View style={styles.rowRight}>
+                <Text style={hometown ? styles.rowValue : styles.rowPlaceholder}>
+                  {hometown ?? "Add"}
+                </Text>
+                <Ionicons name="chevron-forward" size={16} color={COLORS.gray[300]} />
+              </View>
+            )}
+          </Pressable>
+          <View style={styles.toggleRow}>
+            <Text style={styles.toggleLabel}>Visible on profile</Text>
+            <Switch
+              value={showHometown}
+              onValueChange={(val) => onUpdate({ show_hometown: val } as ProfileUpdate)}
+              trackColor={{ true: COLORS.primary[400], false: COLORS.gray[200] }}
+              thumbColor="#fff"
+            />
+          </View>
         </View>
       </View>
     </View>
@@ -190,74 +239,92 @@ export function ProfileFields({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 12,
+    gap: 0,
   },
-  fieldCard: {
+  sectionHeader: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: COLORS.gray[400],
+    letterSpacing: 0.8,
+    marginBottom: 6,
+    marginTop: 20,
+    marginLeft: 4,
+  },
+  group: {
     backgroundColor: "#fff",
     borderRadius: 16,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    overflow: "hidden",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: COLORS.gray[200],
   },
-  fieldHeader: {
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: COLORS.gray[200],
+    marginLeft: 40,
+  },
+  row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    minHeight: 52,
   },
-  fieldLabel: {
-    fontSize: 13,
-    fontWeight: "600",
+  rowIcon: {
+    marginRight: 10,
+    width: 18,
+    textAlign: "center",
+  },
+  rowLabel: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: COLORS.gray[800],
+    width: 80,
+  },
+  rowRight: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 4,
+  },
+  rowValue: {
+    fontSize: 15,
     color: COLORS.gray[500],
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  valueRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  valueText: {
-    fontSize: 16,
-    color: "#1f2937",
+    textAlign: "right",
     flex: 1,
   },
-  placeholderText: {
-    fontSize: 16,
-    color: COLORS.gray[400],
-    fontStyle: "italic",
+  rowPlaceholder: {
+    fontSize: 15,
+    color: COLORS.gray[300],
+    textAlign: "right",
     flex: 1,
   },
-  editRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  input: {
+  inlineInput: {
     flex: 1,
-    fontSize: 16,
-    color: "#1f2937",
-    borderBottomWidth: 2,
+    fontSize: 15,
+    color: COLORS.gray[800],
+    textAlign: "right",
+    borderBottomWidth: 1.5,
     borderBottomColor: COLORS.primary[400],
-    paddingVertical: 4,
+    paddingVertical: 2,
+    paddingHorizontal: 4,
   },
-  inputMultiline: {
-    minHeight: 60,
+  inlineInputMultiline: {
+    textAlign: "left",
+    minHeight: 48,
     textAlignVertical: "top",
   },
   toggleRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: COLORS.gray[200],
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    paddingTop: 0,
+    marginLeft: 28,
   },
   toggleLabel: {
-    fontSize: 14,
-    color: COLORS.gray[500],
+    fontSize: 13,
+    color: COLORS.gray[400],
   },
 });

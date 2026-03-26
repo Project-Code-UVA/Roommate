@@ -1,11 +1,11 @@
 /**
  * Mode selector — roommate / friends / found-roommate picker.
  *
- * PRD: Setting to "found_roommate" removes user from Discovery stack.
+ * Compact horizontal chip row. PRD: "found_roommate" removes user from Discovery.
  */
 
 import { useCallback } from "react";
-import { View, Text, Pressable, StyleSheet, Alert } from "react-native";
+import { View, Text, Pressable, StyleSheet, Alert, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
@@ -27,7 +27,6 @@ type ModeSelectorProps = {
 type ModeOption = {
   readonly value: ModeStatus;
   readonly label: string;
-  readonly description: string;
   readonly icon: keyof typeof Ionicons.glyphMap;
 };
 
@@ -36,24 +35,9 @@ type ModeOption = {
 // ---------------------------------------------------------------------------
 
 const MODES: readonly ModeOption[] = [
-  {
-    value: "roommate",
-    label: "Looking for roommate",
-    description: "Appear in Discovery for roommate matching",
-    icon: "home-outline",
-  },
-  {
-    value: "friends",
-    label: "Looking for friends",
-    description: "Appear in Discovery for friend matching",
-    icon: "people-outline",
-  },
-  {
-    value: "found_roommate",
-    label: "Found my roommate!",
-    description: "Hide from Discovery (you can change this later)",
-    icon: "checkmark-circle-outline",
-  },
+  { value: "roommate", label: "Roommate", icon: "home-outline" },
+  { value: "friends", label: "Friends", icon: "people-outline" },
+  { value: "found_roommate", label: "Found one!", icon: "checkmark-circle-outline" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -89,34 +73,34 @@ export function ModeSelector({ userId, currentMode, onModeChange }: ModeSelector
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Your Status</Text>
-      <View style={styles.options}>
+      <Text style={styles.label}>YOUR STATUS</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chipsRow}
+      >
         {MODES.map((mode) => {
           const isActive = currentMode === mode.value;
           return (
             <Pressable
               key={mode.value}
-              style={[styles.option, isActive && styles.optionActive]}
+              style={[styles.chip, isActive && styles.chipActive]}
               onPress={() => handleSelect(mode.value)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isActive }}
             >
               <Ionicons
                 name={mode.icon}
-                size={24}
-                color={isActive ? COLORS.primary[600] : COLORS.gray[400]}
+                size={15}
+                color={isActive ? "#fff" : COLORS.gray[500]}
               />
-              <View style={styles.optionText}>
-                <Text style={[styles.optionLabel, isActive && styles.optionLabelActive]}>
-                  {mode.label}
-                </Text>
-                <Text style={styles.optionDesc}>{mode.description}</Text>
-              </View>
-              {isActive && (
-                <Ionicons name="checkmark-circle" size={22} color={COLORS.primary[600]} />
-              )}
+              <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+                {mode.label}
+              </Text>
             </Pressable>
           );
         })}
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -127,52 +111,40 @@ export function ModeSelector({ userId, currentMode, onModeChange }: ModeSelector
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 8,
+    marginBottom: 16,
   },
-  title: {
-    fontSize: 13,
+  label: {
+    fontSize: 11,
     fontWeight: "600",
-    color: COLORS.gray[500],
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 10,
+    color: COLORS.gray[400],
+    letterSpacing: 0.8,
+    marginBottom: 8,
   },
-  options: {
+  chipsRow: {
+    flexDirection: "row",
     gap: 8,
   },
-  option: {
+  chip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: COLORS.gray[200],
     backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: "transparent",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
   },
-  optionActive: {
-    borderColor: COLORS.primary[400],
-    backgroundColor: COLORS.primary[50],
+  chipActive: {
+    backgroundColor: COLORS.primary[600],
+    borderColor: COLORS.primary[600],
   },
-  optionText: {
-    flex: 1,
-  },
-  optionLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1f2937",
-  },
-  optionLabelActive: {
-    color: COLORS.primary[700],
-  },
-  optionDesc: {
+  chipText: {
     fontSize: 13,
-    color: COLORS.gray[500],
-    marginTop: 2,
+    fontWeight: "600",
+    color: COLORS.gray[600],
+  },
+  chipTextActive: {
+    color: "#fff",
   },
 });

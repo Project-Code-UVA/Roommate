@@ -1,8 +1,9 @@
 /**
  * Profile tab — view and edit your own profile.
  *
- * Displays photo carousel with edit overlay, editable fields,
- * mode selector, and photo manager. Gear icon navigates to settings.
+ * Clean white layout matching Explore/Discovery aesthetic.
+ * Photo carousel, compact status chips, and editable fields all
+ * flow inside a single ScrollView with no above-fold fixed elements.
  */
 
 import { useCallback, useState } from "react";
@@ -17,7 +18,6 @@ import {
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -93,14 +93,6 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={["top"]}>
-      {/* Gradient background */}
-      <LinearGradient
-        colors={["#f5f3ff", "#fdf2f8", "#f5f5f5"]}
-        locations={[0, 0.3, 1]}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
-
       {/* Header bar */}
       <View style={styles.headerBar}>
         <Text style={styles.headerTitle}>Profile</Text>
@@ -109,17 +101,9 @@ export default function ProfileScreen() {
           style={styles.settingsButton}
           testID="settings-button"
         >
-          <Ionicons name="settings-outline" size={24} color={COLORS.gray[700]} />
+          <Ionicons name="settings-outline" size={22} color={COLORS.gray[600]} />
         </Pressable>
       </View>
-
-      {/* Verification banner for unverified users (D-02: dismissable) */}
-      {!selfieVerified && showBanner && (
-        <VerificationBanner
-          onVerify={() => setShowSelfieCapture(true)}
-          onDismiss={() => setShowBanner(false)}
-        />
-      )}
 
       <ScrollView
         style={styles.scrollView}
@@ -129,7 +113,7 @@ export default function ProfileScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
       >
-        {/* Photo header */}
+        {/* Photo carousel */}
         <ProfileHeader
           photos={photos}
           displayName={profile.display_name}
@@ -146,7 +130,15 @@ export default function ProfileScreen() {
           />
         )}
 
-        {/* Mode selector */}
+        {/* Verification nudge — compact strip, inside scroll */}
+        {!selfieVerified && showBanner && (
+          <VerificationBanner
+            onVerify={() => setShowSelfieCapture(true)}
+            onDismiss={() => setShowBanner(false)}
+          />
+        )}
+
+        {/* Status chips */}
         <ModeSelector
           userId={userId}
           currentMode={modeState}
@@ -154,17 +146,15 @@ export default function ProfileScreen() {
         />
 
         {/* Editable fields */}
-        <View style={styles.fieldsSection}>
-          <ProfileFields
-            bio={profile.bio}
-            gender={profile.gender}
-            showGender={profile.show_gender}
-            hometown={profile.hometown}
-            showHometown={profile.show_hometown}
-            year={profile.year}
-            onUpdate={updateField}
-          />
-        </View>
+        <ProfileFields
+          bio={profile.bio}
+          gender={profile.gender}
+          showGender={profile.show_gender}
+          hometown={profile.hometown}
+          showHometown={profile.show_hometown}
+          year={profile.year}
+          onUpdate={updateField}
+        />
       </ScrollView>
 
       {/* Selfie capture modal */}
@@ -194,28 +184,34 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#f5f3ff",
+    backgroundColor: "#fff",
   },
   loadingContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#f5f3ff",
+    backgroundColor: "#fff",
   },
   headerBar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 12,
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: "700",
-    color: "#1f2937",
+    fontWeight: "800",
+    color: COLORS.gray[900],
+    letterSpacing: -0.5,
   },
   settingsButton: {
-    padding: 8,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.gray[100],
+    alignItems: "center",
+    justifyContent: "center",
   },
   scrollView: {
     flex: 1,
@@ -223,9 +219,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingBottom: 100,
-  },
-  fieldsSection: {
-    marginTop: 20,
   },
   errorText: {
     color: "#f87171",
