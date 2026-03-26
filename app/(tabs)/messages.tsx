@@ -2,11 +2,11 @@
  * Messages tab -- thread list showing all conversations.
  *
  * Displays avatar, display name, last message preview, timestamp,
- * and unread badge for each thread. Tapping navigates to the chat screen.
- * Pull-to-refresh to reload threads.
+ * and unread badge for each thread. Search bar filters by name.
+ * Tapping navigates to the chat screen. Pull-to-refresh to reload threads.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -15,6 +15,7 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -81,48 +82,55 @@ function ThreadRow({
       testID={`thread-${thread.id}`}
     >
       {/* Avatar */}
-      {thread.other_user_avatar_url ? (
-        <Image
-          source={{ uri: thread.other_user_avatar_url }}
-          style={styles.avatar}
-          testID={`avatar-${thread.id}`}
-        />
-      ) : (
-        <View style={styles.avatarFallback}>
-          <Ionicons name="person-circle" size={48} color={COLORS.gray[300]} />
-        </View>
-      )}
+      <View style={styles.avatarWrap}>
+        {thread.other_user_avatar_url ? (
+          <Image
+            source={{ uri: thread.other_user_avatar_url }}
+            style={styles.avatar}
+            testID={`avatar-${thread.id}`}
+          />
+        ) : (
+          <View style={styles.avatarFallback}>
+            <Ionicons name="person-circle" size={52} color={COLORS.gray[300]} />
+          </View>
+        )}
+        {thread.unread_count > 0 && (
+          <View style={styles.unreadDot} testID={`badge-${thread.id}`} />
+        )}
+      </View>
 
       {/* Text content */}
       <View style={styles.textContent}>
         <View style={styles.nameRow}>
-          <Text style={styles.displayName} numberOfLines={1}>
+          <Text
+            style={[
+              styles.displayName,
+              thread.unread_count > 0 && styles.displayNameUnread,
+            ]}
+            numberOfLines={1}
+          >
             {thread.other_user_display_name}
           </Text>
           {thread.last_message_at && (
-            <Text style={styles.timestamp}>
+            <Text
+              style={[
+                styles.timestamp,
+                thread.unread_count > 0 && styles.timestampUnread,
+              ]}
+            >
               {formatRelativeTime(thread.last_message_at)}
             </Text>
           )}
         </View>
-        <View style={styles.previewRow}>
-          <Text
-            style={[
-              styles.preview,
-              thread.unread_count > 0 && styles.previewUnread,
-            ]}
-            numberOfLines={1}
-          >
-            {truncatePreview(thread.last_message_body)}
-          </Text>
-          {thread.unread_count > 0 && (
-            <View style={styles.badge} testID={`badge-${thread.id}`}>
-              <Text style={styles.badgeText}>
-                {thread.unread_count > 99 ? "99+" : thread.unread_count}
-              </Text>
-            </View>
-          )}
-        </View>
+        <Text
+          style={[
+            styles.preview,
+            thread.unread_count > 0 && styles.previewUnread,
+          ]}
+          numberOfLines={1}
+        >
+          {truncatePreview(thread.last_message_body)}
+        </Text>
       </View>
     </Pressable>
   );
@@ -132,13 +140,21 @@ function ThreadRow({
 // Empty state
 // ---------------------------------------------------------------------------
 
-function EmptyThreads() {
+function EmptyThreads({ hasSearch }: { readonly hasSearch: boolean }) {
   return (
     <View style={styles.emptyContainer}>
-      <Ionicons name="chatbubbles-outline" size={64} color={COLORS.gray[300]} />
-      <Text style={styles.emptyTitle}>No conversations yet</Text>
+      <Ionicons
+        name={hasSearch ? "search-outline" : "chatbubbles-outline"}
+        size={64}
+        color={COLORS.gray[300]}
+      />
+      <Text style={styles.emptyTitle}>
+        {hasSearch ? "No results found" : "No conversations yet"}
+      </Text>
       <Text style={styles.emptySubtitle}>
-        Match with someone to start chatting
+        {hasSearch
+          ? "Try a different name"
+          : "Match with someone to start chatting"}
       </Text>
     </View>
   );
@@ -156,6 +172,7 @@ export default function MessagesScreen() {
   const [threads, setThreads] = useState<readonly ThreadItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchThreads = useCallback(async () => {
     if (!userId) return;
@@ -188,6 +205,14 @@ export default function MessagesScreen() {
     [router],
   );
 
+  const filteredThreads = useMemo(() => {
+    if (!searchQuery.trim()) return threads as ThreadItem[];
+    const q = searchQuery.toLowerCase();
+    return (threads as ThreadItem[]).filter((t) =>
+      t.other_user_display_name.toLowerCase().includes(q),
+    );
+  }, [threads, searchQuery]);
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
@@ -200,12 +225,37 @@ export default function MessagesScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle} testID="messages-title">Messages</Text>
+        <Text style={styles.headerTitle} testID="messages-title">
+          Messages
+        </Text>
+        {/* Search bar */}
+        <View style={styles.searchContainer}>
+          <Ionicons name="search-outline" size={18} color={COLORS.gray[400]} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search messages..."
+            placeholderTextColor={COLORS.gray[400]}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+            autoCorrect={false}
+            autoCapitalize="none"
+          />
+          {searchQuery.length > 0 && (
+            <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>
+              <Ionicons
+                name="close-circle"
+                size={18}
+                color={COLORS.gray[400]}
+              />
+            </Pressable>
+          )}
+        </View>
       </View>
 
       {/* Thread list */}
       <FlatList
-        data={threads as ThreadItem[]}
+        data={filteredThreads}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <ThreadRow
@@ -213,7 +263,9 @@ export default function MessagesScreen() {
             onPress={() => handlePressThread(item)}
           />
         )}
-        ListEmptyComponent={<EmptyThreads />}
+        ListEmptyComponent={
+          <EmptyThreads hasSearch={searchQuery.length > 0} />
+        }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -221,7 +273,10 @@ export default function MessagesScreen() {
             tintColor={COLORS.primary[500]}
           />
         }
-        contentContainerStyle={threads.length === 0 ? styles.emptyList : undefined}
+        contentContainerStyle={
+          filteredThreads.length === 0 ? styles.emptyList : styles.listContent
+        }
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
     </SafeAreaView>
   );
@@ -244,38 +299,71 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingTop: 12,
+    paddingBottom: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: COLORS.gray[200],
+    gap: 10,
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: "700",
     color: COLORS.gray[900],
+    letterSpacing: -0.5,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.gray[100],
+    borderRadius: 24,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: COLORS.gray[900],
+    padding: 0,
   },
   threadRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 12,
     gap: 12,
+    backgroundColor: "#fff",
+  },
+  avatarWrap: {
+    position: "relative",
   },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: COLORS.gray[100],
   },
   avatarFallback: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: "center",
     justifyContent: "center",
   },
+  unreadDot: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    width: 13,
+    height: 13,
+    borderRadius: 7,
+    backgroundColor: COLORS.primary[600],
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
   textContent: {
     flex: 1,
-    gap: 2,
+    gap: 3,
   },
   nameRow: {
     flexDirection: "row",
@@ -288,39 +376,30 @@ const styles = StyleSheet.create({
     color: COLORS.gray[900],
     flex: 1,
   },
+  displayNameUnread: {
+    fontWeight: "700",
+  },
   timestamp: {
     fontSize: 13,
     color: COLORS.gray[400],
     marginLeft: 8,
   },
-  previewRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+  timestampUnread: {
+    color: COLORS.primary[600],
+    fontWeight: "600",
   },
   preview: {
     fontSize: 14,
     color: COLORS.gray[400],
-    flex: 1,
   },
   previewUnread: {
     color: COLORS.gray[700],
     fontWeight: "500",
   },
-  badge: {
-    backgroundColor: COLORS.primary[600],
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 6,
-    marginLeft: 8,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#fff",
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: COLORS.gray[100],
+    marginLeft: 80,
   },
   emptyContainer: {
     alignItems: "center",
@@ -342,5 +421,8 @@ const styles = StyleSheet.create({
   },
   emptyList: {
     flexGrow: 1,
+  },
+  listContent: {
+    paddingBottom: 20,
   },
 });

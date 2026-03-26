@@ -17,6 +17,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -92,6 +93,14 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={["top"]}>
+      {/* Gradient background */}
+      <LinearGradient
+        colors={["#f5f3ff", "#fdf2f8", "#f5f5f5"]}
+        locations={[0, 0.3, 1]}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+
       {/* Header bar */}
       <View style={styles.headerBar}>
         <Text style={styles.headerTitle}>Profile</Text>
@@ -185,13 +194,13 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f5f3ff",
   },
   loadingContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f5f3ff",
   },
   headerBar: {
     flexDirection: "row",

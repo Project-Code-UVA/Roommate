@@ -2,8 +2,8 @@
  * Compact grid card for the Explore tab.
  *
  * Shows a profile photo with a gradient overlay at the bottom
- * displaying the user's name and class year. Approximately 1/3
- * screen width in the 3-column grid.
+ * displaying the user's name, verified badge, and class year.
+ * Sized for the 2-column grid.
  */
 
 import { LinearGradient } from "expo-linear-gradient";
@@ -30,7 +30,7 @@ export function ExploreGridCard({ profile, onPress, size }: ExploreGridCardProps
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.card, { width: size, height: size * 1.3 }]}
+      style={[styles.card, { width: size, height: size * 1.4 }]}
       testID={`explore-card-${profile.user_id}`}
     >
       <Image
@@ -39,27 +39,30 @@ export function ExploreGridCard({ profile, onPress, size }: ExploreGridCardProps
         resizeMode="cover"
       />
       <LinearGradient
-        colors={["transparent", "rgba(0,0,0,0.55)"]}
+        colors={["transparent", "rgba(0,0,0,0.35)", "rgba(0,0,0,0.78)"]}
+        locations={[0.45, 0.7, 1]}
         style={styles.gradient}
       >
-        <Text style={styles.name} numberOfLines={1}>
-          {profile.display_name}
-        </Text>
+        <View style={styles.nameRow}>
+          <Text style={styles.name} numberOfLines={1}>
+            {profile.display_name}
+          </Text>
+          {profile.selfie_verified && (
+            <Ionicons
+              name="checkmark-circle"
+              size={16}
+              color="#60a5fa"
+              testID={`explore-card-verified-${profile.user_id}`}
+              accessibilityLabel="Verified"
+            />
+          )}
+        </View>
         {profile.year != null && (
           <Text style={styles.year} numberOfLines={1}>
             {profile.year}
           </Text>
         )}
       </LinearGradient>
-      {profile.selfie_verified && (
-        <View
-          style={styles.verifiedBadge}
-          testID={`explore-card-verified-${profile.user_id}`}
-          accessibilityLabel="Verified"
-        >
-          <Ionicons name="checkmark-circle" size={14} color="#a78bfa" />
-        </View>
-      )}
     </Pressable>
   );
 }
@@ -72,8 +75,12 @@ const styles = StyleSheet.create({
   card: {
     position: "relative",
     overflow: "hidden",
-    borderRadius: 8,
-    margin: 0.5,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
   },
   image: {
     width: "100%",
@@ -84,24 +91,25 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 6,
-    paddingBottom: 6,
-    paddingTop: 24,
+    paddingHorizontal: 10,
+    paddingBottom: 12,
+    paddingTop: 48,
+  },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
   name: {
     color: "#fff",
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: "700",
+    flex: 1,
   },
   year: {
-    color: "rgba(255,255,255,0.7)",
-    fontSize: 11,
+    color: "rgba(255,255,255,0.75)",
+    fontSize: 12,
     fontWeight: "400",
-    marginTop: 1,
-  },
-  verifiedBadge: {
-    position: "absolute",
-    bottom: 4,
-    right: 4,
+    marginTop: 2,
   },
 });
