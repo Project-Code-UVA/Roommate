@@ -15,6 +15,8 @@ export type ExploreProfile = {
   readonly year: string | null;
   readonly photo_url: string;
   readonly selfie_verified: boolean;
+  readonly match_score?: number | null;
+  readonly hometown?: string | null;
 };
 
 // ---------------------------------------------------------------------------

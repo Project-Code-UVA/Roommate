@@ -20,7 +20,6 @@ import {
   Share,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
@@ -181,21 +180,13 @@ export default function ExploreScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      {/* Gradient background */}
-      <LinearGradient
-        colors={["#f5f3ff", "#fdf4ff", "#fff"]}
-        locations={[0, 0.4, 1]}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
-
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={styles.headerTitle}>Explore</Text>
           {profiles.length > 0 && (
             <Text style={styles.headerSubtitle}>
-              {profiles.length} potential roommates
+              {profiles.length} potential roommates nearby
             </Text>
           )}
         </View>
@@ -270,7 +261,7 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f3ff",
+    backgroundColor: "#ffffff",
   },
   header: {
     flexDirection: "row",
