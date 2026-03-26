@@ -140,13 +140,6 @@ export default function ProfileScreen() {
       {/* Header */}
       <View style={styles.headerBar}>
         <Text style={styles.headerTitle}>Profile</Text>
-        <Pressable
-          onPress={() => router.push("/settings" as never)}
-          style={styles.settingsButton}
-          testID="settings-button"
-        >
-          <Ionicons name="settings-outline" size={20} color={COLORS.gray[600]} />
-        </Pressable>
       </View>
 
       <ScrollView
@@ -269,14 +262,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: COLORS.gray[900],
     letterSpacing: -0.5,
-  },
-  settingsButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: COLORS.gray[100],
-    alignItems: "center",
-    justifyContent: "center",
   },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingBottom: 100 },
