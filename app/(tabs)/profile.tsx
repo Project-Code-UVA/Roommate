@@ -157,15 +157,23 @@ export default function ProfileScreen() {
       >
         {/* Avatar + name */}
         <View style={styles.avatarSection}>
-          <View style={styles.avatarWrap}>
-            {primaryPhoto ? (
-              <Image source={{ uri: primaryPhoto.url }} style={styles.avatar} resizeMode="cover" />
-            ) : (
-              <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                <Ionicons name="person" size={40} color={COLORS.gray[300]} />
-              </View>
-            )}
-          </View>
+          <Pressable
+            style={styles.avatarContainer}
+            onPress={() => router.push("/profile/photos" as never)}
+          >
+            <View style={styles.avatarWrap}>
+              {primaryPhoto ? (
+                <Image source={{ uri: primaryPhoto.url }} style={styles.avatar} resizeMode="cover" />
+              ) : (
+                <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                  <Ionicons name="person" size={40} color={COLORS.gray[300]} />
+                </View>
+              )}
+            </View>
+            <View style={styles.cameraButton}>
+              <Ionicons name="camera" size={15} color="#fff" />
+            </View>
+          </Pressable>
           <View style={styles.nameRow}>
             <Text style={styles.name}>{profile.display_name ?? "Your Name"}</Text>
             {selfieVerified && (
@@ -275,6 +283,20 @@ const styles = StyleSheet.create({
 
   // Avatar
   avatarSection: { alignItems: "center", paddingVertical: 24 },
+  avatarContainer: { position: "relative" },
+  cameraButton: {
+    position: "absolute",
+    top: 2,
+    right: -2,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "#1f2937",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2.5,
+    borderColor: "#fff",
+  },
   avatarWrap: {
     width: 96,
     height: 96,
