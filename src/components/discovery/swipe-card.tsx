@@ -27,6 +27,8 @@ import Animated, {
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 
+import { LinearGradient } from "expo-linear-gradient";
+
 import { PhotoCarousel } from "@/components/discovery/photo-carousel";
 import { ProfileInfo } from "@/components/discovery/profile-info";
 import { OverflowMenu } from "@/components/shared/overflow-menu";
@@ -191,11 +193,6 @@ export function SwipeCard({ profile, onSwipeRight, onSwipeLeft, onBlock }: Swipe
     <>
       <GestureDetector gesture={panGesture}>
         <Animated.View style={[styles.card, cardStyle]}>
-          {/* Overflow menu -- zIndex 20, above swipe overlays (zIndex 10) */}
-          <View style={styles.overflowMenuContainer}>
-            <OverflowMenu items={overflowItems} testIDPrefix="swipe-card" />
-          </View>
-
           {/* Like glow overlay */}
           <Animated.View
             style={[styles.overlay, styles.likeOverlay, likeOverlayStyle]}
@@ -213,7 +210,6 @@ export function SwipeCard({ profile, onSwipeRight, onSwipeLeft, onBlock }: Swipe
             showsVerticalScrollIndicator={false}
             bounces
           >
-            {/* Photo carousel -- all photos */}
             <PhotoCarousel
               photos={profile.photos}
               displayName={profile.display_name}
@@ -222,10 +218,22 @@ export function SwipeCard({ profile, onSwipeRight, onSwipeLeft, onBlock }: Swipe
               hometown={profile.hometown}
               profileId={profile.user_id}
             />
-
-            {/* Profile info sections */}
             <ProfileInfo profile={profile} />
           </ScrollView>
+
+          {/* Top bar overlay — rendered last so it paints above the ScrollView.
+              Gradient fades into the photo so it feels native to the card. */}
+          <LinearGradient
+            colors={["rgba(0,0,0,0.32)", "transparent"]}
+            style={styles.topBar}
+            pointerEvents="box-none"
+          >
+            {/* Left slot — reserved for future actions (save, boost, etc.) */}
+            <View style={styles.topBarSlot} />
+            <View style={styles.topBarSlot} pointerEvents="auto">
+              <OverflowMenu items={overflowItems} testIDPrefix="swipe-card" />
+            </View>
+          </LinearGradient>
         </Animated.View>
       </GestureDetector>
 
@@ -259,11 +267,22 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
-  overflowMenuContainer: {
+  topBar: {
     position: "absolute",
-    top: 12,
-    right: 12,
-    zIndex: 20,
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 72,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    paddingTop: 10,
+    paddingHorizontal: 10,
+  },
+  topBarSlot: {
+    width: 44,
+    alignItems: "center",
+    justifyContent: "center",
   },
   scroll: {
     flex: 1,

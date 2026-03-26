@@ -148,9 +148,9 @@ const styles = StyleSheet.create({
   },
   indicatorWrap: {
     position: "absolute",
-    top: 12,
-    left: 0,
-    right: 0,
+    top: 14,
+    left: 54,
+    right: 54,
     zIndex: 10,
   },
   gradient: {
