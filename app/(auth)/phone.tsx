@@ -59,12 +59,14 @@ export default function PhoneScreen() {
         {/* Phone input row */}
         <View className="flex-row items-center mt-4">
           <Text
-            style={{ fontSize: 22, fontWeight: "500", color: COLORS.gray[900] }}
+            allowFontScaling={false}
+            style={{ fontSize: 22, fontWeight: "500", color: COLORS.gray[900], paddingBottom: 8 }}
             className="mr-3"
           >
             +1
           </Text>
           <TextInput
+            allowFontScaling={false}
             value={formatPhone(rawDigits)}
             onChangeText={handleChangeText}
             keyboardType="number-pad"
@@ -74,7 +76,7 @@ export default function PhoneScreen() {
             autoFocus
             style={{
               flex: 1,
-              fontSize: 22, // MODIFIED: phone input text bumped +4pt (was ~18pt)
+              fontSize: 22,
               fontWeight: "500",
               color: COLORS.gray[900],
               borderBottomWidth: 2,
