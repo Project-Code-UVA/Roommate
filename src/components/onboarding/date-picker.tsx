@@ -42,6 +42,7 @@ function WheelColumn({
 }) {
   const listRef = useRef<FlatList<number>>(null);
   const isUserScrolling = useRef(false);
+  const snapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!isUserScrolling.current && listRef.current) {
@@ -52,19 +53,50 @@ function WheelColumn({
     }
   }, [selectedIndex]);
 
-  const handleMomentumEnd = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+  const snapToIndex = useCallback(
+    (y: number) => {
+      const idx = Math.round(y / ITEM_HEIGHT);
       const clamped = Math.max(0, Math.min(idx, data.length - 1));
+      listRef.current?.scrollToOffset({
+        offset: clamped * ITEM_HEIGHT,
+        animated: true,
+      });
       isUserScrolling.current = false;
       onSelect(clamped);
     },
     [data.length, onSelect],
   );
 
-  const handleScrollBegin = useCallback(() => {
+  const handleScrollBeginDrag = useCallback(() => {
     isUserScrolling.current = true;
   }, []);
+
+  // When drag ends without momentum (slow drag), snap manually after a short
+  // delay. The delay lets onMomentumScrollBegin cancel it if a fling follows.
+  const handleScrollEndDrag = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const y = e.nativeEvent.contentOffset.y;
+      snapTimerRef.current = setTimeout(() => {
+        snapToIndex(y);
+      }, 50);
+    },
+    [snapToIndex],
+  );
+
+  // Cancel the manual-snap timer — momentum scroll will handle it instead.
+  const handleMomentumScrollBegin = useCallback(() => {
+    if (snapTimerRef.current) {
+      clearTimeout(snapTimerRef.current);
+      snapTimerRef.current = null;
+    }
+  }, []);
+
+  const handleMomentumScrollEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      snapToIndex(e.nativeEvent.contentOffset.y);
+    },
+    [snapToIndex],
+  );
 
   const padding = ((VISIBLE_ITEMS - 1) / 2) * ITEM_HEIGHT;
 
@@ -77,8 +109,10 @@ function WheelColumn({
         showsVerticalScrollIndicator={false}
         snapToInterval={ITEM_HEIGHT}
         decelerationRate="fast"
-        onScrollBeginDrag={handleScrollBegin}
-        onMomentumScrollEnd={handleMomentumEnd}
+        onScrollBeginDrag={handleScrollBeginDrag}
+        onScrollEndDrag={handleScrollEndDrag}
+        onMomentumScrollBegin={handleMomentumScrollBegin}
+        onMomentumScrollEnd={handleMomentumScrollEnd}
         contentContainerStyle={{ paddingVertical: padding }}
         getItemLayout={(_, index) => ({
           length: ITEM_HEIGHT,

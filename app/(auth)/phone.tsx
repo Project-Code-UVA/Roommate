@@ -58,10 +58,9 @@ export default function PhoneScreen() {
       <View className="flex-1">
         {/* Phone input row */}
         <View className="flex-row items-center mt-4">
-          {/* // MODIFIED: increased country code label from ~18pt to 20pt */}
           <Text
-            style={{ fontSize: 20 }} // MODIFIED: country code text bumped +2pt
-            className="font-semibold text-gray-900 mr-3"
+            style={{ fontSize: 22, fontWeight: "500", color: COLORS.gray[900] }}
+            className="mr-3"
           >
             +1
           </Text>
