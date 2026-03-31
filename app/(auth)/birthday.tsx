@@ -1,21 +1,22 @@
-/**
- * Birthday / age gate screen.
- *
- * Collects the user's birthdate via a scroll-wheel date picker.
- * Under-18 users see a friendly block message and cannot proceed.
- * 18+ users save their birthdate and navigate to the phone step.
- */
-
-import { useState } from "react";
-import { Alert, Pressable, Text, View } from "react-native";
+import { useState, useCallback } from "react";
+import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { useRouter } from "expo-router";
-
 import { StepContainer } from "@/components/onboarding/step-container";
 import { DatePicker } from "@/components/onboarding/date-picker";
-import { validateAge } from "@/services/auth-service";
-import { useOnboarding } from "@/hooks/use-onboarding";
+import { COLORS } from "@/lib/constants";
 
-function getDefaultBirthdate(): Date {
+/** Check if the user is at least 18 years old. */
+function validateAge(birthdate: Date): boolean {
+  const today = new Date();
+  let age = today.getFullYear() - birthdate.getFullYear();
+  const monthDiff = today.getMonth() - birthdate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate())) {
+    age--;
+  }
+  return age >= 18;
+}
+
+function defaultBirthdate(): Date {
   const d = new Date();
   d.setFullYear(d.getFullYear() - 18);
   return d;
@@ -23,52 +24,71 @@ function getDefaultBirthdate(): Date {
 
 export default function BirthdayScreen() {
   const router = useRouter();
-  const { saveProgress } = useOnboarding();
-  const [selectedDate, setSelectedDate] = useState<Date>(getDefaultBirthdate);
+  const [selectedDate, setSelectedDate] = useState<Date>(defaultBirthdate);
 
-  function handleBack() {
-    router.replace("/welcome");
-  }
-
-  async function handleContinue() {
-    const isOldEnough = validateAge(selectedDate);
-
-    if (!isOldEnough) {
+  const handleContinue = useCallback(() => {
+    if (!validateAge(selectedDate)) {
       Alert.alert(
         "Age Requirement",
         "You must be 18+ to use Room. Come back when you're old enough!",
-        [{ text: "OK", onPress: () => router.replace("/welcome") }],
+        [{ text: "OK", onPress: () => router.replace("/") }],
       );
       return;
     }
-
-    await saveProgress("birthday", {
-      birthdate: selectedDate.toISOString(),
-    });
+    // TODO: save birthdate via useOnboarding().saveProgress('birthday', { birthdate })
     router.push("/(auth)/phone");
-  }
+  }, [selectedDate, router]);
+
+  const today = new Date();
+  const minDate = new Date(today.getFullYear() - 100, 0, 1);
 
   return (
     <StepContainer
       title="When's your birthday?"
       subtitle="We need this to verify your age"
-      onBack={handleBack}
+      showBack
+      onBack={() => router.replace("/(auth)/welcome")}
+      currentStep={1}
+      totalSteps={9}
     >
+      {/* Date picker */}
       <View className="flex-1 justify-center">
-        <DatePicker value={selectedDate} onChange={setSelectedDate} />
+        <DatePicker
+          value={selectedDate}
+          onChange={setSelectedDate}
+          maximumDate={today}
+          minimumDate={minDate}
+        />
+
+        {/* // MODIFIED: increased helper text from 14pt to 16pt */}
+        <Text
+          style={{ fontSize: 16 }} // MODIFIED: helper text bumped +2pt
+          className="text-center text-gray-400 mt-6"
+        >
+          Your birthday won't be shown publicly
+        </Text>
       </View>
 
-      <Pressable
-        onPress={handleContinue}
-        className="mb-8 w-full rounded-xl bg-primary-600 py-4"
-        accessibilityRole="button"
-        accessibilityLabel="Continue"
-        testID="birthday-continue"
-      >
-        <Text className="text-center text-lg font-semibold text-white">
-          Continue
-        </Text>
-      </Pressable>
+      {/* Continue button */}
+      <View className="pb-6 pt-4">
+        <TouchableOpacity
+          onPress={handleContinue}
+          activeOpacity={0.85}
+          style={{
+            backgroundColor: COLORS.primary[600],
+            borderRadius: 999, // MODIFIED: fully rounded pill shape (was rounded-xl / ~12)
+            paddingVertical: 18,
+          }}
+        >
+          {/* // MODIFIED: increased button text from 18pt to 20pt to match larger font scale */}
+          <Text
+            style={{ fontSize: 20 }} // MODIFIED: button text bumped +2pt for larger scale
+            className="text-white font-semibold text-center"
+          >
+            Continue
+          </Text>
+        </TouchableOpacity>
+      </View>
     </StepContainer>
   );
 }

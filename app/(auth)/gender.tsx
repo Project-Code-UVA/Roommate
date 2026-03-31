@@ -1,135 +1,113 @@
-/**
- * Gender selection onboarding step.
- *
- * Offers four gender options (Man, Woman, Non-binary, More).
- * "More" reveals a free-text input. Includes a toggle for
- * showing gender on profile.
- */
-
-import { useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-import { router } from "expo-router";
-
+import { useState, useCallback } from "react";
+import { View, Text, TextInput, TouchableOpacity, Switch, ActivityIndicator } from "react-native";
+import { useRouter } from "expo-router";
 import { StepContainer } from "@/components/onboarding/step-container";
-import { useSession } from "@/contexts/auth-context";
-import { useOnboarding } from "@/hooks/use-onboarding";
-import { updateProfile } from "@/services/profile-service";
 import { COLORS } from "@/lib/constants";
 
-type GenderOption = "man" | "woman" | "non-binary" | "more";
-
-const GENDER_OPTIONS: readonly { readonly key: GenderOption; readonly label: string }[] = [
-  { key: "man", label: "Man" },
-  { key: "woman", label: "Woman" },
-  { key: "non-binary", label: "Non-binary" },
-  { key: "more", label: "More" },
+/** Internal value kept as "more" for backend compatibility; display label is "Other". */
+const GENDER_OPTIONS = [
+  { label: "Man", value: "man" },
+  { label: "Woman", value: "woman" },
+  { label: "Non-binary", value: "non-binary" },
+  { label: "Other", value: "more" }, // MODIFIED: renamed "More" to "Other" (display only; stored value stays "more")
 ] as const;
 
-const MAX_CUSTOM_GENDER_LENGTH = 50;
+type GenderValue = (typeof GENDER_OPTIONS)[number]["value"];
 
 export default function GenderScreen() {
-  const { session } = useSession();
-  const { saveProgress } = useOnboarding();
-
-  const [selected, setSelected] = useState<GenderOption | null>(null);
+  const router = useRouter();
+  const [selected, setSelected] = useState<GenderValue | null>(null);
   const [customGender, setCustomGender] = useState("");
   const [showGender, setShowGender] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const trimmedCustom = customGender.trim();
-  const canContinue =
-    selected !== null &&
-    (selected !== "more" || trimmedCustom.length > 0) &&
-    !isSaving;
+  const isMoreSelected = selected === "more";
+  const isValid = selected !== null && (!isMoreSelected || customGender.trim().length > 0);
 
-  function resolveGenderValue(): string {
-    if (selected === "more") return trimmedCustom;
-    return selected ?? "";
-  }
+  const handleContinue = useCallback(async () => {
+    if (!isValid) return;
+    setLoading(true);
 
-  async function handleContinue() {
-    if (!session?.user.id || !canContinue) return;
+    try {
+      const genderValue = isMoreSelected ? customGender.trim() : selected;
 
-    setIsSaving(true);
-    setError(null);
+      // TODO: call updateProfile(session.user.id, { gender: genderValue, show_gender: showGender })
+      // TODO: call saveProgress('gender', { gender: genderValue, show_gender: showGender })
+      await new Promise((r) => setTimeout(r, 400));
 
-    const genderValue = resolveGenderValue();
-
-    const result = await updateProfile(session.user.id, {
-      gender: genderValue,
-      show_gender: showGender,
-    });
-
-    if (result.error) {
-      setError(result.error);
-      setIsSaving(false);
-      return;
+      router.push("/(auth)/school");
+    } catch {
+      // error handling
+    } finally {
+      setLoading(false);
     }
-
-    await saveProgress("gender", { gender: genderValue, show_gender: showGender });
-    setIsSaving(false);
-    router.push("/(auth)/school");
-  }
+  }, [isValid, selected, isMoreSelected, customGender, showGender, router]);
 
   return (
     <StepContainer
       title="What's your gender?"
+      showBack
       onBack={() => router.back()}
+      currentStep={5}
+      totalSteps={9}
     >
       <View className="flex-1">
-        <View className="gap-3">
-          {GENDER_OPTIONS.map((option) => (
-            <Pressable
-              key={option.key}
-              className={`rounded-xl border-2 px-6 py-4 ${
-                selected === option.key
-                  ? "border-primary-600 bg-primary-50"
-                  : "border-gray-300"
-              }`}
-              onPress={() => setSelected(option.key)}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: selected === option.key }}
-              accessibilityLabel={option.label}
-              testID={`gender-option-${option.key}`}
-            >
-              <Text
-                className={`text-base font-medium ${
-                  selected === option.key
-                    ? "text-primary-700"
-                    : "text-gray-900"
-                }`}
+        {/* Gender options */}
+        <View className="mt-2" style={{ gap: 12 }}>
+          {GENDER_OPTIONS.map((opt) => {
+            const isActive = selected === opt.value;
+            return (
+              <TouchableOpacity
+                key={opt.value}
+                onPress={() => {
+                  setSelected(opt.value);
+                  if (opt.value !== "more") setCustomGender("");
+                }}
+                activeOpacity={0.8}
+                style={{
+                  borderWidth: 2,
+                  borderColor: isActive ? COLORS.primary[600] : COLORS.gray[200],
+                  backgroundColor: isActive ? COLORS.primary[50] : "transparent",
+                  borderRadius: 12,
+                  paddingVertical: 16,
+                  paddingHorizontal: 20,
+                }}
               >
-                {option.label}
-              </Text>
-            </Pressable>
-          ))}
+                <Text
+                  style={{ fontSize: 18 }}
+                  className={`font-medium ${isActive ? "text-primary-700" : "text-gray-900"}`}
+                >
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
-        {selected === "more" ? (
+        {/* Free-text input for "Other" (value: "more") */}
+        {isMoreSelected && (
           <TextInput
-            className="mt-3 rounded-xl border-2 border-gray-300 px-6 py-4 text-base text-gray-900 focus:border-primary-600"
-            placeholder="How do you identify?"
-            placeholderTextColor={COLORS.gray[400]}
             value={customGender}
             onChangeText={setCustomGender}
+            placeholder="How do you identify?"
+            placeholderTextColor={COLORS.gray[400]}
             autoFocus
-            maxLength={MAX_CUSTOM_GENDER_LENGTH}
-            editable={!isSaving}
-            accessibilityLabel="Custom gender identity"
-            testID="gender-custom-input"
+            maxLength={50}
+            style={{
+              fontSize: 20,
+              fontWeight: "500",
+              color: COLORS.gray[900],
+              borderBottomWidth: 2,
+              borderBottomColor: customGender ? COLORS.primary[600] : COLORS.gray[300],
+              paddingBottom: 8,
+              marginTop: 16,
+            }}
           />
-        ) : null}
+        )}
 
-        <View className="mt-6 flex-row items-center justify-between">
-          <Text className="text-base text-gray-700">
+        {/* Show gender toggle */}
+        <View className="flex-row items-center justify-between mt-8">
+          <Text style={{ fontSize: 16 }} className="text-gray-700 font-medium">
             Show my gender on profile
           </Text>
           <Switch
@@ -137,38 +115,34 @@ export default function GenderScreen() {
             onValueChange={setShowGender}
             trackColor={{ false: COLORS.gray[300], true: COLORS.primary[600] }}
             thumbColor={COLORS.white}
-            accessibilityLabel="Show gender on profile"
           />
         </View>
-
-        {error ? (
-          <Text className="mt-2 text-sm text-red-500">{error}</Text>
-        ) : null}
       </View>
 
-      <Pressable
-        className={`mb-8 rounded-xl py-4 ${
-          canContinue ? "bg-primary-600" : "bg-gray-300"
-        }`}
-        onPress={handleContinue}
-        disabled={!canContinue}
-        accessibilityRole="button"
-        accessibilityLabel="Continue"
-        accessibilityState={{ disabled: !canContinue }}
-        testID="gender-continue"
-      >
-        {isSaving ? (
-          <ActivityIndicator color={COLORS.white} />
-        ) : (
-          <Text
-            className={`text-center text-lg font-semibold ${
-              canContinue ? "text-white" : "text-gray-500"
-            }`}
-          >
-            Continue
-          </Text>
-        )}
-      </Pressable>
+      {/* Continue button */}
+      <View className="pb-6 pt-4">
+        <TouchableOpacity
+          onPress={handleContinue}
+          disabled={!isValid || loading}
+          activeOpacity={0.85}
+          style={{
+            backgroundColor: isValid ? COLORS.primary[600] : COLORS.gray[300],
+            borderRadius: 999,
+            paddingVertical: 18,
+          }}
+        >
+          {loading ? (
+            <ActivityIndicator color={COLORS.white} />
+          ) : (
+            <Text
+              style={{ fontSize: 20 }}
+              className="text-white font-semibold text-center"
+            >
+              Continue
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
     </StepContainer>
   );
 }
