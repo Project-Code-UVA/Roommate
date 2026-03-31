@@ -89,7 +89,7 @@ export default function WelcomeScreen() {
               {loading === "google" ? (
                 <ActivityIndicator size="small" color={COLORS.gray[500]} />
               ) : (
-                <Ionicons name="logo-google" size={24} color="#4285F4" />
+                <Ionicons name="logo-google" size={24} color="#ffffff" />
               )}
             </TouchableOpacity>
 
@@ -103,7 +103,7 @@ export default function WelcomeScreen() {
               {loading === "microsoft" ? (
                 <ActivityIndicator size="small" color={COLORS.gray[500]} />
               ) : (
-                <Ionicons name="logo-microsoft" size={24} color="#00A4EF" />
+                <Ionicons name="logo-microsoft" size={24} color="#ffffff" />
               )}
             </TouchableOpacity>
           </View>
