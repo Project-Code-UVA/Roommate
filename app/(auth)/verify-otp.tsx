@@ -15,6 +15,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { StepContainer } from "@/components/onboarding/step-container";
 import { OtpInput } from "@/components/onboarding/otp-input";
 import { verifyOtp, sendOtp, createUserRecord } from "@/services/auth-service";
+import { supabase } from "@/lib/supabase";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { useSession } from "@/contexts/auth-context";
 import { COLORS } from "@/lib/constants";
@@ -88,7 +89,9 @@ export default function VerifyOtpScreen() {
           );
 
           if (createError) {
-            setErrorMessage(createError);
+            // Sign out to prevent a live session with no users row
+            await supabase.auth.signOut();
+            setErrorMessage("Could not create your account. Please try again.");
             setIsVerifying(false);
             return;
           }

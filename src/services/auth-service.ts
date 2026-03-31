@@ -9,8 +9,6 @@ import type { Session } from "@supabase/supabase-js";
 
 import { supabase } from "@/lib/supabase";
 
-const DEV_MODE = __DEV__;
-
 /**
  * Client-side age validation. Returns true if birthdate is 18+ years ago.
  * Server-side trigger enforces this as well.
@@ -33,11 +31,6 @@ export function validateAge(birthdate: Date): boolean {
 export async function sendOtp(
   phone: string,
 ): Promise<{ error: string | null }> {
-  if (DEV_MODE) {
-    // Skip actual SMS in dev — any 6-digit code will work in verifyOtp
-    return { error: null };
-  }
-
   const formattedPhone = phone.startsWith("+") ? phone : `+1${phone}`;
 
   const { error } = await supabase.auth.signInWithOtp({
@@ -54,41 +47,6 @@ export async function verifyOtp(
   phone: string,
   token: string,
 ): Promise<{ session: Session | null; error: string | null }> {
-  if (DEV_MODE) {
-    // Dev bypass — sign in with a dev email to get a real session
-    // This lets you test the full onboarding flow without SMS
-    const devEmail = `dev-${phone}@room-dev.local`;
-    const devPassword = "dev-password-123";
-
-    // Try sign in first, then sign up if user doesn't exist
-    const { data: signInData, error: signInError } =
-      await supabase.auth.signInWithPassword({
-        email: devEmail,
-        password: devPassword,
-      });
-
-    if (signInData?.session) {
-      return { session: signInData.session, error: null };
-    }
-
-    // User doesn't exist — sign up
-    if (signInError) {
-      const { data: signUpData, error: signUpError } =
-        await supabase.auth.signUp({
-          email: devEmail,
-          password: devPassword,
-        });
-
-      if (signUpError) {
-        return { session: null, error: signUpError.message };
-      }
-
-      return { session: signUpData?.session ?? null, error: null };
-    }
-
-    return { session: null, error: "Dev auth failed" };
-  }
-
   const formattedPhone = phone.startsWith("+") ? phone : `+1${phone}`;
 
   const { data, error } = await supabase.auth.verifyOtp({
