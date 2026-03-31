@@ -75,7 +75,7 @@ export default function TabLayout() {
 
   // Unauthenticated -> welcome screen
   if (!session) {
-    return <Redirect href="/welcome" />;
+    return <Redirect href="/(auth)/welcome" />;
   }
 
   // Authenticated but not onboarded -> onboarding flow

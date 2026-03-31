@@ -48,7 +48,6 @@ function AppContent() {
     <BottomSheetModalProvider>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="welcome" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ headerShown: true, presentation: "card" }} />
         <Stack.Screen name="profile/edit" options={{ headerShown: true, presentation: "card" }} />
