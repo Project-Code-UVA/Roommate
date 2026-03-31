@@ -21,12 +21,14 @@ function RootNavigator() {
 
     const inAuthGroup = segments[0] === "(auth)";
 
-    if (!session) {
+    if (!session && process.env.EXPO_PUBLIC_DEV_SKIP_AUTH !== "true") {
       // Not signed in → send to welcome/sign-in
       if (!inAuthGroup) {
         router.replace("/(auth)/welcome");
       }
-    } else if (!onboarded) {
+    } else if (!session) {
+      // Dev skip auth: allow free navigation without a session
+    } else if (!onboarded && process.env.EXPO_PUBLIC_DEV_SKIP_AUTH !== "true") {
       // Signed in but hasn't completed onboarding → sign out and send to welcome
       supabase.auth.signOut();
     } else {

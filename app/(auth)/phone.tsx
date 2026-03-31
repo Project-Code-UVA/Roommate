@@ -29,6 +29,12 @@ export default function PhoneScreen() {
 
   const handleSend = useCallback(async () => {
     if (!isValid) return;
+
+    if (process.env.EXPO_PUBLIC_DEV_SKIP_AUTH === "true") {
+      router.push("/(auth)/name");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
