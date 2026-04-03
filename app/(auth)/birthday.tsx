@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { StepContainer } from "@/components/onboarding/step-container";
 import { DatePicker } from "@/components/onboarding/date-picker";
 import { COLORS } from "@/lib/constants";
+import { useOnboarding } from "@/hooks/use-onboarding";
 
 /** Check if the user is at least 18 years old. */
 function validateAge(birthdate: Date): boolean {
@@ -24,20 +25,21 @@ function defaultBirthdate(): Date {
 
 export default function BirthdayScreen() {
   const router = useRouter();
+  const { saveProgress } = useOnboarding();
   const [selectedDate, setSelectedDate] = useState<Date>(defaultBirthdate);
 
-  const handleContinue = useCallback(() => {
+  const handleContinue = useCallback(async () => {
     if (!validateAge(selectedDate)) {
       Alert.alert(
         "Age Requirement",
         "You must be 18+ to use Room. Come back when you're old enough!",
-        [{ text: "OK", onPress: () => router.replace("/") }],
+        [{ text: "OK", onPress: () => router.replace("/(auth)/welcome") }],
       );
       return;
     }
-    // TODO: save birthdate via useOnboarding().saveProgress('birthday', { birthdate })
-    router.push("/(auth)/phone");
-  }, [selectedDate, router]);
+    await saveProgress("birthday", { birthdate: selectedDate.toISOString() });
+    router.push("/(auth)/signup");
+  }, [selectedDate, router, saveProgress]);
 
   const today = new Date();
   const minDate = new Date(today.getFullYear() - 100, 0, 1);

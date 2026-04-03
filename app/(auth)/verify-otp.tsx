@@ -5,6 +5,8 @@ import { StepContainer } from "@/components/onboarding/step-container";
 import { OtpInput } from "@/components/onboarding/otp-input";
 import { COLORS } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
+import { createUserRecord } from "@/services/auth-service";
+import { useOnboarding } from "@/hooks/use-onboarding";
 
 /** Format raw 10-digit string as (xxx) xxx-xxxx */
 function formatPhone(raw: string): string {
@@ -19,10 +21,12 @@ const RESEND_SECONDS = 60;
 export default function VerifyOtpScreen() {
   const router = useRouter();
   const { phone } = useLocalSearchParams<{ phone: string }>();
+  const { getProgress } = useOnboarding();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(RESEND_SECONDS);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const codeRef = useRef("");
 
   // Countdown timer for resend
   useEffect(() => {
@@ -42,19 +46,40 @@ export default function VerifyOtpScreen() {
 
   const handleComplete = useCallback(
     async (code: string) => {
+      if (!phone) {
+        setError("Phone number missing. Please go back and re-enter.");
+        return;
+      }
+      codeRef.current = code;
       setLoading(true);
       setError(null);
 
       try {
-        const { error } = await supabase.auth.verifyOtp({
+        const { data, error: otpError } = await supabase.auth.verifyOtp({
           phone: `+1${phone}`,
           token: code,
           type: "sms",
         });
-        if (error) throw error;
+        if (otpError) throw otpError;
 
-        // Auth state change will be picked up by AuthProvider.
-        // Navigate to next onboarding step.
+        // Create users row so downstream profile writes have a valid FK target.
+        const userId = data.user?.id;
+        if (userId) {
+          const progress = await getProgress();
+          const birthdate = progress?.birthdate as string | undefined;
+          if (birthdate) {
+            const { error: recordError } = await createUserRecord(
+              userId,
+              birthdate,
+              phone ?? "",
+            );
+            if (recordError) {
+              setError("Failed to create account. Please try again.");
+              return;
+            }
+          }
+        }
+
         router.push("/(auth)/name");
       } catch {
         setError("Invalid code. Please try again.");
@@ -62,7 +87,7 @@ export default function VerifyOtpScreen() {
         setLoading(false);
       }
     },
-    [phone, router],
+    [phone, router, getProgress],
   );
 
   const handleResend = useCallback(async () => {
@@ -74,7 +99,8 @@ export default function VerifyOtpScreen() {
       });
       if (error) throw error;
       setResendTimer(RESEND_SECONDS);
-      // Restart countdown
+      // Clear any existing interval before restarting countdown
+      if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = setInterval(() => {
         setResendTimer((prev) => {
           if (prev <= 1) {
@@ -150,7 +176,9 @@ export default function VerifyOtpScreen() {
       {/* Verify button */}
       <View className="pb-6 pt-4">
         <TouchableOpacity
-          onPress={() => {}}
+          onPress={() => {
+            if (codeRef.current.length === 6) handleComplete(codeRef.current);
+          }}
           disabled={loading}
           activeOpacity={0.85}
           style={{

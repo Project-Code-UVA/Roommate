@@ -41,6 +41,7 @@ type DiscoveryStackState = {
   readonly saveCurrent: () => void;
   readonly unsaveCurrent: () => void;
   readonly dismissMatch: () => void;
+  readonly refresh: () => Promise<void>;
 };
 
 // ---------------------------------------------------------------------------
@@ -235,6 +236,29 @@ export function useDiscoveryStack(userId: string): DiscoveryStackState {
     setMatchData(null);
   }, []);
 
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    hasReachedEnd.current = false;
+
+    const result = await getDiscoveryStack(userId, PAGE_SIZE, 0);
+
+    if (result.error) {
+      setError(result.error);
+      setIsLoading(false);
+      return;
+    }
+
+    const profiles = result.data ?? [];
+    setStack(profiles);
+    setOffset(profiles.length);
+    setIsLoading(false);
+
+    if (profiles.length < PAGE_SIZE) {
+      hasReachedEnd.current = true;
+    }
+  }, [userId]);
+
   // -------------------------------------------------------------------------
   // Return
   // -------------------------------------------------------------------------
@@ -251,5 +275,6 @@ export function useDiscoveryStack(userId: string): DiscoveryStackState {
     saveCurrent,
     unsaveCurrent,
     dismissMatch,
+    refresh,
   };
 }

@@ -4,78 +4,93 @@ import { useRouter } from "expo-router";
 import { StepContainer } from "@/components/onboarding/step-container";
 import { PhotoGrid } from "@/components/onboarding/photo-grid";
 import { COLORS } from "@/lib/constants";
+import { useSession } from "@/contexts/auth-context";
+import { useOnboarding } from "@/hooks/use-onboarding";
+import { pickImage, uploadPhoto, deletePhoto } from "@/services/photo-service";
 import type { PhotoSlot } from "@/components/onboarding/photo-grid";
 
 const MIN_PHOTOS = 3;
 
 export default function PhotosScreen() {
   const router = useRouter();
+  const { session } = useSession();
+  const { saveProgress } = useOnboarding();
   const [photos, setPhotos] = useState<PhotoSlot[]>([]);
   const [loading, setLoading] = useState(false);
 
   const filledCount = photos.filter(Boolean).length;
   const isValid = filledCount >= MIN_PHOTOS; // MODIFIED: Continue disabled until at least 3 photos selected
 
+  const uploadFromSource = useCallback(async (source: "camera" | "gallery", index: number) => {
+    if (!session?.user.id) return;
+
+    try {
+      const result = await pickImage(source, 1);
+      if (result.canceled || !result.assets?.[0]) return;
+
+      const uri = result.assets[0].uri;
+
+      // Show local preview immediately
+      const tempId = `temp-${Date.now()}`;
+      setPhotos((prev) => {
+        const next = [...prev];
+        while (next.length <= index) next.push(null);
+        next[index] = { id: tempId, uri, uploaded: false };
+        return next;
+      });
+
+      const { url, error } = await uploadPhoto(session.user.id, uri, index);
+      if (error) {
+        // Revert the preview on failure
+        setPhotos((prev) => prev.map((p) => (p?.id === tempId ? null : p)).filter(Boolean));
+        Alert.alert("Upload Failed", error);
+        return;
+      }
+
+      // Replace temp with real uploaded photo
+      setPhotos((prev) =>
+        prev.map((p) => (p?.id === tempId ? { id: `photo-${Date.now()}`, uri: url, uploaded: true } : p)),
+      );
+    } catch {
+      Alert.alert("Error", "Failed to add photo. Please try again.");
+    }
+  }, [session?.user.id]);
+
   const handleAdd = useCallback((index: number) => {
     Alert.alert("Add Photo", "Choose a source", [
-      {
-        text: "Take Photo",
-        onPress: () => {
-          // TODO: call pickImage('camera') then uploadPhoto
-          // Stub: add a placeholder
-          setPhotos((prev) => {
-            const next = [...prev];
-            while (next.length <= index) next.push(null);
-            next[index] = {
-              id: `photo-${Date.now()}`,
-              uri: `https://picsum.photos/seed/${Date.now()}/400/400`,
-              uploaded: true,
-            };
-            return next;
-          });
-        },
-      },
-      {
-        text: "Choose from Library",
-        onPress: () => {
-          // TODO: call pickImage('gallery') then uploadPhoto
-          setPhotos((prev) => {
-            const next = [...prev];
-            while (next.length <= index) next.push(null);
-            next[index] = {
-              id: `photo-${Date.now()}`,
-              uri: `https://picsum.photos/seed/${Date.now() + 1}/400/400`,
-              uploaded: true,
-            };
-            return next;
-          });
-        },
-      },
+      { text: "Take Photo", onPress: () => uploadFromSource("camera", index) },
+      { text: "Choose from Library", onPress: () => uploadFromSource("gallery", index) },
       { text: "Cancel", style: "cancel" },
     ]);
-  }, []);
+  }, [uploadFromSource]);
 
   const handleRemove = useCallback((index: number) => {
-    // TODO: call deletePhoto from photo-service
+    const photo = photos[index];
+    if (!photo || !session?.user.id) return;
+
+    // Remove from UI immediately
     setPhotos((prev) => {
       const next = [...prev];
       next[index] = null;
-      // Compact: remove trailing nulls then shift filled items forward
-      const compacted = next.filter(Boolean);
-      return compacted;
+      return next.filter(Boolean);
     });
-  }, []);
+
+    // Best-effort delete from server (don't block UI)
+    if (photo.uploaded && photo.id) {
+      const filePath = `${session.user.id}/${photo.id}.jpg`;
+      deletePhoto(session.user.id, photo.id, filePath);
+    }
+  }, [photos, session?.user.id]);
 
   const handleContinue = useCallback(async () => {
     if (!isValid) return;
     setLoading(true);
 
     try {
-      // TODO: save progress
-      await new Promise((r) => setTimeout(r, 400));
+      await saveProgress("photos", { photoCount: filledCount });
       router.push("/(auth)/bio");
     } catch {
-      // error handling
+      Alert.alert("Error", "Failed to save. Please try again.");
     } finally {
       setLoading(false);
     }

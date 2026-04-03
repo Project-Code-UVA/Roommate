@@ -3,6 +3,9 @@ import { View, Text, TextInput, TouchableOpacity, Switch, ActivityIndicator } fr
 import { useRouter } from "expo-router";
 import { StepContainer } from "@/components/onboarding/step-container";
 import { COLORS } from "@/lib/constants";
+import { useSession } from "@/contexts/auth-context";
+import { updateProfile } from "@/services/profile-service";
+import { useOnboarding } from "@/hooks/use-onboarding";
 
 /** Internal value kept as "more" for backend compatibility; display label is "Other". */
 const GENDER_OPTIONS = [
@@ -16,6 +19,8 @@ type GenderValue = (typeof GENDER_OPTIONS)[number]["value"];
 
 export default function GenderScreen() {
   const router = useRouter();
+  const { session } = useSession();
+  const { saveProgress } = useOnboarding();
   const [selected, setSelected] = useState<GenderValue | null>(null);
   const [customGender, setCustomGender] = useState("");
   const [showGender, setShowGender] = useState(true);
@@ -31,13 +36,18 @@ export default function GenderScreen() {
     try {
       const genderValue = isMoreSelected ? customGender.trim() : selected;
 
-      // TODO: call updateProfile(session.user.id, { gender: genderValue, show_gender: showGender })
-      // TODO: call saveProgress('gender', { gender: genderValue, show_gender: showGender })
-      await new Promise((r) => setTimeout(r, 400));
+      if (!session?.user.id) return;
 
+      const { error: profileError } = await updateProfile(session.user.id, {
+        gender: genderValue,
+        show_gender: showGender,
+      });
+      if (profileError) throw new Error(profileError);
+
+      await saveProgress("gender", { gender: genderValue, show_gender: showGender });
       router.push("/(auth)/school");
     } catch {
-      // error handling
+      // TODO: show user-facing error
     } finally {
       setLoading(false);
     }

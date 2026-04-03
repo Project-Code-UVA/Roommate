@@ -3,9 +3,14 @@ import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from "reac
 import { useRouter } from "expo-router";
 import { StepContainer } from "@/components/onboarding/step-container";
 import { COLORS } from "@/lib/constants";
+import { useSession } from "@/contexts/auth-context";
+import { updateProfile } from "@/services/profile-service";
+import { useOnboarding } from "@/hooks/use-onboarding";
 
 export default function NameScreen() {
   const router = useRouter();
+  const { session } = useSession();
+  const { saveProgress } = useOnboarding();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState(""); // MODIFIED: added lastName state variable
   const [error, setError] = useState<string | null>(null);
@@ -24,10 +29,17 @@ export default function NameScreen() {
         ? `${firstName.trim()} ${lastName.trim()}`
         : firstName.trim();
 
-      // TODO: call updateProfile(session.user.id, { display_name: displayName })
-      // TODO: call saveProgress('name', { display_name: displayName })
-      await new Promise((r) => setTimeout(r, 400));
+      if (!session?.user.id) {
+        setError("Session expired. Please restart onboarding.");
+        return;
+      }
 
+      const { error: profileError } = await updateProfile(session.user.id, {
+        display_name: displayName,
+      });
+      if (profileError) throw new Error(profileError);
+
+      await saveProgress("name", { display_name: displayName });
       router.push("/(auth)/gender");
     } catch {
       setError("Failed to save. Please try again.");

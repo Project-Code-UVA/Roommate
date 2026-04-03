@@ -1,38 +1,52 @@
 import { useState, useCallback } from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { StepContainer } from "@/components/onboarding/step-container";
 import { SchoolSearch } from "@/components/onboarding/school-search";
 import { COLORS } from "@/lib/constants";
+import { useSession } from "@/contexts/auth-context";
+import { useOnboarding } from "@/hooks/use-onboarding";
+import { addUserSchool, removeUserSchool } from "@/services/school-service";
 import type { School } from "@/components/onboarding/school-search";
 
 export default function SchoolScreen() {
   const router = useRouter();
+  const { session } = useSession();
+  const { saveProgress } = useOnboarding();
   const [selectedSchools, setSelectedSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(false);
 
   const isValid = selectedSchools.length > 0;
 
-  const handleAdd = useCallback((school: School) => {
-    // TODO: call addUserSchool(session.user.id, school.id)
+  const handleAdd = useCallback(async (school: School) => {
+    if (!session?.user.id) return;
+    const { error } = await addUserSchool(session.user.id, school.id);
+    if (error) {
+      Alert.alert("Error", `Failed to add school: ${error}`);
+      return;
+    }
     setSelectedSchools((prev) => [...prev, school]);
-  }, []);
+  }, [session?.user.id]);
 
-  const handleRemove = useCallback((school: School) => {
-    // TODO: call removeUserSchool(session.user.id, school.id)
+  const handleRemove = useCallback(async (school: School) => {
+    if (!session?.user.id) return;
+    const { error } = await removeUserSchool(session.user.id, school.id);
+    if (error) {
+      Alert.alert("Error", "Failed to remove school. Please try again.");
+      return;
+    }
     setSelectedSchools((prev) => prev.filter((s) => s.id !== school.id));
-  }, []);
+  }, [session?.user.id]);
 
   const handleContinue = useCallback(async () => {
     if (!isValid) return;
     setLoading(true);
 
     try {
-      // TODO: call saveProgress('school', { schoolIds: selectedSchools.map(s => s.id) })
-      await new Promise((r) => setTimeout(r, 400));
+      await saveProgress("school", { schoolIds: selectedSchools.map((s) => s.id) });
       router.push("/(auth)/photos");
     } catch {
-      // error handling
+      Alert.alert("Error", "Failed to save. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -40,8 +54,8 @@ export default function SchoolScreen() {
 
   return (
     <StepContainer
-      title="Where do you go to school?"
-      subtitle="You'll connect with people at your school"
+      title="What schools are you interested in?"
+      subtitle="Add schools where you're looking for roommates"
       showBack
       onBack={() => router.back()}
       currentStep={6}

@@ -3,12 +3,18 @@ import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert } fro
 import { useRouter } from "expo-router";
 import { StepContainer } from "@/components/onboarding/step-container";
 import { COLORS } from "@/lib/constants";
+import { useSession } from "@/contexts/auth-context";
+import { updateProfile } from "@/services/profile-service";
+import { markOnboardingComplete } from "@/services/auth-service";
+import { useOnboarding } from "@/hooks/use-onboarding";
 
 const MAX_BIO = 300;
 const WARN_THRESHOLD = 280;
 
 export default function BioScreen() {
   const router = useRouter();
+  const { session, refreshOnboardingStatus } = useSession();
+  const { clearProgress } = useOnboarding();
   const [bio, setBio] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -16,24 +22,31 @@ export default function BioScreen() {
   const isNearLimit = bio.length >= WARN_THRESHOLD;
 
   const handleComplete = useCallback(async () => {
-    if (!isValid) return;
+    if (!isValid || !session?.user.id) return;
     setLoading(true);
 
     try {
-      // TODO: call updateProfile(session.user.id, { bio: bio.trim() })
-      // TODO: call markOnboardingComplete(session.user.id)
-      // TODO: call refreshOnboardingStatus() from auth context
-      // TODO: call clearProgress() to remove AsyncStorage onboarding data
-      await new Promise((r) => setTimeout(r, 600));
+      const profileResult = await updateProfile(session.user.id, { bio: bio.trim() });
+      if (profileResult.error) {
+        Alert.alert("Error", `Failed to save your bio: ${profileResult.error}`);
+        return;
+      }
 
-      // On success the auth context change redirects to main tabs
+      const onboardingResult = await markOnboardingComplete(session.user.id);
+      if (onboardingResult.error) {
+        Alert.alert("Error", `Failed to complete profile: ${onboardingResult.error}`);
+        return;
+      }
+
+      await Promise.all([refreshOnboardingStatus(), clearProgress()]);
+
       router.replace("/(tabs)");
     } catch {
       Alert.alert("Error", "Failed to save your bio. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, [isValid, bio, router]);
+  }, [isValid, bio, session?.user.id, refreshOnboardingStatus, clearProgress, router]);
 
   return (
     <StepContainer

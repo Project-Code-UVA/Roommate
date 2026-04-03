@@ -12,7 +12,6 @@ import { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
-  Image,
   Modal,
   ActivityIndicator,
   Share,
@@ -25,6 +24,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SwipeCard } from "@/components/discovery/swipe-card";
+import { PhotoCarousel } from "@/components/discovery/photo-carousel";
 import { SwipeTutorial } from "@/components/discovery/swipe-tutorial";
 import { EmptyState } from "@/components/discovery/empty-state";
 import { MatchModal } from "@/components/match/match-modal";
@@ -44,6 +44,15 @@ import type { ReportCategory } from "@/types/chat";
 // ---------------------------------------------------------------------------
 
 const GRADIENT_COLORS = ["#f5f3ff", "#fdf2f8", "#fff7ed"] as const;
+
+function getHabitChips(profile: { year: string | null; nitty_gritty?: { self?: Record<string, string> } }): string[] {
+  const self = profile.nitty_gritty?.self ?? {};
+  const chips: string[] = [];
+  if (self.sleep_schedule) chips.push(self.sleep_schedule);
+  if (self.cleanliness) chips.push(self.cleanliness);
+  if (profile.year) chips.push(`Class of ${profile.year}`);
+  return chips.slice(0, 3);
+}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -66,6 +75,7 @@ export default function DiscoveryScreen() {
     dismissCurrent,
     likeCurrent,
     dismissMatch,
+    refresh,
   } = useDiscoveryStack(userId);
 
   const nextProfile = stack[1] ?? null;
@@ -165,7 +175,7 @@ export default function DiscoveryScreen() {
         style={[styles.screen, { paddingTop: insets.top, paddingBottom: TAB_BAR_HEIGHT }]}
         testID="discovery-empty"
       >
-        <EmptyState />
+        <EmptyState onRefresh={refresh} />
       </LinearGradient>
     );
   }
@@ -199,10 +209,16 @@ export default function DiscoveryScreen() {
       <View style={styles.cardStack}>
         {nextProfile && nextProfile.photos[0] && (
           <View style={styles.behindCard} pointerEvents="none">
-            <Image
-              source={{ uri: nextProfile.photos[0].url }}
-              style={styles.behindCardImage}
-              resizeMode="cover"
+            <PhotoCarousel
+              photos={nextProfile.photos}
+              displayName={nextProfile.display_name}
+              year={nextProfile.year}
+              selfieVerified={nextProfile.selfie_verified}
+              hometown={nextProfile.hometown}
+              profileId={nextProfile.user_id}
+              compatibility={Math.round(nextProfile.rank_score * 100)}
+              bio={nextProfile.bio}
+              habitChips={getHabitChips(nextProfile)}
             />
           </View>
         )}
@@ -288,17 +304,13 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     borderRadius: 24,
     overflow: "hidden",
-    transform: [{ scale: 0.93 }],
-    opacity: 0.5,
+    transform: [{ scale: 0.95 }],
+    opacity: 0.7,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 4,
-  },
-  behindCardImage: {
-    width: "100%",
-    height: "100%",
   },
   center: {
     flex: 1,

@@ -20,6 +20,15 @@ import {
   Text,
   View,
 } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  interpolate,
+  runOnJS,
+} from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -41,6 +50,9 @@ import type { ReportCategory } from "@/types/chat";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const HERO_HEIGHT = SCREEN_HEIGHT * 0.58;
+const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
+const MAX_ROTATION = 12;
+const FLY_OUT_X = SCREEN_WIDTH * 1.5;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -219,15 +231,78 @@ export function ExploreProfileView({
     [profile, userId],
   );
 
-  const handleLike = useCallback(() => {
+  const translateX = useSharedValue(0);
+  const isAnimating = useSharedValue(false);
+
+  // Reset swipe state when profile changes
+  useEffect(() => {
+    translateX.value = 0;
+    isAnimating.value = false;
+  }, [profile?.user_id, translateX, isAnimating]);
+
+  const triggerLike = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onLike();
     onClose();
   }, [onLike, onClose]);
 
-  const handleDismiss = useCallback(() => {
+  const triggerDismiss = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onDismiss();
     onClose();
   }, [onDismiss, onClose]);
+
+  const panGesture = Gesture.Pan()
+    .activeOffsetX([-15, 15])
+    .onUpdate((event) => {
+      "worklet";
+      if (isAnimating.value) return;
+      translateX.value = event.translationX;
+    })
+    .onEnd((event) => {
+      "worklet";
+      if (isAnimating.value) return;
+
+      if (event.translationX > SWIPE_THRESHOLD) {
+        isAnimating.value = true;
+        translateX.value = withSpring(
+          FLY_OUT_X,
+          { damping: 20, stiffness: 200, mass: 0.8 },
+          () => { runOnJS(triggerLike)(); },
+        );
+      } else if (event.translationX < -SWIPE_THRESHOLD) {
+        isAnimating.value = true;
+        translateX.value = withSpring(
+          -FLY_OUT_X,
+          { damping: 20, stiffness: 200, mass: 0.8 },
+          () => { runOnJS(triggerDismiss)(); },
+        );
+      } else {
+        translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
+      }
+    });
+
+  const cardAnimStyle = useAnimatedStyle(() => {
+    const rotation = interpolate(
+      translateX.value,
+      [-SCREEN_WIDTH, 0, SCREEN_WIDTH],
+      [-MAX_ROTATION, 0, MAX_ROTATION],
+    );
+    return {
+      transform: [
+        { translateX: translateX.value },
+        { rotate: `${rotation}deg` },
+      ],
+    };
+  });
+
+  const likeIndicatorStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(translateX.value, [0, SWIPE_THRESHOLD], [0, 1], "clamp"),
+  }));
+
+  const passIndicatorStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(translateX.value, [-SWIPE_THRESHOLD, 0], [1, 0], "clamp"),
+  }));
 
   const goNextPhoto = useCallback(() => {
     if (!profile) return;
@@ -259,7 +334,17 @@ export function ExploreProfileView({
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+      <GestureDetector gesture={panGesture}>
+      <Animated.View style={[styles.container, { paddingBottom: insets.bottom }, cardAnimStyle]}>
+        {/* LIKE pill indicator */}
+        <Animated.View style={[styles.likePill, likeIndicatorStyle]} pointerEvents="none">
+          <Text style={styles.likePillText}>LIKE</Text>
+        </Animated.View>
+        {/* NOPE pill indicator */}
+        <Animated.View style={[styles.nopePill, passIndicatorStyle]} pointerEvents="none">
+          <Text style={styles.nopePillText}>NOPE</Text>
+        </Animated.View>
+
         {/* ── Scrollable body ── */}
         <ScrollView
           style={styles.scroll}
@@ -423,39 +508,10 @@ export function ExploreProfileView({
               </View>
             )}
 
-            {/* Bottom padding for action bar */}
-            <View style={styles.actionBarSpacer} />
           </View>
         </ScrollView>
-
-        {/* ── Fixed action bar ── */}
-        <View style={[styles.actionBar, { paddingBottom: insets.bottom + 12 }]}>
-          <Pressable
-            onPress={handleDismiss}
-            style={styles.dismissBtn}
-            testID="explore-profile-dismiss"
-            accessibilityRole="button"
-            accessibilityLabel="Pass"
-          >
-            <Ionicons name="close" size={32} color="#ef4444" strokeWidth={2.5} />
-          </Pressable>
-
-          <Pressable
-            onPress={handleLike}
-            style={styles.likeBtn}
-            testID="explore-profile-like"
-            accessibilityRole="button"
-            accessibilityLabel="Like"
-          >
-            <LinearGradient
-              colors={[COLORS.primary[500], "#ec4899"]}
-              style={styles.likeBtnGradient}
-            >
-              <Ionicons name="heart" size={36} color="#fff" />
-            </LinearGradient>
-          </Pressable>
-        </View>
-      </View>
+      </Animated.View>
+      </GestureDetector>
 
       {/* Report sheet */}
       <ReportSheet
@@ -685,51 +741,43 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
 
-  // ── Action bar ──
-  actionBarSpacer: {
-    height: 100,
-  },
-  actionBar: {
+  // ── Swipe indicators ──
+  likePill: {
     position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "rgba(255,255,255,0.97)",
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: COLORS.gray[200],
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 32,
-    paddingTop: 14,
+    top: 100,
+    right: 20,
+    backgroundColor: "#22c55e",
+    borderWidth: 3,
+    borderColor: "#fff",
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    transform: [{ rotate: "12deg" }],
+    zIndex: 30,
   },
-  dismissBtn: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: COLORS.gray[200],
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
+  likePillText: {
+    color: "#fff",
+    fontSize: 19,
+    fontWeight: "800",
+    letterSpacing: 1,
   },
-  likeBtn: {
-    shadowColor: COLORS.primary[600],
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 6,
+  nopePill: {
+    position: "absolute",
+    top: 100,
+    left: 20,
+    backgroundColor: "#ef4444",
+    borderWidth: 3,
+    borderColor: "#fff",
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    transform: [{ rotate: "-12deg" }],
+    zIndex: 30,
   },
-  likeBtnGradient: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    alignItems: "center",
-    justifyContent: "center",
+  nopePillText: {
+    color: "#fff",
+    fontSize: 19,
+    fontWeight: "800",
+    letterSpacing: 1,
   },
 });

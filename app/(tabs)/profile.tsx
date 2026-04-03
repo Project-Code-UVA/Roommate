@@ -5,7 +5,7 @@
  * that navigate to dedicated sub-pages for editing.
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { SelfieCapture } from "@/components/verification/selfie-capture";
 import { useProfile } from "@/hooks/use-profile";
 import { useSession } from "@/contexts/auth-context";
+import { getUserSchools } from "@/services/school-service";
 import { COLORS } from "@/lib/constants";
 
 // ---------------------------------------------------------------------------
@@ -107,12 +108,21 @@ export default function ProfileScreen() {
 
   const [refreshing, setRefreshing] = useState(false);
   const [showSelfieCapture, setShowSelfieCapture] = useState(false);
+  const [schoolCount, setSchoolCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    getUserSchools(userId).then((schools) => setSchoolCount(schools.length));
+  }, [userId]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refresh();
+    await Promise.all([
+      refresh(),
+      getUserSchools(userId).then((s) => setSchoolCount(s.length)),
+    ]);
     setRefreshing(false);
-  }, [refresh]);
+  }, [refresh, userId]);
 
   const primaryPhoto = photos[0] ?? null;
 
@@ -192,6 +202,13 @@ export default function ProfileScreen() {
             label="My Photos"
             detail={photos.length > 0 ? `${photos.length} photos` : "Add photos"}
             onPress={() => router.push("/profile/photos" as never)}
+          />
+          <DirectoryRow
+            iconName="school-outline"
+            iconBg="#0ea5e9"
+            label="My Schools"
+            detail={schoolCount != null ? `${schoolCount} school${schoolCount !== 1 ? "s" : ""}` : undefined}
+            onPress={() => router.push("/profile/schools" as never)}
             isLast
           />
         </Section>

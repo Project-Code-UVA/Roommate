@@ -5,9 +5,12 @@ import { useRouter } from "expo-router";
 import { StepContainer } from "@/components/onboarding/step-container";
 import { COLORS } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
+import { createUserRecord } from "@/services/auth-service";
+import { useOnboarding } from "@/hooks/use-onboarding";
 
 export default function SignupScreen() {
   const router = useRouter();
+  const { getProgress } = useOnboarding();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -17,7 +20,7 @@ export default function SignupScreen() {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const isValid =
-    email.includes("@") &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) &&
     password.length >= 6 &&
     password === confirmPassword;
 
@@ -33,8 +36,18 @@ export default function SignupScreen() {
       });
       if (error) throw error;
 
-      // Navigate to the first onboarding step
-      router.replace("/(auth)/birthday");
+      // Create users row immediately after auth signup.
+      // Phone is nullable — it gets set later during OTP verification.
+      const userId = data.user?.id;
+      if (userId) {
+        const progress = await getProgress();
+        const birthdate = progress?.birthdate as string | undefined;
+        if (birthdate) {
+          await createUserRecord(userId, birthdate, "");
+        }
+      }
+
+      router.replace("/(auth)/phone");
     } catch (e: any) {
       if (e.message?.includes("already registered")) {
         setError("An account with this email already exists. Try logging in.");
@@ -44,7 +57,7 @@ export default function SignupScreen() {
     } finally {
       setLoading(false);
     }
-  }, [isValid, email, password]);
+  }, [isValid, email, password, getProgress]);
 
   return (
     <StepContainer

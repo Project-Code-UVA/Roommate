@@ -4,6 +4,9 @@ import { useRouter } from "expo-router";
 import { StepContainer } from "@/components/onboarding/step-container";
 import { COLORS } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
+import { createUserRecord } from "@/services/auth-service";
+import { useSession } from "@/contexts/auth-context";
+import { useOnboarding } from "@/hooks/use-onboarding";
 
 /** Format raw digits as (xxx) xxx-xxxx */
 function formatPhone(raw: string): string {
@@ -15,6 +18,8 @@ function formatPhone(raw: string): string {
 
 export default function PhoneScreen() {
   const router = useRouter();
+  const { session } = useSession();
+  const { getProgress } = useOnboarding();
   const [rawDigits, setRawDigits] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,7 +35,16 @@ export default function PhoneScreen() {
   const handleSend = useCallback(async () => {
     if (!isValid) return;
 
-    if (process.env.EXPO_PUBLIC_DEV_SKIP_AUTH === "true") {
+    if (__DEV__ && process.env.EXPO_PUBLIC_DEV_SKIP_AUTH === "true") {
+      // Still need to create the users row so downstream profile writes work.
+      const userId = session?.user.id;
+      if (userId) {
+        const progress = await getProgress();
+        const birthdate = progress?.birthdate as string | undefined;
+        if (birthdate) {
+          await createUserRecord(userId, birthdate, rawDigits);
+        }
+      }
       router.push("/(auth)/name");
       return;
     }
@@ -50,7 +64,7 @@ export default function PhoneScreen() {
     } finally {
       setLoading(false);
     }
-  }, [isValid, rawDigits, router]);
+  }, [isValid, rawDigits, router, session, getProgress]);
 
   return (
     <StepContainer

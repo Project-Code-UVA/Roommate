@@ -120,10 +120,6 @@ export default function ExploreScreen() {
     await dismissSelected();
   }, [dismissSelected]);
 
-  const handleMessage = useCallback(async () => {
-    await likeSelected();
-  }, [likeSelected]);
-
   const handleMatchSendMessage = useCallback(() => {
     if (matchData?.threadId) {
       dismissMatch();
@@ -236,7 +232,7 @@ export default function ExploreScreen() {
         nextProfile={nextProfile}
         onLike={handleLike}
         onDismiss={handleDismiss}
-        onMessage={handleMessage}
+        onMessage={handleLike}
         onClose={clearSelected}
         visible={selectedProfile !== null}
       />

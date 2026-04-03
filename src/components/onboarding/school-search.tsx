@@ -1,7 +1,8 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { View, Text, TextInput, TouchableOpacity, FlatList } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/lib/constants";
+import { searchSchools } from "@/services/school-service";
 
 export interface School {
   id: string;
@@ -14,28 +15,16 @@ interface SchoolSearchProps {
   onRemove: (school: School) => void;
 }
 
-/** Stub list — replace with searchSchools() from school-service when available. */
-const STUB_SCHOOLS: School[] = [
-  { id: "1", name: "UCLA" },
-  { id: "2", name: "USC" },
-  { id: "3", name: "UC Berkeley" },
-  { id: "4", name: "Stanford University" },
-  { id: "5", name: "UC San Diego" },
-  { id: "6", name: "UC Davis" },
-  { id: "7", name: "UC Irvine" },
-  { id: "8", name: "UC Santa Barbara" },
-  { id: "9", name: "Cal Poly SLO" },
-  { id: "10", name: "San Jose State University" },
-  { id: "11", name: "University of Washington" },
-  { id: "12", name: "Arizona State University" },
-];
 
 export function SchoolSearch({ selectedSchools, onAdd, onRemove }: SchoolSearchProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<School[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const selectedIds = new Set(selectedSchools.map((s) => s.id));
+  const selectedIds = useMemo(
+    () => new Set(selectedSchools.map((s) => s.id)),
+    [selectedSchools],
+  );
 
   // Debounced search
   useEffect(() => {
@@ -46,13 +35,9 @@ export function SchoolSearch({ selectedSchools, onAdd, onRemove }: SchoolSearchP
       return;
     }
 
-    debounceRef.current = setTimeout(() => {
-      // TODO: replace with searchSchools(query) from school-service
-      const q = query.toLowerCase();
-      const matched = STUB_SCHOOLS.filter(
-        (s) => s.name.toLowerCase().includes(q) && !selectedIds.has(s.id),
-      );
-      setResults(matched);
+    debounceRef.current = setTimeout(async () => {
+      const matched = await searchSchools(query);
+      setResults(matched.filter((s) => !selectedIds.has(s.id)));
     }, 300);
 
     return () => {
