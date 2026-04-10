@@ -122,7 +122,7 @@ export default function VerifyOtpScreen() {
       showBack
       onBack={() => router.back()}
       currentStep={3}
-      totalSteps={9}
+      totalSteps={10}
     >
       <View className="flex-1">
         {/* OTP boxes */}

@@ -10,6 +10,7 @@ import { ProfileFields } from "@/components/profile/profile-fields";
 import { useProfile } from "@/hooks/use-profile";
 import { useSession } from "@/contexts/auth-context";
 import { COLORS } from "@/lib/constants";
+import type { NittyGritty } from "@/types/filters";
 
 export default function EditProfileScreen() {
   const { session } = useSession();
@@ -52,6 +53,7 @@ export default function EditProfileScreen() {
             hometown={profile.hometown}
             showHometown={profile.show_hometown}
             year={profile.year}
+            nittyGritty={profile.nitty_gritty as NittyGritty | null}
             onUpdate={updateField}
           />
         </ScrollView>

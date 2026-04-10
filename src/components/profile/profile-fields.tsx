@@ -7,6 +7,7 @@
 
 import { useState, useCallback } from "react";
 import {
+  Alert,
   View,
   Text,
   TextInput,
@@ -17,7 +18,15 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 
 import { COLORS } from "@/lib/constants";
+import {
+  FILTER_CATEGORY_ORDER,
+  FILTER_LABELS,
+  FILTER_OPTIONS,
+  FILTER_VALUE_LABELS,
+} from "@/constants/filter-options";
 import type { ProfileUpdate } from "@/services/profile-service";
+import type { Json } from "@/types/database.types";
+import type { FilterCategory, NittyGritty } from "@/types/filters";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -30,6 +39,7 @@ type ProfileFieldsProps = {
   readonly hometown: string | null;
   readonly showHometown: boolean;
   readonly year: string | null;
+  readonly nittyGritty: NittyGritty | null;
   readonly onUpdate: (fields: ProfileUpdate) => Promise<{ error: string | null }>;
 };
 
@@ -56,6 +66,7 @@ export function ProfileFields({
   hometown,
   showHometown,
   year,
+  nittyGritty,
   onUpdate,
 }: ProfileFieldsProps) {
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -72,6 +83,53 @@ export function ProfileFields({
       await onUpdate({ [field]: editValue || null });
     },
     [editValue, onUpdate],
+  );
+
+  const pickLifestyleOption = useCallback(
+    (category: FilterCategory) => {
+      const currentValue = nittyGritty?.self?.[category];
+      const options = FILTER_OPTIONS[category];
+
+      Alert.alert(
+        FILTER_LABELS[category],
+        currentValue ? `Currently: ${FILTER_VALUE_LABELS[category][currentValue]}` : undefined,
+        [
+          ...options.map((value) => ({
+            text: currentValue === value ? `✓  ${FILTER_VALUE_LABELS[category][value]}` : FILTER_VALUE_LABELS[category][value],
+            onPress: () => {
+              const updatedSelf = { ...(nittyGritty?.self ?? {}), [category]: value };
+              onUpdate({
+                nitty_gritty: {
+                  self: updatedSelf,
+                  preferences: nittyGritty?.preferences ?? {},
+                  dealbreakers: nittyGritty?.dealbreakers ?? {},
+                } as unknown as Json,
+              });
+            },
+          })),
+          ...(currentValue
+            ? [
+                {
+                  text: "Remove",
+                  style: "destructive" as const,
+                  onPress: () => {
+                    const { [category]: _removed, ...remainingSelf } = nittyGritty?.self ?? {};
+                    onUpdate({
+                      nitty_gritty: {
+                        self: remainingSelf,
+                        preferences: nittyGritty?.preferences ?? {},
+                        dealbreakers: nittyGritty?.dealbreakers ?? {},
+                      } as unknown as Json,
+                    });
+                  },
+                },
+              ]
+            : []),
+          { text: "Cancel", style: "cancel" as const },
+        ],
+      );
+    },
+    [nittyGritty, onUpdate],
   );
 
   return (
@@ -229,6 +287,38 @@ export function ProfileFields({
           </View>
         </View>
       </View>
+
+      {/* ── LIFESTYLE ── */}
+      <SectionHeader title="LIFESTYLE" />
+      <View style={styles.group}>
+        {FILTER_CATEGORY_ORDER.map((category, idx) => {
+          const currentValue = nittyGritty?.self?.[category];
+          const isLast = idx === FILTER_CATEGORY_ORDER.length - 1;
+          return (
+            <View key={category}>
+              <Pressable
+                style={styles.row}
+                onPress={() => pickLifestyleOption(category)}
+              >
+                <Text style={styles.rowLabelLifestyle}>{FILTER_LABELS[category]}</Text>
+                <View style={styles.rowRight}>
+                  {currentValue ? (
+                    <View style={styles.lifestyleChip}>
+                      <Text style={styles.lifestyleChipText}>
+                        {FILTER_VALUE_LABELS[category][currentValue] ?? currentValue}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.rowPlaceholder}>Add</Text>
+                  )}
+                  <Ionicons name="chevron-forward" size={16} color={COLORS.gray[300]} />
+                </View>
+              </Pressable>
+              {!isLast && <Separator />}
+            </View>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -326,5 +416,22 @@ const styles = StyleSheet.create({
   toggleLabel: {
     fontSize: 13,
     color: COLORS.gray[400],
+  },
+  rowLabelLifestyle: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: COLORS.gray[800],
+    flex: 1,
+  },
+  lifestyleChip: {
+    backgroundColor: COLORS.primary[50],
+    borderRadius: 9999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  lifestyleChipText: {
+    fontSize: 14,
+    color: COLORS.primary[700],
+    fontWeight: "500",
   },
 });

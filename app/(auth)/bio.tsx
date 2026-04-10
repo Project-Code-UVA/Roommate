@@ -5,7 +5,6 @@ import { StepContainer } from "@/components/onboarding/step-container";
 import { COLORS } from "@/lib/constants";
 import { useSession } from "@/contexts/auth-context";
 import { updateProfile } from "@/services/profile-service";
-import { markOnboardingComplete } from "@/services/auth-service";
 import { useOnboarding } from "@/hooks/use-onboarding";
 
 const MAX_BIO = 300;
@@ -13,8 +12,8 @@ const WARN_THRESHOLD = 280;
 
 export default function BioScreen() {
   const router = useRouter();
-  const { session, refreshOnboardingStatus } = useSession();
-  const { clearProgress } = useOnboarding();
+  const { session } = useSession();
+  const { saveProgress } = useOnboarding();
   const [bio, setBio] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -32,21 +31,14 @@ export default function BioScreen() {
         return;
       }
 
-      const onboardingResult = await markOnboardingComplete(session.user.id);
-      if (onboardingResult.error) {
-        Alert.alert("Error", `Failed to complete profile: ${onboardingResult.error}`);
-        return;
-      }
-
-      await Promise.all([refreshOnboardingStatus(), clearProgress()]);
-
-      router.replace("/(tabs)");
+      await saveProgress("nitty-gritty");
+      router.push("/(auth)/nitty-gritty");
     } catch {
       Alert.alert("Error", "Failed to save your bio. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, [isValid, bio, session?.user.id, refreshOnboardingStatus, clearProgress, router]);
+  }, [isValid, bio, session?.user.id, saveProgress, router]);
 
   return (
     <StepContainer
@@ -56,7 +48,7 @@ export default function BioScreen() {
       showBack
       onBack={() => router.back()}
       currentStep={8}
-      totalSteps={9}
+      totalSteps={10}
     >
       <View className="flex-1">
         {/* Bio text area */}
@@ -110,7 +102,7 @@ export default function BioScreen() {
               style={{ fontSize: 20 }} // MODIFIED: button text bumped +2pt for larger scale
               className="text-white font-semibold text-center"
             >
-              Complete Profile
+              Continue
             </Text>
           )}
         </TouchableOpacity>

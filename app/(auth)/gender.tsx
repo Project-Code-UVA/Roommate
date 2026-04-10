@@ -59,7 +59,7 @@ export default function GenderScreen() {
       showBack
       onBack={() => router.back()}
       currentStep={5}
-      totalSteps={9}
+      totalSteps={10}
     >
       <View className="flex-1">
         {/* Gender options */}

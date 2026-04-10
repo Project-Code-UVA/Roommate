@@ -55,7 +55,7 @@ export default function NameScreen() {
       showBack
       onBack={() => router.back()}
       currentStep={4}
-      totalSteps={9}
+      totalSteps={10}
     >
       <View className="flex-1">
         {/* First Name label */}

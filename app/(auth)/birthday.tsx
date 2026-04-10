@@ -51,7 +51,7 @@ export default function BirthdayScreen() {
       showBack
       onBack={() => router.replace("/(auth)/welcome")}
       currentStep={1}
-      totalSteps={9}
+      totalSteps={10}
     >
       {/* Date picker */}
       <View className="flex-1 justify-center">

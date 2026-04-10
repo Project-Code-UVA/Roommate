@@ -38,3 +38,41 @@ export const FILTER_LABELS: Readonly<Record<FilterCategory, string>> = {
   noise_level: "Noise Level",
   study_habits: "Study Habits",
 } as const;
+
+// ---------------------------------------------------------------------------
+// Human-friendly labels for each option value
+// ---------------------------------------------------------------------------
+
+export const FILTER_VALUE_LABELS: Readonly<Record<FilterCategory, Readonly<Record<string, string>>>> = {
+  sleep_schedule: { early_bird: "Early Bird", night_owl: "Night Owl", flexible: "Flexible" },
+  cleanliness: { very_tidy: "Very Tidy", tidy: "Tidy", moderate: "Moderate", relaxed: "Relaxed" },
+  guests: { never: "Never", rarely: "Rarely", sometimes: "Sometimes", often: "Often" },
+  smoking: { never: "Never", outside_only: "Outside Only", social: "Social", daily: "Daily" },
+  budget_range: {
+    under_500: "Under $500",
+    "500_800": "$500–800",
+    "800_1200": "$800–1.2k",
+    "1200_1500": "$1.2k–1.5k",
+    over_1500: "Over $1.5k",
+  },
+  partying: { never: "Never", rarely: "Rarely", weekends: "Weekends", often: "Often" },
+  pets: { no_pets: "No Pets", have_pets: "Have Pets", love_pets: "Love Pets", allergic: "Allergic" },
+  noise_level: { silent: "Silent", quiet: "Quiet", moderate: "Moderate", loud_ok: "Loud OK" },
+  study_habits: { home_studier: "Home", library: "Library", mixed: "Mixed", minimal: "Minimal" },
+} as const;
+
+// ---------------------------------------------------------------------------
+// Display order for nitty-gritty categories
+// ---------------------------------------------------------------------------
+
+export const FILTER_CATEGORY_ORDER: readonly FilterCategory[] = [
+  "sleep_schedule",
+  "cleanliness",
+  "noise_level",
+  "guests",
+  "pets",
+  "smoking",
+  "partying",
+  "study_habits",
+  "budget_range",
+] as const;
