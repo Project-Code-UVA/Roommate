@@ -10,6 +10,7 @@ import { pickImage, uploadPhoto, deletePhoto } from "@/services/photo-service";
 import type { PhotoSlot } from "@/components/onboarding/photo-grid";
 
 const MIN_PHOTOS = 3;
+const MAX_PHOTOS = 9;
 
 export default function PhotosScreen() {
   const router = useRouter();
@@ -21,40 +22,68 @@ export default function PhotosScreen() {
   const filledCount = photos.filter(Boolean).length;
   const isValid = filledCount >= MIN_PHOTOS; // MODIFIED: Continue disabled until at least 3 photos selected
 
-  const uploadFromSource = useCallback(async (source: "camera" | "gallery", index: number) => {
+  const uploadFromSource = useCallback(async (source: "camera" | "gallery", startIndex: number) => {
     if (!session?.user.id) return;
+    const userId = session.user.id;
 
     try {
-      const result = await pickImage(source, 1);
-      if (result.canceled || !result.assets?.[0]) return;
+      const remainingSlots = MAX_PHOTOS - filledCount;
+      const selectionLimit = source === "camera" ? 1 : remainingSlots;
 
-      const uri = result.assets[0].uri;
+      const result = await pickImage(source, selectionLimit);
+      if (result.canceled || !result.assets?.length) return;
 
-      // Show local preview immediately
-      const tempId = `temp-${Date.now()}`;
+      const assets = result.assets;
+
+      // Build temp entries for all selected photos
+      const tempEntries = assets.map((asset, i) => ({
+        slotIndex: startIndex + i,
+        tempId: `temp-${Date.now()}-${i}`,
+        uri: asset.uri,
+      }));
+
+      // Show local previews immediately for all selected photos
       setPhotos((prev) => {
         const next = [...prev];
-        while (next.length <= index) next.push(null);
-        next[index] = { id: tempId, uri, uploaded: false };
+        tempEntries.forEach(({ slotIndex, tempId, uri }) => {
+          while (next.length <= slotIndex) next.push(null);
+          next[slotIndex] = { id: tempId, uri, uploaded: false };
+        });
         return next;
       });
 
-      const { url, error } = await uploadPhoto(session.user.id, uri, index);
-      if (error) {
-        // Revert the preview on failure
-        setPhotos((prev) => prev.map((p) => (p?.id === tempId ? null : p)).filter(Boolean));
-        Alert.alert("Upload Failed", error);
-        return;
-      }
-
-      // Replace temp with real uploaded photo
-      setPhotos((prev) =>
-        prev.map((p) => (p?.id === tempId ? { id: `photo-${Date.now()}`, uri: url, uploaded: true } : p)),
+      // Upload all in parallel, collect errors
+      const errors = await Promise.all(
+        tempEntries.map(async ({ slotIndex, tempId, uri }) => {
+          const { url, error } = await uploadPhoto(userId, uri, slotIndex);
+          if (error) {
+            setPhotos((prev) => prev.map((p) => (p?.id === tempId ? null : p)).filter(Boolean));
+            return error;
+          }
+          setPhotos((prev) =>
+            prev.map((p) =>
+              p?.id === tempId
+                ? { id: `photo-${Date.now()}-${Math.random().toString(36).slice(2)}`, uri: url, uploaded: true }
+                : p
+            )
+          );
+          return null;
+        })
       );
+
+      const failedCount = errors.filter(Boolean).length;
+      if (failedCount > 0) {
+        Alert.alert(
+          "Upload Failed",
+          failedCount === assets.length
+            ? "Failed to upload photos. Please try again."
+            : `${failedCount} of ${assets.length} photos failed to upload.`
+        );
+      }
     } catch {
-      Alert.alert("Error", "Failed to add photo. Please try again.");
+      Alert.alert("Error", "Failed to add photos. Please try again.");
     }
-  }, [session?.user.id]);
+  }, [session?.user.id, filledCount]);
 
   const handleAdd = useCallback((index: number) => {
     Alert.alert("Add Photo", "Choose a source", [
@@ -76,7 +105,7 @@ export default function PhotosScreen() {
     });
 
     // Best-effort delete from server (don't block UI)
-    if (photo.uploaded && photo.id) {
+    if (photo.uploaded && photo.id && session?.user.id) {
       const filePath = `${session.user.id}/${photo.id}.jpg`;
       deletePhoto(session.user.id, photo.id, filePath);
     }
