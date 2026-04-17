@@ -16,6 +16,9 @@ function formatPhone(raw: string): string {
   return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
 }
 
+/** Dev-only magic phone number that bypasses OTP verification. Production builds ignore it. */
+const DEV_BYPASS_PHONE = "0000000000";
+
 export default function PhoneScreen() {
   const router = useRouter();
   const { session } = useSession();
@@ -35,7 +38,12 @@ export default function PhoneScreen() {
   const handleSend = useCallback(async () => {
     if (!isValid) return;
 
-    if (__DEV__ && process.env.EXPO_PUBLIC_DEV_SKIP_AUTH === "true") {
+    const isDevBypass =
+      __DEV__ &&
+      (rawDigits === DEV_BYPASS_PHONE ||
+        process.env.EXPO_PUBLIC_DEV_SKIP_AUTH === "true");
+
+    if (isDevBypass) {
       // Still need to create the users row so downstream profile writes work.
       const userId = session?.user.id;
       if (userId) {
