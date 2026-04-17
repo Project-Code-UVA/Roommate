@@ -43,9 +43,14 @@ function WheelColumn({
   const listRef = useRef<FlatList<number>>(null);
   const isUserScrolling = useRef(false);
   const snapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Visual index tracks the currently-centered item for bold/color rendering.
+  // Decoupled from `selectedIndex` so it can update on every scroll tick without
+  // re-firing onChange on the parent during a scroll.
+  const [visualIndex, setVisualIndex] = useState(selectedIndex);
 
   useEffect(() => {
     if (!isUserScrolling.current && listRef.current) {
+      setVisualIndex(selectedIndex);
       listRef.current.scrollToOffset({
         offset: selectedIndex * ITEM_HEIGHT,
         animated: false,
@@ -62,9 +67,20 @@ function WheelColumn({
         animated: true,
       });
       isUserScrolling.current = false;
+      setVisualIndex(clamped);
       onSelect(clamped);
     },
     [data.length, onSelect],
+  );
+
+  const handleScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const y = e.nativeEvent.contentOffset.y;
+      const idx = Math.round(y / ITEM_HEIGHT);
+      const clamped = Math.max(0, Math.min(idx, data.length - 1));
+      setVisualIndex((prev) => (prev === clamped ? prev : clamped));
+    },
+    [data.length],
   );
 
   const handleScrollBeginDrag = useCallback(() => {
@@ -109,6 +125,9 @@ function WheelColumn({
         showsVerticalScrollIndicator={false}
         snapToInterval={ITEM_HEIGHT}
         decelerationRate="fast"
+        initialScrollIndex={selectedIndex}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         onScrollBeginDrag={handleScrollBeginDrag}
         onScrollEndDrag={handleScrollEndDrag}
         onMomentumScrollBegin={handleMomentumScrollBegin}
@@ -120,7 +139,7 @@ function WheelColumn({
           index,
         })}
         renderItem={({ item, index }) => {
-          const isSelected = index === selectedIndex;
+          const isSelected = index === visualIndex;
           return (
             <View
               style={{ height: ITEM_HEIGHT, justifyContent: "center", alignItems: "center" }}
