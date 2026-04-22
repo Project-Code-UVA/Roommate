@@ -94,6 +94,7 @@ function setupDefaultMocks() {
 describe("useLikes", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    process.env.EXPO_PUBLIC_DEV_MOCK_LIKED_ME = "false";
     setupDefaultMocks();
   });
 
@@ -179,4 +180,22 @@ describe("useLikes", () => {
 
     expect(result.current.matches).toEqual([]);
   });
+
+  it("injects dev stub liked-me when userId is empty and there are no likes", async () => {
+    mockGetThreads.mockResolvedValue({ data: [], error: null });
+    mockGetMyLikes.mockResolvedValue({ data: [], error: null });
+    mockGetLikedMe.mockResolvedValue({ data: [], error: null });
+    mockGetLikedMeCount.mockResolvedValue({ count: 0, error: null });
+
+    const { result } = renderHook(() => useLikes(""));
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.likedMe).toHaveLength(3);
+    expect(result.current.likedMeCount).toBe(3);
+    expect(result.current.likedMeIsDevStub).toBe(true);
+  });
+
 });

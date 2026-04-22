@@ -10,6 +10,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useFocusEffect } from "expo-router";
 
+import { DEV_LIKED_ME_STUBS, shouldInjectDevLikedMeStub } from "@/lib/dev-liked-me-stub";
 import { getMyLikes, getLikedMe, getLikedMeCount } from "@/services/likes-service";
 import { getThreads, type EnrichedThread } from "@/services/thread-service";
 import type { LikedMeProfile, MyLike } from "@/types/explore";
@@ -23,6 +24,8 @@ type UseLikesResult = {
   readonly myLikes: readonly MyLike[];
   readonly likedMe: readonly LikedMeProfile[];
   readonly likedMeCount: number;
+  /** True when showing dev sample likers (no real inbound likes). */
+  readonly likedMeIsDevStub: boolean;
   readonly isLoading: boolean;
   readonly isRefreshing: boolean;
   readonly refresh: () => Promise<void>;
@@ -38,6 +41,7 @@ export function useLikes(userId: string): UseLikesResult {
   const [myLikes, setMyLikes] = useState<readonly MyLike[]>([]);
   const [likedMe, setLikedMe] = useState<readonly LikedMeProfile[]>([]);
   const [likedMeCount, setLikedMeCount] = useState(0);
+  const [likedMeIsDevStub, setLikedMeIsDevStub] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -55,8 +59,24 @@ export function useLikes(userId: string): UseLikesResult {
 
     setMatches(threadsResult.data ?? []);
     setMyLikes(myLikesResult.data);
-    setLikedMe(likedMeResult.data);
-    setLikedMeCount(countResult.count);
+
+    let nextLikedMe = likedMeResult.data;
+    let nextCount = countResult.count;
+    const injectStub = shouldInjectDevLikedMeStub(
+      userId,
+      nextLikedMe.length,
+      nextCount,
+    );
+    if (injectStub) {
+      nextLikedMe = [...DEV_LIKED_ME_STUBS];
+      nextCount = DEV_LIKED_ME_STUBS.length;
+      setLikedMeIsDevStub(true);
+    } else {
+      setLikedMeIsDevStub(false);
+    }
+
+    setLikedMe(nextLikedMe);
+    setLikedMeCount(nextCount);
   }, [userId, isPaid]);
 
   // Initial load
@@ -97,6 +117,7 @@ export function useLikes(userId: string): UseLikesResult {
     myLikes,
     likedMe,
     likedMeCount,
+    likedMeIsDevStub,
     isLoading,
     isRefreshing,
     refresh,
