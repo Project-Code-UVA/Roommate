@@ -19,7 +19,6 @@ import {
   Text,
   View,
 } from "react-native";
-import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -27,6 +26,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useSession } from "@/contexts/auth-context";
 import { useLikes } from "@/hooks/use-likes";
+import { LikedMeCard } from "@/components/likes/liked-me-card";
 import { ProfileDetailModal } from "@/components/likes/profile-detail-modal";
 import { getProfileDetail } from "@/services/explore-service";
 import { COLORS } from "@/lib/constants";
@@ -52,13 +52,6 @@ const LIKES_GAP = 10;
 const LIKES_COLS = 2;
 const LIKES_CARD_SIZE =
   (SCREEN_WIDTH - H_PADDING * 2 - LIKES_GAP * (LIKES_COLS - 1)) / LIKES_COLS;
-
-// Liked Me placeholder colors
-const PLACEHOLDER_COLORS = [
-  "#c4b5fd", "#a78bfa", "#818cf8",
-  "#6366f1", "#8b5cf6", "#7c3aed",
-  "#ddd6fe", "#c084fc", "#a855f7",
-];
 
 // ---------------------------------------------------------------------------
 // Section header
@@ -285,50 +278,42 @@ function LikedMePaywall({
   readonly onUpgrade: () => void;
 }) {
   return (
-    <View style={paywallStyles.container}>
-      <View style={paywallStyles.card}>
-        <View style={paywallStyles.iconWrap}>
-          <Ionicons name="lock-closed" size={28} color="#d97706" />
-        </View>
-        <Text style={paywallStyles.title}>
-          {count > 0
-            ? `${count} ${count === 1 ? "person has" : "people have"} liked you`
-            : "See who likes you"}
-        </Text>
-        <Text style={paywallStyles.subtitle}>
-          Upgrade to Room+ to reveal who liked you and match instantly
-        </Text>
-        <Pressable
-          style={paywallStyles.button}
-          onPress={onUpgrade}
-          testID="paywall-upgrade-button"
-        >
-          <Ionicons name="sparkles" size={16} color="#fff" />
-          <Text style={paywallStyles.buttonText}>Upgrade to Room+</Text>
-        </Pressable>
+    <View style={paywallStyles.card}>
+      <View style={paywallStyles.iconWrap}>
+        <Ionicons name="lock-closed" size={28} color="#d97706" />
       </View>
+      <Text style={paywallStyles.title}>
+        {count > 0
+          ? `${count} ${count === 1 ? "person has" : "people have"} liked you`
+          : "See who likes you"}
+      </Text>
+      <Text style={paywallStyles.subtitle}>
+        Upgrade to Room+ to reveal who liked you and match instantly
+      </Text>
+      <Pressable
+        style={paywallStyles.button}
+        onPress={onUpgrade}
+        testID="paywall-upgrade-button"
+      >
+        <Ionicons name="sparkles" size={16} color="#fff" />
+        <Text style={paywallStyles.buttonText}>Upgrade to Room+</Text>
+      </Pressable>
     </View>
   );
 }
 
 const paywallStyles = StyleSheet.create({
-  container: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 10,
-    paddingHorizontal: 16,
-  },
   card: {
     backgroundColor: "rgba(255,255,255,0.97)",
     borderRadius: 20,
-    padding: 28,
+    padding: 22,
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.12,
     shadowRadius: 12,
     elevation: 6,
+    maxWidth: 300,
     width: "100%",
   },
   iconWrap: {
@@ -403,28 +388,6 @@ function MyLikeCard({
         )}
       </LinearGradient>
     </Pressable>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Placeholder blur grid for Liked Me
-// ---------------------------------------------------------------------------
-
-function PlaceholderBlurGrid() {
-  return (
-    <View testID="liked-me-placeholder-grid" style={styles.placeholderGrid}>
-      {PLACEHOLDER_COLORS.map((color, i) => (
-        <View
-          key={i}
-          style={[
-            styles.placeholderCard,
-            { width: LIKES_CARD_SIZE, height: LIKES_CARD_SIZE, backgroundColor: color },
-          ]}
-        >
-          <BlurView intensity={80} tint="light" style={StyleSheet.absoluteFill} />
-        </View>
-      ))}
-    </View>
   );
 }
 
@@ -569,21 +532,62 @@ export default function LikesScreen() {
             title={`Liked You (${likedMeCount})`}
           />
           <View style={styles.likedMeContainer}>
-            {isPaid && likedMe.length > 0 ? (
-              <View testID="liked-me-list">
-                {likedMe.map((profile) => (
-                  <LikedMeRow
-                    key={profile.user_id}
-                    profile={profile}
-                    onLike={() => handleLikedMeLike(profile)}
-                  />
-                ))}
-              </View>
+            {isPaid ? (
+              likedMe.length > 0 ? (
+                <View testID="liked-me-list">
+                  {likedMe.map((profile) => (
+                    <LikedMeRow
+                      key={profile.user_id}
+                      profile={profile}
+                      onLike={() => handleLikedMeLike(profile)}
+                    />
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.emptyText}>
+                  No pending likes right now.
+                </Text>
+              )
             ) : (
-              <PlaceholderBlurGrid />
-            )}
-            {!isPaid && (
-              <LikedMePaywall count={likedMeCount} onUpgrade={handleUpgrade} />
+              <>
+                {likedMe.length === 0 ? (
+                  likedMeCount === 0 ? (
+                    <Text style={styles.emptyText}>
+                      When someone likes you, they&apos;ll appear here.
+                    </Text>
+                  ) : (
+                    <Text style={styles.emptyText}>
+                      Previews couldn&apos;t load. Pull to refresh.
+                    </Text>
+                  )
+                ) : (
+                  <View style={styles.likedMeFreeStack}>
+                    <View testID="liked-me-blur-grid" style={styles.likedMeBlurGrid}>
+                      {likedMe.map((profile) => (
+                        <LikedMeCard
+                          key={profile.user_id}
+                          profile={profile}
+                          isPaid={false}
+                          onUpgrade={handleUpgrade}
+                          onSelect={() => {}}
+                          size={LIKES_CARD_SIZE}
+                          height={LIKES_CARD_SIZE * 1.45}
+                        />
+                      ))}
+                    </View>
+                    {likedMeCount > 0 && (
+                      <View
+                        style={styles.likedMePaywallOverlay}
+                        pointerEvents="box-none"
+                      >
+                        <View pointerEvents="auto">
+                          <LikedMePaywall count={likedMeCount} onUpgrade={handleUpgrade} />
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                )}
+              </>
             )}
           </View>
         </View>
@@ -675,16 +679,21 @@ const styles = StyleSheet.create({
   // Liked Me
   likedMeContainer: {
     position: "relative",
-    minHeight: LIKES_CARD_SIZE + 20,
   },
-  placeholderGrid: {
+  likedMeFreeStack: {
+    position: "relative",
+    width: "100%",
+  },
+  likedMeBlurGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: LIKES_GAP,
   },
-  placeholderCard: {
-    borderRadius: 12,
-    overflow: "hidden",
+  likedMePaywallOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 12,
   },
   // My Likes grid
   likesGrid: {
