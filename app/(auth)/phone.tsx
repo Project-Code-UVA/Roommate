@@ -81,7 +81,7 @@ export default function PhoneScreen() {
       showBack
       onBack={() => router.back()}
       currentStep={2}
-      totalSteps={10}
+      totalSteps={11}
     >
       <View className="flex-1">
         {/* Phone input row */}

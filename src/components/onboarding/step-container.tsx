@@ -3,6 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { COLORS } from "@/lib/constants";
+import { OnboardingProgressBar } from "./progress-bar";
 import type { ReactNode } from "react";
 
 interface StepContainerProps {
@@ -26,8 +27,6 @@ export function StepContainer({
   totalSteps = 4,
   children,
 }: StepContainerProps) {
-  const progress = totalSteps > 0 ? ((currentStep + 1) / totalSteps) * 100 : 0;
-
   const handleBack = () => {
     if (!onBack) return;
     if (router.canGoBack()) {
@@ -52,16 +51,10 @@ export function StepContainer({
 
           {/* Progress bar track — hidden when totalSteps is 0 */}
           {totalSteps > 0 ? (
-            <View className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-              <View
-                style={{
-                  width: `${progress}%`,
-                  height: "100%",
-                  backgroundColor: COLORS.primary[600],
-                  borderRadius: 9999,
-                }}
-              />
-            </View>
+            <OnboardingProgressBar
+              currentStep={currentStep}
+              totalSteps={totalSteps}
+            />
           ) : (
             <View className="flex-1" />
           )}

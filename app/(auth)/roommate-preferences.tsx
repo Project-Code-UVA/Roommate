@@ -14,7 +14,7 @@ import {
 import type { Json } from "@/types/database.types";
 
 const TOTAL_STEPS = 11;
-const CURRENT_STEP = 9;
+const CURRENT_STEP = 10;
 
 export default function RoommatePreferencesScreen() {
   const router = useRouter();

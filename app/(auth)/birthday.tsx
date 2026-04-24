@@ -50,8 +50,8 @@ export default function BirthdayScreen() {
       subtitle="We need this to verify your age"
       showBack
       onBack={() => router.replace("/(auth)/welcome")}
-      currentStep={1}
-      totalSteps={10}
+      currentStep={0}
+      totalSteps={11}
     >
       {/* Date picker */}
       <View className="flex-1 justify-center">

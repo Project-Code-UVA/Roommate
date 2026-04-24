@@ -22,13 +22,14 @@ import {
   FILTER_VALUE_LABELS,
   FILTER_CATEGORY_ORDER,
 } from "@/constants/filter-options";
+import { OnboardingProgressBar } from "@/components/onboarding/progress-bar";
 import type { Json } from "@/types/database.types";
 import type { FilterCategory } from "@/types/filters";
 
 type SelfSelections = Partial<Record<FilterCategory, string>>;
 
 const TOTAL_STEPS = 11;
-const CURRENT_STEP = 8;
+const CURRENT_STEP = 9;
 
 const CATEGORY_ICONS: Record<FilterCategory, string> = {
   sleep_schedule: "moon-outline",
@@ -93,8 +94,6 @@ export default function NittyGrittyScreen() {
     }
   }, [session?.user.id, selections, router]);
 
-  const progress = ((CURRENT_STEP + 1) / TOTAL_STEPS) * 100;
-
   return (
     <SafeAreaView style={styles.screen}>
       {/* Top bar */}
@@ -102,9 +101,10 @@ export default function NittyGrittyScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color={COLORS.gray[800]} />
         </TouchableOpacity>
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${progress}%` }]} />
-        </View>
+        <OnboardingProgressBar
+          currentStep={CURRENT_STEP}
+          totalSteps={TOTAL_STEPS}
+        />
       </View>
 
       {/* Title */}

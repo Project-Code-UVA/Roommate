@@ -48,7 +48,7 @@ export default function BioScreen() {
       showBack
       onBack={() => router.back()}
       currentStep={8}
-      totalSteps={10}
+      totalSteps={11}
     >
       <View className="flex-1">
         {/* Bio text area */}

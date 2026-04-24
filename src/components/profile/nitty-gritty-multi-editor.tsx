@@ -24,6 +24,7 @@ import {
   FILTER_OPTIONS,
   FILTER_VALUE_LABELS,
 } from "@/constants/filter-options";
+import { OnboardingProgressBar } from "@/components/onboarding/progress-bar";
 import type { FilterCategory } from "@/types/filters";
 
 // ---------------------------------------------------------------------------
@@ -120,8 +121,6 @@ export function NittyGrittyMultiEditor({
     }
   }, [saving, selections, onSave]);
 
-  const progressPct = progress ? ((progress.current + 1) / progress.total) * 100 : 0;
-
   return (
     <SafeAreaView style={styles.screen}>
       {/* Top bar: back + progress */}
@@ -134,14 +133,11 @@ export function NittyGrittyMultiEditor({
           <View style={styles.backButton} />
         )}
         {progress ? (
-          <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${progressPct}%`, backgroundColor: accent.bar },
-              ]}
-            />
-          </View>
+          <OnboardingProgressBar
+            currentStep={progress.current}
+            totalSteps={progress.total}
+            fillColor={accent.bar}
+          />
         ) : (
           <View style={{ flex: 1 }} />
         )}

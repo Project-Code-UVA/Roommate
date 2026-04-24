@@ -65,8 +65,8 @@ export default function SignupScreen() {
       subtitle="Sign up with an email and password"
       showBack
       onBack={() => router.back()}
-      currentStep={0}
-      totalSteps={10}
+      currentStep={1}
+      totalSteps={11}
     >
       <View className="flex-1">
         {/* Email */}

@@ -132,7 +132,7 @@ export default function PhotosScreen() {
       showBack
       onBack={() => router.back()}
       currentStep={7}
-      totalSteps={10}
+      totalSteps={11}
     >
       <View className="flex-1">
         {/* Photo grid */}

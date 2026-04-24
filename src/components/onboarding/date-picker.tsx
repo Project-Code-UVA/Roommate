@@ -43,6 +43,7 @@ function WheelColumn({
   const listRef = useRef<FlatList<number>>(null);
   const isUserScrolling = useRef(false);
   const snapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [visualIdx, setVisualIdx] = useState(selectedIndex);
 
   useEffect(() => {
     if (!isUserScrolling.current && listRef.current) {
@@ -50,8 +51,19 @@ function WheelColumn({
         offset: selectedIndex * ITEM_HEIGHT,
         animated: false,
       });
+      setVisualIdx(selectedIndex);
     }
   }, [selectedIndex]);
+
+  const handleScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const y = e.nativeEvent.contentOffset.y;
+      const idx = Math.round(y / ITEM_HEIGHT);
+      const clamped = Math.max(0, Math.min(idx, data.length - 1));
+      setVisualIdx((prev) => (prev === clamped ? prev : clamped));
+    },
+    [data.length],
+  );
 
   const snapToIndex = useCallback(
     (y: number) => {
@@ -109,6 +121,9 @@ function WheelColumn({
         showsVerticalScrollIndicator={false}
         snapToInterval={ITEM_HEIGHT}
         decelerationRate="fast"
+        initialScrollIndex={selectedIndex}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         onScrollBeginDrag={handleScrollBeginDrag}
         onScrollEndDrag={handleScrollEndDrag}
         onMomentumScrollBegin={handleMomentumScrollBegin}
@@ -120,7 +135,7 @@ function WheelColumn({
           index,
         })}
         renderItem={({ item, index }) => {
-          const isSelected = index === selectedIndex;
+          const isSelected = index === visualIdx;
           return (
             <View
               style={{ height: ITEM_HEIGHT, justifyContent: "center", alignItems: "center" }}

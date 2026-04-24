@@ -59,7 +59,7 @@ export default function SchoolScreen() {
       showBack
       onBack={() => router.back()}
       currentStep={6}
-      totalSteps={10}
+      totalSteps={11}
     >
       <View className="flex-1 mt-2">
         <SchoolSearch
