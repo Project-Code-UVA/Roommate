@@ -121,27 +121,37 @@ export function NittyGrittyMultiEditor({
     }
   }, [saving, selections, onSave]);
 
+  const showTopBar = Boolean(onBack || progress);
+  // When the parent renders a native header there's no top inset to
+  // consume; without a header (onboarding) the top bar handles it.
+  const safeAreaEdges: readonly ("top" | "bottom")[] = showTopBar
+    ? ["top", "bottom"]
+    : ["bottom"];
+
   return (
-    <SafeAreaView style={styles.screen}>
-      {/* Top bar: back + progress */}
-      <View style={styles.topBar}>
-        {onBack ? (
-          <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={28} color={COLORS.gray[800]} />
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.backButton} />
-        )}
-        {progress ? (
-          <OnboardingProgressBar
-            currentStep={progress.current}
-            totalSteps={progress.total}
-            fillColor={accent.bar}
-          />
-        ) : (
-          <View style={{ flex: 1 }} />
-        )}
-      </View>
+    <SafeAreaView style={styles.screen} edges={safeAreaEdges}>
+      {/* Top bar: back + progress — hidden when neither applies (e.g. screens
+          that already render a native header). */}
+      {showTopBar && (
+        <View style={styles.topBar}>
+          {onBack ? (
+            <TouchableOpacity onPress={onBack} style={styles.backButton}>
+              <Ionicons name="chevron-back" size={28} color={COLORS.gray[800]} />
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.backButton} />
+          )}
+          {progress ? (
+            <OnboardingProgressBar
+              currentStep={progress.current}
+              totalSteps={progress.total}
+              fillColor={accent.bar}
+            />
+          ) : (
+            <View style={{ flex: 1 }} />
+          )}
+        </View>
+      )}
 
       {/* Title */}
       <View style={styles.titleArea}>
@@ -265,7 +275,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   progressFill: { height: "100%", borderRadius: 9999 },
-  titleArea: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 16 },
+  titleArea: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 12 },
   title: { fontSize: 32, lineHeight: 40, fontWeight: "700" },
   subtitle: { fontSize: 18, color: COLORS.gray[500], marginTop: 8 },
   scroll: { flex: 1 },
