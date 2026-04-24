@@ -18,7 +18,8 @@ export type FilterCategory =
   | "partying"
   | "pets"
   | "noise_level"
-  | "study_habits";
+  | "study_habits"
+  | "looking_for";
 
 // ---------------------------------------------------------------------------
 // Nitty-gritty JSONB schema

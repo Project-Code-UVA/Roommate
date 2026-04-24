@@ -41,6 +41,7 @@ const CATEGORY_ICONS: Record<FilterCategory, string> = {
   partying: "musical-notes-outline",
   study_habits: "book-outline",
   budget_range: "cash-outline",
+  looking_for: "search-outline",
 };
 
 export default function NittyGrittyScreen() {

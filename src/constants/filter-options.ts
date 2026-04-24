@@ -21,6 +21,7 @@ export const FILTER_OPTIONS: Readonly<Record<FilterCategory, readonly string[]>>
   pets: ["no_pets", "have_pets", "love_pets", "allergic"],
   noise_level: ["silent", "quiet", "moderate", "loud_ok"],
   study_habits: ["home_studier", "library", "mixed", "minimal"],
+  looking_for: ["roommate", "friends", "both"],
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -37,6 +38,7 @@ export const FILTER_LABELS: Readonly<Record<FilterCategory, string>> = {
   pets: "Pets",
   noise_level: "Noise Level",
   study_habits: "Study Habits",
+  looking_for: "Looking For",
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -59,6 +61,7 @@ export const FILTER_VALUE_LABELS: Readonly<Record<FilterCategory, Readonly<Recor
   pets: { no_pets: "No Pets", have_pets: "Have Pets", love_pets: "Love Pets", allergic: "Allergic" },
   noise_level: { silent: "Silent", quiet: "Quiet", moderate: "Moderate", loud_ok: "Loud OK" },
   study_habits: { home_studier: "Home", library: "Library", mixed: "Mixed", minimal: "Minimal" },
+  looking_for: { roommate: "Roommate", friends: "Friends", both: "Both" },
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -71,8 +74,7 @@ export const FILTER_CATEGORY_ORDER: readonly FilterCategory[] = [
   "noise_level",
   "guests",
   "pets",
-  "smoking",
   "partying",
   "study_habits",
-  "budget_range",
+  "looking_for",
 ] as const;

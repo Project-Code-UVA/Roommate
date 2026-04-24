@@ -25,6 +25,7 @@ const CATEGORY_LABELS: Record<FilterCategory, string> = {
   pets: "Pets",
   noise_level: "Noise Level",
   study_habits: "Study Habits",
+  looking_for: "Looking For",
 };
 
 const CATEGORY_EMOJI: Record<FilterCategory, string> = {
@@ -37,6 +38,7 @@ const CATEGORY_EMOJI: Record<FilterCategory, string> = {
   pets: "🐾",
   noise_level: "🔊",
   study_habits: "📚",
+  looking_for: "🔍",
 };
 
 const CATEGORY_ICONS: Record<FilterCategory, keyof typeof Ionicons.glyphMap> = {
@@ -49,6 +51,7 @@ const CATEGORY_ICONS: Record<FilterCategory, keyof typeof Ionicons.glyphMap> = {
   pets: "paw-outline",
   noise_level: "volume-medium-outline",
   study_habits: "book-outline",
+  looking_for: "search-outline",
 };
 
 // ---------------------------------------------------------------------------

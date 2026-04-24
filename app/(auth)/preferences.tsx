@@ -48,19 +48,14 @@ const PREFERENCE_OPTIONS: OptionDef[] = [
     options: ["No pets", "I have a pet", "Love pets", "Allergic"],
   },
   {
-    key: "smoking",
-    question: "Do you smoke?",
-    options: ["Never", "Socially", "Regularly"],
+    key: "partying",
+    question: "How often do you party?",
+    options: ["Never", "Rarely", "Weekends", "Often"],
   },
   {
-    key: "drinking",
-    question: "Do you drink?",
-    options: ["Never", "Socially", "Regularly"],
-  },
-  {
-    key: "budget",
-    question: "What's your monthly budget?",
-    options: ["Under $500", "$500–$1000", "$1000–$1500", "$1500+"],
+    key: "study_habits",
+    question: "Where do you usually study?",
+    options: ["Home", "Library", "Mixed", "Minimal"],
   },
   {
     key: "looking_for",
