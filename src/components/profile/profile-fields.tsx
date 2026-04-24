@@ -24,6 +24,10 @@ import {
   FILTER_OPTIONS,
   FILTER_VALUE_LABELS,
 } from "@/constants/filter-options";
+
+const LIFESTYLE_CATEGORIES: readonly FilterCategory[] = FILTER_CATEGORY_ORDER.filter(
+  (c) => c !== "smoking" && c !== "budget_range",
+);
 import type { ProfileUpdate } from "@/services/profile-service";
 import type { Json } from "@/types/database.types";
 import type { FilterCategory, NittyGritty } from "@/types/filters";
@@ -102,7 +106,6 @@ export function ProfileFields({
                 nitty_gritty: {
                   self: updatedSelf,
                   preferences: nittyGritty?.preferences ?? {},
-                  dealbreakers: nittyGritty?.dealbreakers ?? {},
                 } as unknown as Json,
               });
             },
@@ -118,7 +121,6 @@ export function ProfileFields({
                       nitty_gritty: {
                         self: remainingSelf,
                         preferences: nittyGritty?.preferences ?? {},
-                        dealbreakers: nittyGritty?.dealbreakers ?? {},
                       } as unknown as Json,
                     });
                   },
@@ -291,9 +293,9 @@ export function ProfileFields({
       {/* ── LIFESTYLE ── */}
       <SectionHeader title="LIFESTYLE" />
       <View style={styles.group}>
-        {FILTER_CATEGORY_ORDER.map((category, idx) => {
+        {LIFESTYLE_CATEGORIES.map((category, idx) => {
           const currentValue = nittyGritty?.self?.[category];
-          const isLast = idx === FILTER_CATEGORY_ORDER.length - 1;
+          const isLast = idx === LIFESTYLE_CATEGORIES.length - 1;
           return (
             <View key={category}>
               <Pressable

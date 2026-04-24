@@ -25,19 +25,26 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SwipeCard } from "@/components/discovery/swipe-card";
 import { PhotoCarousel } from "@/components/discovery/photo-carousel";
+import { PhotoViewer } from "@/components/discovery/photo-viewer";
+import { ExploreProfileView } from "@/components/explore/explore-profile-view";
 import { SwipeTutorial } from "@/components/discovery/swipe-tutorial";
 import { EmptyState } from "@/components/discovery/empty-state";
 import { MatchModal } from "@/components/match/match-modal";
 import { OverflowMenu } from "@/components/shared/overflow-menu";
+import { FilterButton } from "@/components/shared/filter-button";
 import { ReportSheet } from "@/components/safety/report-sheet";
+import { openFilterDraft } from "@/stores/filter-draft";
 import { showBlockConfirmDialog } from "@/components/safety/block-confirm-dialog";
 import { blockUser } from "@/services/block-service";
 import { submitReport } from "@/services/report-service";
 import { useDiscoveryStack } from "@/hooks/use-discovery-stack";
 import { useSession } from "@/contexts/auth-context";
 import { COLORS } from "@/lib/constants";
+import { FILTER_VALUE_LABELS } from "@/constants/filter-options";
 import type { OverflowMenuItem } from "@/types/safety";
 import type { ReportCategory } from "@/types/chat";
+import type { DiscoveryFilters } from "@/types/filters";
+import { countActiveFilters } from "@/types/filters";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -45,11 +52,20 @@ import type { ReportCategory } from "@/types/chat";
 
 const GRADIENT_COLORS = ["#f5f3ff", "#fdf2f8", "#fff7ed"] as const;
 
-function getHabitChips(profile: { year: string | null; nitty_gritty?: { self?: Record<string, string> } }): string[] {
+function getHabitChips(profile: {
+  year: string | null;
+  nitty_gritty?: { self?: Partial<Record<string, string>> } | null;
+}): string[] {
   const self = profile.nitty_gritty?.self ?? {};
   const chips: string[] = [];
-  if (self.sleep_schedule) chips.push(self.sleep_schedule);
-  if (self.cleanliness) chips.push(self.cleanliness);
+  const sleep = self.sleep_schedule
+    ? (FILTER_VALUE_LABELS.sleep_schedule[self.sleep_schedule] ?? self.sleep_schedule)
+    : null;
+  const clean = self.cleanliness
+    ? (FILTER_VALUE_LABELS.cleanliness[self.cleanliness] ?? self.cleanliness)
+    : null;
+  if (sleep) chips.push(sleep);
+  if (clean) chips.push(clean);
   if (profile.year) chips.push(`Class of ${profile.year}`);
   return chips.slice(0, 3);
 }
@@ -65,6 +81,9 @@ export default function DiscoveryScreen() {
   const insets = useSafeAreaInsets();
   const TAB_BAR_HEIGHT = 49 + insets.bottom;
 
+  const [filters, setFilters] = useState<DiscoveryFilters>({});
+  const activeFilterCount = useMemo(() => countActiveFilters(filters), [filters]);
+
   const {
     stack,
     currentProfile,
@@ -74,14 +93,17 @@ export default function DiscoveryScreen() {
     matchData,
     dismissCurrent,
     likeCurrent,
+    superLikeCurrent,
     dismissMatch,
     refresh,
-  } = useDiscoveryStack(userId);
+  } = useDiscoveryStack(userId, filters);
 
   const nextProfile = stack[1] ?? null;
 
   const [reportVisible, setReportVisible] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
+  const [expandVisible, setExpandVisible] = useState(false);
+  const [viewerPhotoUrl, setViewerPhotoUrl] = useState<string | null>(null);
 
   // ---------------------------------------------------------------------------
   // Callbacks
@@ -94,6 +116,26 @@ export default function DiscoveryScreen() {
   const handleDismiss = useCallback(() => {
     dismissCurrent();
   }, [dismissCurrent]);
+
+  const handleSuperLike = useCallback(() => {
+    superLikeCurrent();
+  }, [superLikeCurrent]);
+
+  const handleExpand = useCallback(() => {
+    setExpandVisible(true);
+  }, []);
+
+  const handleCloseExpand = useCallback(() => {
+    setExpandVisible(false);
+  }, []);
+
+  const handlePhotoTap = useCallback((photoUrl: string) => {
+    setViewerPhotoUrl(photoUrl);
+  }, []);
+
+  const handleCloseViewer = useCallback(() => {
+    setViewerPhotoUrl(null);
+  }, []);
 
   const handleBlock = useCallback(() => {
     if (!currentProfile) return;
@@ -145,6 +187,11 @@ export default function DiscoveryScreen() {
     { label: "Report", icon: "flag-outline", onPress: handleReport },
   ], [handleBlock, handleReport]);
 
+  const handleOpenFilters = useCallback(() => {
+    openFilterDraft(filters, setFilters);
+    router.push("/filters" as never);
+  }, [filters, router]);
+
   // ---------------------------------------------------------------------------
   // Render — loading / error / empty states
   // ---------------------------------------------------------------------------
@@ -175,6 +222,17 @@ export default function DiscoveryScreen() {
         style={[styles.screen, { paddingTop: insets.top, paddingBottom: TAB_BAR_HEIGHT }]}
         testID="discovery-empty"
       >
+        {/* Header still renders so the user can loosen filters from empty state */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Discovery</Text>
+          <View style={styles.headerRight}>
+            <FilterButton
+              activeCount={activeFilterCount}
+              onPress={handleOpenFilters}
+              testID="discovery-filter-button"
+            />
+          </View>
+        </View>
         <EmptyState onRefresh={refresh} />
       </LinearGradient>
     );
@@ -199,6 +257,11 @@ export default function DiscoveryScreen() {
               <Text style={styles.countText}>{stack.length} left</Text>
             </View>
           )}
+          <FilterButton
+            activeCount={activeFilterCount}
+            onPress={handleOpenFilters}
+            testID="discovery-filter-button"
+          />
           {currentProfile && (
             <OverflowMenu items={overflowItems} testIDPrefix="discovery" />
           )}
@@ -228,6 +291,8 @@ export default function DiscoveryScreen() {
             profile={currentProfile}
             onSwipeRight={handleLike}
             onSwipeLeft={handleDismiss}
+            onSwipeUp={handleSuperLike}
+            onExpand={handleExpand}
           />
         )}
       </View>
@@ -255,6 +320,38 @@ export default function DiscoveryScreen() {
           isSubmitting={isReporting}
         />
       </Modal>
+
+      {/* Expanded profile detail — opened via double-tap on card.
+          Shares visual language with Explore's full profile view. */}
+      <ExploreProfileView
+        profile={currentProfile}
+        nextProfile={nextProfile}
+        visible={expandVisible}
+        onClose={handleCloseExpand}
+        onLike={() => {
+          handleCloseExpand();
+          handleLike();
+        }}
+        onDismiss={() => {
+          handleCloseExpand();
+          handleDismiss();
+        }}
+        onMessage={() => {
+          handleCloseExpand();
+          handleSuperLike();
+        }}
+        onBlock={() => {
+          handleCloseExpand();
+          dismissCurrent();
+        }}
+      />
+
+      {/* Full-screen photo viewer — retained for future use */}
+      <PhotoViewer
+        photoUrl={viewerPhotoUrl}
+        visible={viewerPhotoUrl !== null}
+        onClose={handleCloseViewer}
+      />
     </LinearGradient>
   );
 }

@@ -1,8 +1,8 @@
 /**
  * Predefined filter options for the 9 nitty-gritty categories.
  *
- * These constants define the valid values for self-description,
- * preferences, and dealbreakers in the Discovery Engine.
+ * These constants define the valid values for self-description
+ * and roommate preferences in the Discovery Engine.
  */
 
 import type { FilterCategory } from "@/types/filters";
@@ -21,6 +21,8 @@ export const FILTER_OPTIONS: Readonly<Record<FilterCategory, readonly string[]>>
   pets: ["no_pets", "have_pets", "love_pets", "allergic"],
   noise_level: ["silent", "quiet", "moderate", "loud_ok"],
   study_habits: ["home_studier", "library", "mixed", "minimal"],
+  rushing: ["not_interested", "considering", "active_rush", "in_greek_life"],
+  social_energy: ["introvert", "ambivert", "extrovert"],
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -37,6 +39,8 @@ export const FILTER_LABELS: Readonly<Record<FilterCategory, string>> = {
   pets: "Pets",
   noise_level: "Noise Level",
   study_habits: "Study Habits",
+  rushing: "Rushing",
+  social_energy: "Introvert / Extrovert",
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -59,6 +63,13 @@ export const FILTER_VALUE_LABELS: Readonly<Record<FilterCategory, Readonly<Recor
   pets: { no_pets: "No Pets", have_pets: "Have Pets", love_pets: "Love Pets", allergic: "Allergic" },
   noise_level: { silent: "Silent", quiet: "Quiet", moderate: "Moderate", loud_ok: "Loud OK" },
   study_habits: { home_studier: "Home", library: "Library", mixed: "Mixed", minimal: "Minimal" },
+  rushing: {
+    not_interested: "Not Interested",
+    considering: "Considering",
+    active_rush: "Actively Rushing",
+    in_greek_life: "In Greek Life",
+  },
+  social_energy: { introvert: "Introvert", ambivert: "Ambivert", extrovert: "Extrovert" },
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -73,6 +84,8 @@ export const FILTER_CATEGORY_ORDER: readonly FilterCategory[] = [
   "pets",
   "smoking",
   "partying",
+  "social_energy",
+  "rushing",
   "study_habits",
   "budget_range",
 ] as const;

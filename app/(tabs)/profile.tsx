@@ -223,6 +223,12 @@ export default function ProfileScreen() {
             onPress={() => router.push("/profile/status" as never)}
           />
           <DirectoryRow
+            iconName="search-outline"
+            iconBg={COLORS.primary[600]}
+            label="Looking for"
+            onPress={() => router.push("/profile/preferences" as never)}
+          />
+          <DirectoryRow
             iconName="shield-checkmark-outline"
             iconBg={selfieVerified ? "#16a34a" : "#d97706"}
             label="Verification"

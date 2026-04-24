@@ -1,6 +1,6 @@
 /**
  * Tests for filter-service.
- * Covers: DISC-06, DISC-07
+ * Covers: DISC-06
  */
 
 import { resetAllMocks, mockSupabase } from "../setup";
@@ -8,7 +8,6 @@ import {
   getNittyGritty,
   updateSelfValues,
   updatePreferences,
-  updateDealbreakers,
 } from "@/services/filter-service";
 import type { NittyGritty } from "@/types/filters";
 
@@ -17,7 +16,6 @@ const TEST_USER_ID = "test-user-id";
 const EXISTING_NITTY_GRITTY: NittyGritty = {
   self: { sleep_schedule: "night_owl", cleanliness: "tidy" },
   preferences: { guests: ["rarely", "sometimes"] },
-  dealbreakers: { smoking: ["daily"] },
 };
 
 describe("filter-service", () => {
@@ -50,7 +48,6 @@ describe("filter-service", () => {
       expect(result.data).toEqual({
         self: {},
         preferences: {},
-        dealbreakers: {},
       });
       expect(result.error).toBeNull();
     });
@@ -99,13 +96,12 @@ describe("filter-service", () => {
               pets: "have_pets",
             },
             preferences: { guests: ["rarely", "sometimes"] },
-            dealbreakers: { smoking: ["daily"] },
           },
         }),
       );
     });
 
-    it("preserves existing preferences and dealbreakers when updating self", async () => {
+    it("preserves existing preferences when updating self", async () => {
       const readChain = createSelectChain({
         data: { nitty_gritty: EXISTING_NITTY_GRITTY },
         error: null,
@@ -120,9 +116,6 @@ describe("filter-service", () => {
       const writtenValue = writeChain.update.mock.calls[0][0].nitty_gritty;
       expect(writtenValue.preferences).toEqual(
         EXISTING_NITTY_GRITTY.preferences,
-      );
-      expect(writtenValue.dealbreakers).toEqual(
-        EXISTING_NITTY_GRITTY.dealbreakers,
       );
     });
 
@@ -203,7 +196,7 @@ describe("filter-service", () => {
       ]);
     });
 
-    it("preserves existing self and dealbreakers when updating preferences", async () => {
+    it("preserves existing self when updating preferences", async () => {
       const readChain = createSelectChain({
         data: { nitty_gritty: EXISTING_NITTY_GRITTY },
         error: null,
@@ -217,9 +210,6 @@ describe("filter-service", () => {
 
       const writtenValue = writeChain.update.mock.calls[0][0].nitty_gritty;
       expect(writtenValue.self).toEqual(EXISTING_NITTY_GRITTY.self);
-      expect(writtenValue.dealbreakers).toEqual(
-        EXISTING_NITTY_GRITTY.dealbreakers,
-      );
     });
 
     it("returns error on update failure", async () => {
@@ -237,80 +227,6 @@ describe("filter-service", () => {
 
       const result = await updatePreferences(TEST_USER_ID, "noise_level", [
         "quiet",
-      ]);
-
-      expect(result.error).toBe("Update failed");
-    });
-  });
-
-  describe("updateDealbreakers", () => {
-    it("updates dealbreakers layer of nitty_gritty JSONB (DISC-07)", async () => {
-      const readChain = createSelectChain({
-        data: { nitty_gritty: EXISTING_NITTY_GRITTY },
-        error: null,
-      });
-      const writeChain = createUpdateChain({ data: null, error: null });
-
-      mockSupabase.from.mockReturnValueOnce(readChain);
-      mockSupabase.from.mockReturnValueOnce(writeChain);
-
-      const result = await updateDealbreakers(TEST_USER_ID, "partying", [
-        "often",
-      ]);
-
-      expect(result.error).toBeNull();
-    });
-
-    it("accepts array of values to hard-exclude", async () => {
-      const readChain = createSelectChain({
-        data: { nitty_gritty: EXISTING_NITTY_GRITTY },
-        error: null,
-      });
-      const writeChain = createUpdateChain({ data: null, error: null });
-
-      mockSupabase.from.mockReturnValueOnce(readChain);
-      mockSupabase.from.mockReturnValueOnce(writeChain);
-
-      await updateDealbreakers(TEST_USER_ID, "smoking", ["social", "daily"]);
-
-      const writtenValue = writeChain.update.mock.calls[0][0].nitty_gritty;
-      expect(writtenValue.dealbreakers.smoking).toEqual(["social", "daily"]);
-    });
-
-    it("preserves existing self and preferences when updating dealbreakers", async () => {
-      const readChain = createSelectChain({
-        data: { nitty_gritty: EXISTING_NITTY_GRITTY },
-        error: null,
-      });
-      const writeChain = createUpdateChain({ data: null, error: null });
-
-      mockSupabase.from.mockReturnValueOnce(readChain);
-      mockSupabase.from.mockReturnValueOnce(writeChain);
-
-      await updateDealbreakers(TEST_USER_ID, "partying", ["often"]);
-
-      const writtenValue = writeChain.update.mock.calls[0][0].nitty_gritty;
-      expect(writtenValue.self).toEqual(EXISTING_NITTY_GRITTY.self);
-      expect(writtenValue.preferences).toEqual(
-        EXISTING_NITTY_GRITTY.preferences,
-      );
-    });
-
-    it("returns error on update failure", async () => {
-      const readChain = createSelectChain({
-        data: { nitty_gritty: EXISTING_NITTY_GRITTY },
-        error: null,
-      });
-      const writeChain = createUpdateChain({
-        data: null,
-        error: { message: "Update failed" },
-      });
-
-      mockSupabase.from.mockReturnValueOnce(readChain);
-      mockSupabase.from.mockReturnValueOnce(writeChain);
-
-      const result = await updateDealbreakers(TEST_USER_ID, "partying", [
-        "often",
       ]);
 
       expect(result.error).toBe("Update failed");

@@ -6,7 +6,7 @@ import { DatePicker } from "@/components/onboarding/date-picker";
 import { COLORS } from "@/lib/constants";
 import { useOnboarding } from "@/hooks/use-onboarding";
 
-/** Check if the user is at least 18 years old. */
+/** Check if the user is at least 17 years old. */
 function validateAge(birthdate: Date): boolean {
   const today = new Date();
   let age = today.getFullYear() - birthdate.getFullYear();
@@ -14,12 +14,12 @@ function validateAge(birthdate: Date): boolean {
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate())) {
     age--;
   }
-  return age >= 18;
+  return age >= 17;
 }
 
 function defaultBirthdate(): Date {
   const d = new Date();
-  d.setFullYear(d.getFullYear() - 18);
+  d.setFullYear(d.getFullYear() - 17);
   return d;
 }
 
@@ -32,7 +32,7 @@ export default function BirthdayScreen() {
     if (!validateAge(selectedDate)) {
       Alert.alert(
         "Age Requirement",
-        "You must be 18+ to use Room. Come back when you're old enough!",
+        "You must be 17+ to use Room. Come back when you're old enough!",
         [{ text: "OK", onPress: () => router.replace("/(auth)/welcome") }],
       );
       return;

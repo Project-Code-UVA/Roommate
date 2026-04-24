@@ -1,7 +1,7 @@
 /**
  * Profile info sections below the photo carousel in swipe cards.
  *
- * Displays: compatibility, mode badge, bio, habits, preferences, dealbreakers.
+ * Displays: compatibility, mode badge, bio, habits, preferences.
  * Extracted from the old profile-card.tsx for use in the swipe card layout.
  */
 
@@ -25,6 +25,8 @@ const CATEGORY_LABELS: Record<FilterCategory, string> = {
   pets: "Pets",
   noise_level: "Noise Level",
   study_habits: "Study Habits",
+  rushing: "Rushing",
+  social_energy: "Introvert / Extrovert",
 };
 
 const CATEGORY_EMOJI: Record<FilterCategory, string> = {
@@ -37,6 +39,8 @@ const CATEGORY_EMOJI: Record<FilterCategory, string> = {
   pets: "🐾",
   noise_level: "🔊",
   study_habits: "📚",
+  rushing: "🏛️",
+  social_energy: "🗣️",
 };
 
 const CATEGORY_ICONS: Record<FilterCategory, keyof typeof Ionicons.glyphMap> = {
@@ -49,6 +53,8 @@ const CATEGORY_ICONS: Record<FilterCategory, keyof typeof Ionicons.glyphMap> = {
   pets: "paw-outline",
   noise_level: "volume-medium-outline",
   study_habits: "book-outline",
+  rushing: "ribbon-outline",
+  social_energy: "people-circle-outline",
 };
 
 // ---------------------------------------------------------------------------
@@ -72,10 +78,6 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
 
   const prefEntries = profile.nitty_gritty?.preferences
     ? (Object.entries(profile.nitty_gritty.preferences) as [FilterCategory, readonly string[]][])
-    : [];
-
-  const dealEntries = profile.nitty_gritty?.dealbreakers
-    ? (Object.entries(profile.nitty_gritty.dealbreakers) as [FilterCategory, readonly string[]][])
     : [];
 
   return (
@@ -165,25 +167,6 @@ export function ProfileInfo({ profile }: ProfileInfoProps) {
         </View>
       )}
 
-      {/* Dealbreakers */}
-      {dealEntries.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="warning-outline" size={18} color="#ef4444" />
-            <Text style={styles.sectionTitle}>Dealbreakers</Text>
-          </View>
-          <View style={styles.dealList}>
-            {dealEntries.map(([category, values]) => (
-              <View key={category} style={styles.dealRow}>
-                <View style={styles.dealDot} />
-                <Text style={styles.dealText}>
-                  {CATEGORY_LABELS[category]}: {values.join(", ")}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      )}
     </View>
   );
 }
@@ -355,26 +338,6 @@ const styles = StyleSheet.create({
   prefValues: {
     fontSize: 14,
     color: "#1f2937",
-    flex: 1,
-  },
-  // Dealbreakers
-  dealList: {
-    gap: 8,
-  },
-  dealRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  dealDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#ef4444",
-  },
-  dealText: {
-    fontSize: 14,
-    color: "#374151",
     flex: 1,
   },
 });

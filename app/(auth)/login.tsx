@@ -22,12 +22,28 @@ export default function LoginScreen() {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
       });
       if (error) throw error;
-      // Auth listener in context will handle navigation
+
+      const userId = data.session?.user.id;
+      if (!userId) throw new Error("Session missing after login.");
+
+      const { data: userRow } = await supabase
+        .from("users")
+        .select("onboarding_completed")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (userRow?.onboarding_completed) {
+        router.replace("/(tabs)");
+      } else {
+        setError(
+          "Your account isn't fully set up yet. Please complete signup.",
+        );
+      }
     } catch (e: any) {
       if (e.message?.includes("Invalid login credentials")) {
         setError("Incorrect email or password.");

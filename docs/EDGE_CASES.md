@@ -241,7 +241,7 @@ Ordered by severity within each section.
 ### EC-35: Age Calculation Timezone Edge Case
 
 - **Files**: `app/(auth)/birthday.tsx:10-18`
-- **Description**: `validateAge()` uses local device time. A user near midnight on their 18th birthday could be accepted or rejected depending on timezone mismatch with server.
+- **Description**: `validateAge()` uses local device time. A user near midnight on their 17th birthday could be accepted or rejected depending on timezone mismatch with server.
 - **Fix**: Use UTC consistently for age calculation.
 
 ### EC-36: OTP Timer Resets on App Restart

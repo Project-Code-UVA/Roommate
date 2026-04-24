@@ -5,10 +5,10 @@
 
 describe("auth-service", () => {
   describe("age validation", () => {
-    it.todo("returns true for user exactly 18 years old");
-    it.todo("returns true for user over 18");
-    it.todo("returns false for user under 18");
-    it.todo("returns false for user one day before 18th birthday");
+    it.todo("returns true for user exactly 17 years old");
+    it.todo("returns true for user over 17");
+    it.todo("returns false for user under 17");
+    it.todo("returns false for user one day before 17th birthday");
   });
 
   describe("otp", () => {

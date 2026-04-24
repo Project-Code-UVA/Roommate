@@ -1,18 +1,19 @@
 /**
  * Full profile detail view for Explore tab.
  *
- * Matches the Figma UserDetailPage design:
- * - Hero photo (tap left/right zones to navigate, bar-style dots)
- * - Name, verified badge, location, compatibility % overlaid at bottom of hero
- * - Scrollable content: quick lifestyle tags, About card, Lifestyle grid
- * - Fixed bottom action bar: Dismiss (X) + Like (Heart)
- * - Overflow menu for block/report
+ * Visual parity with Discovery swipe card: the hero uses the same
+ * PhotoCarousel component (full-bleed photo + gradient overlay with
+ * name, verified badge, location, habit chips, compatibility badge,
+ * and bio preview). Scrolling below the fold reveals a modern
+ * About section and Hinge-style iconified Lifestyle grid.
+ *
+ * Swipe left/right still triggers dismiss/like with LIKE/NOPE pills,
+ * matching the discovery gesture language.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Dimensions,
-  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -29,10 +30,10 @@ import Animated, {
   runOnJS,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { PhotoCarousel } from "@/components/discovery/photo-carousel";
 import { OverflowMenu } from "@/components/shared/overflow-menu";
 import { ReportSheet } from "@/components/safety/report-sheet";
 import { showBlockConfirmDialog } from "@/components/safety/block-confirm-dialog";
@@ -40,7 +41,8 @@ import { blockUser } from "@/services/block-service";
 import { submitReport } from "@/services/report-service";
 import { useSession } from "@/contexts/auth-context";
 import { COLORS } from "@/lib/constants";
-import type { DiscoveryProfile } from "@/types/filters";
+import { FILTER_VALUE_LABELS } from "@/constants/filter-options";
+import type { DiscoveryProfile, FilterCategory } from "@/types/filters";
 import type { OverflowMenuItem } from "@/types/safety";
 import type { ReportCategory } from "@/types/chat";
 
@@ -49,10 +51,25 @@ import type { ReportCategory } from "@/types/chat";
 // ---------------------------------------------------------------------------
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-const HERO_HEIGHT = SCREEN_HEIGHT * 0.58;
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
 const MAX_ROTATION = 12;
 const FLY_OUT_X = SCREEN_WIDTH * 1.5;
+
+type IoniconName = React.ComponentProps<typeof Ionicons>["name"];
+
+const LIFESTYLE_ICONS: Readonly<Record<FilterCategory, IoniconName>> = {
+  sleep_schedule: "moon-outline",
+  cleanliness: "sparkles-outline",
+  guests: "people-outline",
+  smoking: "ban-outline",
+  budget_range: "cash-outline",
+  partying: "wine-outline",
+  pets: "paw-outline",
+  noise_level: "volume-low-outline",
+  study_habits: "book-outline",
+  rushing: "ribbon-outline",
+  social_energy: "chatbubbles-outline",
+};
 
 // ---------------------------------------------------------------------------
 // Types
@@ -69,92 +86,95 @@ type ExploreProfileViewProps = {
   readonly onBlock?: () => void;
 };
 
+type LifestyleEntry = {
+  readonly category: FilterCategory;
+  readonly label: string;
+  readonly value: string;
+  readonly icon: IoniconName;
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
+function prettify(category: FilterCategory, value: string | undefined): string | null {
+  if (!value) return null;
+  return FILTER_VALUE_LABELS[category]?.[value] ?? value;
+}
+
 function getHabitChips(profile: DiscoveryProfile): string[] {
   const self = profile.nitty_gritty?.self ?? {};
   const chips: string[] = [];
-  if (self.sleep_schedule) chips.push(self.sleep_schedule);
-  if (self.cleanliness) chips.push(self.cleanliness);
+  const sleep = prettify("sleep_schedule", self.sleep_schedule);
+  const clean = prettify("cleanliness", self.cleanliness);
+  if (sleep) chips.push(sleep);
+  if (clean) chips.push(clean);
   if (profile.year) chips.push(`Class of ${profile.year}`);
-  if (self.pets === "yes" || self.pets === "has pets") chips.push("Pet Friendly");
-  return chips.slice(0, 4);
+  return chips.slice(0, 3);
 }
 
-function formatLifestyle(profile: DiscoveryProfile): {
-  label: string;
-  value: string;
-}[] {
+function buildLifestyle(profile: DiscoveryProfile): LifestyleEntry[] {
   const self = profile.nitty_gritty?.self ?? {};
-  const rows: { label: string; value: string }[] = [];
-  if (self.sleep_schedule) rows.push({ label: "Sleep", value: self.sleep_schedule });
-  if (self.cleanliness) rows.push({ label: "Cleanliness", value: self.cleanliness });
-  if (self.smoking !== undefined) rows.push({ label: "Smoking", value: self.smoking === "yes" ? "Smoker" : "Non-smoker" });
-  if (self.guests) rows.push({ label: "Guests", value: self.guests });
-  if (self.noise_level) rows.push({ label: "Noise", value: self.noise_level });
-  if (self.partying) rows.push({ label: "Social", value: self.partying });
-  return rows.slice(0, 6);
+  const entries: LifestyleEntry[] = [];
+
+  const push = (
+    category: FilterCategory,
+    label: string,
+    raw: string | undefined,
+    overrideValue?: string,
+  ) => {
+    const pretty = overrideValue ?? prettify(category, raw);
+    if (!pretty) return;
+    entries.push({
+      category,
+      label,
+      value: pretty,
+      icon: LIFESTYLE_ICONS[category],
+    });
+  };
+
+  push("sleep_schedule", "Sleep", self.sleep_schedule);
+  push("cleanliness", "Cleanliness", self.cleanliness);
+  // Smoking: show friendlier "Non-smoker" for `never` values
+  if (self.smoking !== undefined) {
+    const smokingLabel =
+      self.smoking === "never" || self.smoking === "no" || self.smoking === "false"
+        ? "Non-smoker"
+        : prettify("smoking", self.smoking);
+    if (smokingLabel) {
+      entries.push({
+        category: "smoking",
+        label: "Smoking",
+        value: smokingLabel,
+        icon: LIFESTYLE_ICONS.smoking,
+      });
+    }
+  }
+  push("guests", "Guests", self.guests);
+  push("noise_level", "Noise", self.noise_level);
+  push("partying", "Social", self.partying);
+  push("pets", "Pets", self.pets);
+  push("social_energy", "Energy", self.social_energy);
+
+  return entries.slice(0, 6);
 }
 
 // ---------------------------------------------------------------------------
-// Photo dots (bar style like Figma)
+// Lifestyle grid cell — icon-first, Hinge-style
 // ---------------------------------------------------------------------------
 
-function PhotoDots({
-  count,
-  current,
-}: {
-  readonly count: number;
-  readonly current: number;
-}) {
-  if (count <= 1) return null;
-  return (
-    <View style={dotsStyles.row}>
-      {Array.from({ length: count }, (_, i) => (
-        <View
-          key={i}
-          style={[dotsStyles.dot, i === current && dotsStyles.dotActive]}
-        />
-      ))}
-    </View>
-  );
-}
-
-const dotsStyles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    gap: 4,
-    paddingHorizontal: 16,
-  },
-  dot: {
-    flex: 1,
-    maxWidth: 80,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.4)",
-  },
-  dotActive: {
-    backgroundColor: "#fff",
-  },
-});
-
-// ---------------------------------------------------------------------------
-// Lifestyle grid cell
-// ---------------------------------------------------------------------------
-
-function LifestyleCell({
-  label,
-  value,
-}: {
-  readonly label: string;
-  readonly value: string;
-}) {
+function LifestyleCell({ entry }: { readonly entry: LifestyleEntry }) {
   return (
     <View style={lifestyleStyles.cell}>
-      <Text style={lifestyleStyles.label}>{label}</Text>
-      <Text style={lifestyleStyles.value}>{value}</Text>
+      <View style={lifestyleStyles.iconWrap}>
+        <Ionicons name={entry.icon} size={18} color={COLORS.primary[600]} />
+      </View>
+      <View style={lifestyleStyles.cellText}>
+        <Text style={lifestyleStyles.label}>{entry.label}</Text>
+        <Text style={lifestyleStyles.value} numberOfLines={1}>
+          {entry.value}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -162,17 +182,34 @@ function LifestyleCell({
 const lifestyleStyles = StyleSheet.create({
   cell: {
     width: "48%",
-    marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 16,
+  },
+  iconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.primary[50],
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cellText: {
+    flex: 1,
   },
   label: {
-    fontSize: 12,
-    color: COLORS.gray[400],
-    marginBottom: 2,
+    fontSize: 11,
+    color: COLORS.gray[500],
+    fontWeight: "500",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
   },
   value: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: "700",
     color: COLORS.gray[900],
+    marginTop: 1,
   },
 });
 
@@ -192,14 +229,17 @@ export function ExploreProfileView({
   const userId = session?.user.id ?? "";
   const insets = useSafeAreaInsets();
 
-  const [photoIndex, setPhotoIndex] = useState(0);
   const [reportVisible, setReportVisible] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
 
-  // Reset photo index when profile changes
-  useEffect(() => {
-    setPhotoIndex(0);
-  }, [profile?.user_id]);
+  const habitChips = useMemo(
+    () => (profile ? getHabitChips(profile) : []),
+    [profile],
+  );
+  const lifestyleEntries = useMemo(
+    () => (profile ? buildLifestyle(profile) : []),
+    [profile],
+  );
 
   // ---------------------------------------------------------------------------
   // Handlers
@@ -234,7 +274,6 @@ export function ExploreProfileView({
   const translateX = useSharedValue(0);
   const isAnimating = useSharedValue(false);
 
-  // Reset swipe state when profile changes
   useEffect(() => {
     translateX.value = 0;
     isAnimating.value = false;
@@ -304,15 +343,6 @@ export function ExploreProfileView({
     opacity: interpolate(translateX.value, [-SWIPE_THRESHOLD, 0], [1, 0], "clamp"),
   }));
 
-  const goNextPhoto = useCallback(() => {
-    if (!profile) return;
-    setPhotoIndex((i) => Math.min(i + 1, profile.photos.length - 1));
-  }, [profile]);
-
-  const goPrevPhoto = useCallback(() => {
-    setPhotoIndex((i) => Math.max(i - 1, 0));
-  }, []);
-
   const overflowItems: readonly OverflowMenuItem[] = [
     {
       label: "Block",
@@ -325,73 +355,57 @@ export function ExploreProfileView({
 
   if (!profile) return null;
 
-  const currentPhoto = profile.photos[photoIndex]?.url ?? profile.photos[0]?.url;
   const compatibility = Math.round(profile.rank_score * 100);
-  const habitChips = getHabitChips(profile);
-  const lifestyleRows = formatLifestyle(profile);
   const lookingFor =
     profile.mode_status === "roommate" ? "Roommate" : "Friends";
+
+  const heroHeight = SCREEN_HEIGHT - insets.top - insets.bottom - 20;
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <GestureDetector gesture={panGesture}>
-      <Animated.View style={[styles.container, { paddingBottom: insets.bottom }, cardAnimStyle]}>
-        {/* LIKE pill indicator */}
-        <Animated.View style={[styles.likePill, likeIndicatorStyle]} pointerEvents="none">
-          <Text style={styles.likePillText}>LIKE</Text>
-        </Animated.View>
-        {/* NOPE pill indicator */}
-        <Animated.View style={[styles.nopePill, passIndicatorStyle]} pointerEvents="none">
-          <Text style={styles.nopePillText}>NOPE</Text>
-        </Animated.View>
+        <Animated.View style={[styles.container, cardAnimStyle]}>
+          {/* LIKE pill indicator */}
+          <Animated.View style={[styles.likePill, likeIndicatorStyle]} pointerEvents="none">
+            <Text style={styles.likePillText}>LIKE</Text>
+          </Animated.View>
+          {/* NOPE pill indicator */}
+          <Animated.View style={[styles.nopePill, passIndicatorStyle]} pointerEvents="none">
+            <Text style={styles.nopePillText}>NOPE</Text>
+          </Animated.View>
 
-        {/* ── Scrollable body ── */}
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-        >
-          {/* ── Hero photo ── */}
-          <View style={[styles.hero, { height: HERO_HEIGHT }]}>
-            {currentPhoto ? (
-              <Image
-                source={{ uri: currentPhoto }}
-                style={styles.heroImage}
-                resizeMode="cover"
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* ── Hero card — same visual language as Discovery ── */}
+            <View style={[styles.hero, { height: heroHeight }]}>
+              <PhotoCarousel
+                photos={profile.photos}
+                displayName={profile.display_name}
+                year={profile.year}
+                selfieVerified={profile.selfie_verified}
+                hometown={profile.hometown}
+                profileId={profile.user_id}
+                compatibility={compatibility}
+                bio={profile.bio}
+                habitChips={habitChips}
               />
-            ) : (
-              <View style={[styles.heroImage, styles.heroFallback]}>
-                <Ionicons name="person" size={80} color={COLORS.gray[300]} />
-              </View>
-            )}
 
-            {/* Gradient overlay — strong at bottom, fades to transparent */}
-            <LinearGradient
-              colors={[
-                "rgba(0,0,0,0)",
-                "rgba(0,0,0,0.18)",
-                "rgba(0,0,0,0.72)",
-              ]}
-              locations={[0.4, 0.65, 1]}
-              style={StyleSheet.absoluteFill}
-              pointerEvents="none"
-            />
-
-            {/* Top bar */}
-            <View
-              style={[styles.topBar, { paddingTop: insets.top + 8 }]}
-            >
-              <Pressable
-                onPress={onClose}
-                style={styles.topBtn}
-                testID="explore-profile-back"
-                accessibilityRole="button"
-                accessibilityLabel="Go back"
+              <View
+                style={[styles.topBar, { paddingTop: insets.top + 8 }]}
+                pointerEvents="box-none"
               >
-                <Ionicons name="arrow-back" size={20} color="#1f2937" />
-              </Pressable>
-              <View style={styles.topRight}>
+                <Pressable
+                  onPress={onClose}
+                  style={styles.topBtn}
+                  testID="explore-profile-back"
+                  accessibilityRole="button"
+                  accessibilityLabel="Go back"
+                >
+                  <Ionicons name="arrow-back" size={20} color="#1f2937" />
+                </Pressable>
                 <View style={styles.topBtn}>
                   <OverflowMenu
                     items={overflowItems}
@@ -401,119 +415,54 @@ export function ExploreProfileView({
               </View>
             </View>
 
-            {/* Photo dots */}
-            <View style={styles.dotsContainer}>
-              <PhotoDots
-                count={profile.photos.length}
-                current={photoIndex}
-              />
-            </View>
-
-            {/* Tap zones for photo navigation */}
-            <Pressable
-              style={styles.leftTapZone}
-              onPress={goPrevPhoto}
-              accessibilityLabel="Previous photo"
-            />
-            <Pressable
-              style={styles.rightTapZone}
-              onPress={goNextPhoto}
-              accessibilityLabel="Next photo"
-            />
-
-            {/* Name + info at bottom of hero */}
-            <View style={styles.heroBottom}>
-              <View style={styles.heroBottomLeft}>
-                <View style={styles.nameRow}>
-                  <Text style={styles.name} numberOfLines={1}>
-                    {profile.display_name}
-                  </Text>
-                  {profile.selfie_verified && (
-                    <Ionicons
-                      name="checkmark-circle"
-                      size={22}
-                      color="#60a5fa"
-                    />
-                  )}
-                </View>
-                {profile.hometown ? (
-                  <View style={styles.locationRow}>
-                    <Ionicons
-                      name="location-outline"
-                      size={14}
-                      color="rgba(255,255,255,0.85)"
-                    />
-                    <Text style={styles.location}>{profile.hometown}</Text>
-                  </View>
-                ) : null}
-              </View>
-
-              {compatibility > 0 && (
-                <LinearGradient
-                  colors={[COLORS.primary[500], "#ec4899"]}
-                  style={styles.compatBadge}
-                >
-                  <Text style={styles.compatPct}>{compatibility}%</Text>
-                  <Text style={styles.compatLabel}>Match</Text>
-                </LinearGradient>
-              )}
-            </View>
-          </View>
-
-          {/* ── Content section ── */}
-          <View style={styles.content}>
-            {/* Quick lifestyle tags */}
-            {habitChips.length > 0 && (
-              <View style={styles.tagsRow}>
-                {habitChips.map((chip) => (
-                  <View key={chip} style={styles.tag}>
-                    <Text style={styles.tagText}>{chip}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* About card */}
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>About</Text>
-              {profile.bio ? (
-                <Text style={styles.bio}>{profile.bio}</Text>
-              ) : null}
-              <View style={styles.divider} />
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Looking for</Text>
-                <Text style={styles.infoValue}>{lookingFor}</Text>
+            {/* ── Quick stat pills ── */}
+            <View style={styles.statRow}>
+              <View style={styles.statPill}>
+                <Ionicons name="home-outline" size={14} color={COLORS.primary[700]} />
+                <Text style={styles.statPillLabel}>Looking for</Text>
+                <Text style={styles.statPillValue}>{lookingFor}</Text>
               </View>
               {profile.year ? (
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Class year</Text>
-                  <Text style={styles.infoValue}>{profile.year}</Text>
+                <View style={styles.statPill}>
+                  <Ionicons name="school-outline" size={14} color={COLORS.primary[700]} />
+                  <Text style={styles.statPillLabel}>Class of</Text>
+                  <Text style={styles.statPillValue}>{profile.year}</Text>
                 </View>
               ) : null}
             </View>
 
-            {/* Lifestyle card */}
-            {lifestyleRows.length > 0 && (
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>Lifestyle</Text>
-                <View style={styles.lifestyleGrid}>
-                  {lifestyleRows.map((row) => (
-                    <LifestyleCell
-                      key={row.label}
-                      label={row.label}
-                      value={row.value}
-                    />
-                  ))}
+            {/* ── Content ── */}
+            <View style={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
+              {/* About card */}
+              {profile.bio ? (
+                <View style={styles.card}>
+                  <View style={styles.sectionHeader}>
+                    <View style={styles.sectionAccent} />
+                    <Text style={styles.sectionTitle}>About</Text>
+                  </View>
+                  <Text style={styles.bio}>{profile.bio}</Text>
                 </View>
-              </View>
-            )}
+              ) : null}
 
-          </View>
-        </ScrollView>
-      </Animated.View>
+              {/* Lifestyle card */}
+              {lifestyleEntries.length > 0 ? (
+                <View style={styles.card}>
+                  <View style={styles.sectionHeader}>
+                    <View style={styles.sectionAccent} />
+                    <Text style={styles.sectionTitle}>Lifestyle</Text>
+                  </View>
+                  <View style={styles.lifestyleGrid}>
+                    {lifestyleEntries.map((entry) => (
+                      <LifestyleCell key={entry.category} entry={entry} />
+                    ))}
+                  </View>
+                </View>
+              ) : null}
+            </View>
+          </ScrollView>
+        </Animated.View>
       </GestureDetector>
 
-      {/* Report sheet */}
       <ReportSheet
         visible={reportVisible}
         userName={profile.display_name}
@@ -532,7 +481,7 @@ export function ExploreProfileView({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#faf7ff",
   },
   scroll: {
     flex: 1,
@@ -546,21 +495,15 @@ const styles = StyleSheet.create({
     position: "relative",
     backgroundColor: COLORS.gray[200],
     overflow: "hidden",
-  },
-  heroImage: {
-    width: "100%",
-    height: "100%",
-  },
-  heroFallback: {
-    alignItems: "center",
-    justifyContent: "center",
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
   },
   topBar: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
-    zIndex: 20,
+    zIndex: 30,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -580,165 +523,86 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
-  topRight: {
+
+  // ── Stat pill row ──
+  statRow: {
     flexDirection: "row",
-    gap: 8,
-  },
-  dotsContainer: {
-    position: "absolute",
-    top: 70,
-    left: 0,
-    right: 0,
-    zIndex: 20,
-  },
-  leftTapZone: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: SCREEN_WIDTH * 0.35,
-    bottom: 0,
-    zIndex: 10,
-  },
-  rightTapZone: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    width: SCREEN_WIDTH * 0.65,
-    bottom: 0,
-    zIndex: 10,
-  },
-  heroBottom: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    zIndex: 20,
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 10,
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingTop: 20,
   },
-  heroBottomLeft: {
-    flex: 1,
-    marginRight: 12,
-  },
-  nameRow: {
+  statPill: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 4,
-  },
-  name: {
-    fontSize: 32,
-    fontWeight: "800",
-    color: "#fff",
-    letterSpacing: -0.5,
-    flexShrink: 1,
-  },
-  locationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  location: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.85)",
-  },
-  compatBadge: {
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#fff",
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  compatPct: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: "#fff",
-    letterSpacing: -0.5,
+  statPillLabel: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: COLORS.gray[500],
   },
-  compatLabel: {
-    fontSize: 10,
-    color: "rgba(255,255,255,0.9)",
-    fontWeight: "600",
-    letterSpacing: 1,
-    textTransform: "uppercase",
+  statPillValue: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.gray[900],
   },
 
   // ── Content ──
   content: {
     padding: 20,
-    gap: 16,
-  },
-  tagsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  tag: {
-    backgroundColor: COLORS.primary[100],
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-  },
-  tagText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: COLORS.primary[700],
+    paddingTop: 16,
+    gap: 14,
   },
 
   // ── Cards ──
   card: {
     backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 24,
+    padding: 22,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 16,
     elevation: 2,
   },
-  cardTitle: {
-    fontSize: 17,
-    fontWeight: "700",
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 14,
+  },
+  sectionAccent: {
+    width: 4,
+    height: 18,
+    borderRadius: 2,
+    backgroundColor: COLORS.primary[500],
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "800",
     color: COLORS.gray[900],
-    marginBottom: 12,
+    letterSpacing: -0.3,
   },
   bio: {
     fontSize: 15,
     color: COLORS.gray[700],
-    lineHeight: 22,
-    marginBottom: 12,
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: COLORS.gray[200],
-    marginVertical: 12,
-  },
-  infoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 6,
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: COLORS.gray[500],
-  },
-  infoValue: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.gray[900],
+    lineHeight: 23,
   },
   lifestyleGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
+    marginTop: 2,
   },
 
   // ── Swipe indicators ──
@@ -753,7 +617,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 9,
     transform: [{ rotate: "12deg" }],
-    zIndex: 30,
+    zIndex: 40,
   },
   likePillText: {
     color: "#fff",
@@ -772,7 +636,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 9,
     transform: [{ rotate: "-12deg" }],
-    zIndex: 30,
+    zIndex: 40,
   },
   nopePillText: {
     color: "#fff",

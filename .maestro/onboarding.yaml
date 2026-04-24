@@ -26,7 +26,7 @@ appId: host.exp.Exponent
 - waitForAnimationToEnd
 - assertVisible: "When's your birthday?"
 
-# Scroll year column down (toward older years) to ensure 18+
+# Scroll year column down (toward older years) to ensure 17+
 - swipe:
     start: 80%, 55%
     end: 80%, 70%

@@ -78,9 +78,9 @@ export default function TabLayout() {
     return <Redirect href="/(auth)/welcome" />;
   }
 
-  // Authenticated but not onboarded -> onboarding flow
+  // Authenticated but not onboarded -> send to welcome (user can continue from there)
   if (!onboardingComplete) {
-    return <Redirect href="/(auth)/birthday" />;
+    return <Redirect href="/(auth)/welcome" />;
   }
 
   return (

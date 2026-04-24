@@ -177,7 +177,7 @@ describe("Underage Report Category (SAFE-06)", () => {
       reporter_id: userE.id,
       reported_id: userF.id,
       reason: "underage",
-      details: "User appears to be under 18",
+      details: "User appears to be under 17",
     });
 
     // The enum should accept "underage" as a valid report_reason

@@ -7,7 +7,8 @@
 
 import { supabase } from "@/lib/supabase";
 import type { ExploreProfile } from "@/types/explore";
-import type { DiscoveryProfile } from "@/types/filters";
+import type { DiscoveryFilters, DiscoveryProfile } from "@/types/filters";
+import { normalizeFilters } from "@/types/filters";
 
 // Cast for RPC functions not yet in generated database types
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,13 +28,30 @@ export async function getExploreFeed(
   limit = 24,
   offset = 0,
   seed = 0,
+  filters?: DiscoveryFilters,
 ): Promise<ExploreFeedResult> {
-  const { data, error } = await rpc("get_explore_feed", {
-    p_user_id: userId,
-    p_limit: limit,
-    p_offset: offset,
-    p_seed: seed,
-  });
+  const normalized = filters ? normalizeFilters(filters) : {};
+  const hasFilters = Object.keys(normalized).length > 0;
+
+  // Omit p_filters entirely when no filter is active so the call still
+  // resolves to the legacy 4-arg overload before the filter migration is
+  // applied. PostgREST matches overloads by the exact set of named params.
+  const payload = hasFilters
+    ? {
+        p_user_id: userId,
+        p_limit: limit,
+        p_offset: offset,
+        p_seed: seed,
+        p_filters: normalized,
+      }
+    : {
+        p_user_id: userId,
+        p_limit: limit,
+        p_offset: offset,
+        p_seed: seed,
+      };
+
+  const { data, error } = await rpc("get_explore_feed", payload);
 
   if (error) {
     return { data: [], error: error.message };

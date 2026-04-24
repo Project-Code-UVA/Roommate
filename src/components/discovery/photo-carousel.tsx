@@ -1,13 +1,15 @@
 /**
  * Photo carousel for swipe card — fills the full card height.
  *
- * Tap left/right halves to navigate. Last photo loops to first.
- * Gradient overlay at bottom with name, year, verified badge,
- * compatibility badge, location, habit chips, and bio snippet.
- * Photo indicator bars at top.
+ * Outer thirds navigate photos (left=prev, right=next, loops).
+ * Center third is reserved for double-tap → `onDoubleTap` (e.g. expand profile).
+ * Center single-tap is a no-op by design.
+ *
+ * Gradient overlay at bottom with name, year, verified badge, compatibility
+ * badge, location, habit chips, and bio snippet. Photo indicator bars at top.
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -27,6 +29,8 @@ import { COLORS } from "@/lib/constants";
 // ---------------------------------------------------------------------------
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const EDGE_THIRD = SCREEN_WIDTH / 3;
+const DOUBLE_TAP_WINDOW_MS = 260;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -48,6 +52,7 @@ type PhotoCarouselProps = {
   readonly compatibility?: number;
   readonly bio?: string | null;
   readonly habitChips?: readonly string[];
+  readonly onDoubleTap?: () => void;
 };
 
 // ---------------------------------------------------------------------------
@@ -64,8 +69,10 @@ export function PhotoCarousel({
   compatibility,
   bio,
   habitChips,
+  onDoubleTap,
 }: PhotoCarouselProps) {
   const [photoIndex, setPhotoIndex] = useState(0);
+  const centerTapTimeRef = useRef(0);
 
   const photoCount = photos.length;
   const currentPhoto = photos[photoIndex] ?? photos[0] ?? null;
@@ -75,18 +82,40 @@ export function PhotoCarousel({
     setPhotoIndex(0);
   }, [profileId]);
 
+  const navPrev = useCallback(() => {
+    if (photoCount <= 1) return;
+    setPhotoIndex((prev) => (prev > 0 ? prev - 1 : photoCount - 1));
+  }, [photoCount]);
+
+  const navNext = useCallback(() => {
+    if (photoCount <= 1) return;
+    setPhotoIndex((prev) => (prev + 1) % photoCount);
+  }, [photoCount]);
+
   const handleTap = useCallback(
     (tapX: number) => {
-      if (photoCount <= 1) return;
-      const isLeftHalf = tapX < SCREEN_WIDTH / 2;
-      setPhotoIndex((prev) => {
-        if (isLeftHalf) {
-          return prev > 0 ? prev - 1 : photoCount - 1;
-        }
-        return (prev + 1) % photoCount;
-      });
+      // Outer thirds → instant photo navigation
+      if (tapX < EDGE_THIRD) {
+        navPrev();
+        return;
+      }
+      if (tapX > SCREEN_WIDTH - EDGE_THIRD) {
+        navNext();
+        return;
+      }
+
+      // Center third → wait for potential 2nd tap for double-tap-to-expand
+      if (!onDoubleTap) return;
+
+      const now = Date.now();
+      if (now - centerTapTimeRef.current < DOUBLE_TAP_WINDOW_MS) {
+        centerTapTimeRef.current = 0;
+        onDoubleTap();
+      } else {
+        centerTapTimeRef.current = now;
+      }
     },
-    [photoCount],
+    [navPrev, navNext, onDoubleTap],
   );
 
   if (!currentPhoto) return null;
@@ -116,18 +145,18 @@ export function PhotoCarousel({
         {/* Name row + compatibility badge */}
         <View style={styles.nameRow}>
           <View style={styles.nameLeft}>
-            <View style={styles.nameLine}>
+            <Text style={styles.nameLineText} numberOfLines={2} ellipsizeMode="tail">
               <Text style={styles.nameText}>{displayName}</Text>
-              {year && <Text style={styles.yearText}>, {year}</Text>}
-              {selfieVerified && (
-                <Ionicons
-                  name="checkmark-circle"
-                  size={22}
-                  color={COLORS.primary[400]}
-                  style={styles.verifiedIcon}
-                />
-              )}
-            </View>
+              {year ? <Text style={styles.yearText}>, {year}</Text> : null}
+            </Text>
+            {selfieVerified && (
+              <Ionicons
+                name="checkmark-circle"
+                size={22}
+                color={COLORS.primary[400]}
+                style={styles.verifiedIcon}
+              />
+            )}
           </View>
           {compatibility !== undefined && (
             <LinearGradient
@@ -205,15 +234,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
+    gap: 12,
     marginBottom: 4,
   },
   nameLeft: {
     flex: 1,
-    marginRight: 12,
-  },
-  nameLine: {
     flexDirection: "row",
-    alignItems: "baseline",
+    alignItems: "flex-end",
+    flexWrap: "wrap",
+  },
+  nameLineText: {
+    flexShrink: 1,
   },
   nameText: {
     color: "#fff",
@@ -227,12 +258,14 @@ const styles = StyleSheet.create({
   },
   verifiedIcon: {
     marginLeft: 8,
+    alignSelf: "center",
   },
   compatBadge: {
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 8,
     alignItems: "center",
+    flexShrink: 0,
   },
   compatPct: {
     color: "#fff",

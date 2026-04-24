@@ -8,7 +8,7 @@
  * Scroll loads more profiles with the same seed.
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -26,10 +26,14 @@ import { useRouter } from "expo-router";
 import { ExploreGridCard } from "@/components/explore/explore-grid-card";
 import { ExploreProfileView } from "@/components/explore/explore-profile-view";
 import { MatchModal } from "@/components/match/match-modal";
+import { FilterButton } from "@/components/shared/filter-button";
 import { useExploreFeed } from "@/hooks/use-explore-feed";
+import { openFilterDraft } from "@/stores/filter-draft";
 import { useSession } from "@/contexts/auth-context";
 import { COLORS } from "@/lib/constants";
 import type { ExploreProfile } from "@/types/explore";
+import type { DiscoveryFilters } from "@/types/filters";
+import { countActiveFilters } from "@/types/filters";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -89,6 +93,12 @@ export default function ExploreScreen() {
   const router = useRouter();
   const userId = session?.user.id ?? "";
 
+  const [filters, setFilters] = useState<DiscoveryFilters>({});
+  const activeFilterCount = useMemo(
+    () => countActiveFilters(filters),
+    [filters],
+  );
+
   const {
     profiles,
     selectedProfile,
@@ -104,7 +114,7 @@ export default function ExploreScreen() {
     dismissSelected,
     clearSelected,
     dismissMatch,
-  } = useExploreFeed(userId);
+  } = useExploreFeed(userId, filters);
 
   const [currentUserPhotoUrl] = useState<string | null>(null);
 
@@ -138,6 +148,11 @@ export default function ExploreScreen() {
       // Ignore share errors
     }
   }, []);
+
+  const handleOpenFilters = useCallback(() => {
+    openFilterDraft(filters, setFilters);
+    router.push("/filters" as never);
+  }, [filters, router]);
 
   // -------------------------------------------------------------------------
   // Render item
@@ -186,8 +201,15 @@ export default function ExploreScreen() {
             </Text>
           )}
         </View>
-        <View style={styles.sparklesBadge}>
-          <Ionicons name="sparkles" size={18} color={COLORS.primary[600]} />
+        <View style={styles.headerRight}>
+          <FilterButton
+            activeCount={activeFilterCount}
+            onPress={handleOpenFilters}
+            testID="explore-filter-button"
+          />
+          <View style={styles.sparklesBadge}>
+            <Ionicons name="sparkles" size={18} color={COLORS.primary[600]} />
+          </View>
         </View>
       </View>
 
@@ -246,6 +268,7 @@ export default function ExploreScreen() {
         onKeepSwiping={handleKeepBrowsing}
         onShare={handleShare}
       />
+
     </SafeAreaView>
   );
 }
@@ -270,6 +293,11 @@ const styles = StyleSheet.create({
   },
   headerLeft: {
     gap: 2,
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
   headerTitle: {
     fontSize: 28,

@@ -10,18 +10,18 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
 /**
- * Client-side age validation. Returns true if birthdate is 18+ years ago.
+ * Client-side age validation. Returns true if birthdate is 17+ years ago.
  * Server-side trigger enforces this as well.
  */
 export function validateAge(birthdate: Date): boolean {
   const today = new Date();
-  const eighteenYearsAgo = new Date(
-    today.getFullYear() - 18,
+  const minAgeCutoff = new Date(
+    today.getFullYear() - 17,
     today.getMonth(),
     today.getDate(),
   );
 
-  return birthdate <= eighteenYearsAgo;
+  return birthdate <= minAgeCutoff;
 }
 
 /**

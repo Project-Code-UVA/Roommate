@@ -80,10 +80,11 @@ export function SettingsScreen() {
         style: "destructive",
         onPress: async () => {
           await signOut();
+          router.replace("/(auth)/welcome");
         },
       },
     ]);
-  }, []);
+  }, [router]);
 
   const handleDeleteAccount = useCallback(() => {
     Alert.alert(
@@ -110,6 +111,7 @@ export function SettingsScreen() {
                       Alert.alert("Error", result.error);
                     } else {
                       await signOut();
+                      router.replace("/(auth)/welcome");
                     }
                   },
                 },
@@ -119,7 +121,7 @@ export function SettingsScreen() {
         },
       ],
     );
-  }, [userId]);
+  }, [userId, router]);
 
   const sections: readonly Section[] = [
     {

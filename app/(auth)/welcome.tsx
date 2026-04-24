@@ -113,7 +113,7 @@ export default function WelcomeScreen() {
         <View style={styles.footer}>
           <Text style={styles.footerText}>
             By continuing, you agree to our Terms of Service and Privacy Policy.
-            You must be 18+ to use Room.
+            You must be 17+ to use Room.
           </Text>
         </View>
       </SafeAreaView>

@@ -18,23 +18,68 @@ export type FilterCategory =
   | "partying"
   | "pets"
   | "noise_level"
-  | "study_habits";
+  | "study_habits"
+  | "rushing"
+  | "social_energy";
 
 // ---------------------------------------------------------------------------
 // Nitty-gritty JSONB schema
 // ---------------------------------------------------------------------------
 
 /**
- * Three-layer preference model stored in profiles.nitty_gritty:
+ * Two-layer preference model stored in profiles.nitty_gritty:
  * - self: what the user is like (single value per category)
  * - preferences: what the user prefers in a roommate (multiple acceptable values)
- * - dealbreakers: what the user will NOT accept (hard exclusion filters)
  */
 export type NittyGritty = {
   readonly self: Partial<Record<FilterCategory, string>>;
   readonly preferences: Partial<Record<FilterCategory, readonly string[]>>;
-  readonly dealbreakers: Partial<Record<FilterCategory, readonly string[]>>;
 };
+
+// ---------------------------------------------------------------------------
+// Session-level filters (ad-hoc, not persisted to profile)
+// ---------------------------------------------------------------------------
+
+/**
+ * Hard-include filter applied on top of saved preferences.
+ *
+ * Semantics: for every category key with a non-empty array, a candidate
+ * must have `nitty_gritty.self[category]` in that list.
+ * Empty arrays or missing keys impose no constraint.
+ *
+ * Lives in screen-local state — never written to the profile.
+ */
+export type DiscoveryFilters = Partial<Record<FilterCategory, readonly string[]>>;
+
+export const EMPTY_FILTERS: DiscoveryFilters = Object.freeze({});
+
+/**
+ * Count of categories that currently have at least one selected value.
+ * Used to render the "active filter" badge next to the filter button.
+ */
+export function countActiveFilters(filters: DiscoveryFilters): number {
+  let count = 0;
+  for (const key of Object.keys(filters) as FilterCategory[]) {
+    const values = filters[key];
+    if (values && values.length > 0) count += 1;
+  }
+  return count;
+}
+
+/**
+ * Strip empty arrays so the payload sent to the RPC stays compact and
+ * cache-friendly across calls.
+ */
+export function normalizeFilters(filters: DiscoveryFilters): DiscoveryFilters {
+  const result: Record<string, readonly string[]> = {};
+  for (const key of Object.keys(filters) as FilterCategory[]) {
+    const values = filters[key];
+    if (values && values.length > 0) {
+      result[key] = values;
+    }
+  }
+  return result as DiscoveryFilters;
+}
 
 // ---------------------------------------------------------------------------
 // Discovery profile (returned by get_discovery_stack RPC)
@@ -62,6 +107,7 @@ export type DiscoveryProfile = {
 export type LikeResult = {
   readonly success: boolean;
   readonly is_match: boolean;
+  readonly is_super_like: boolean;
   readonly match_id: string | null;
   readonly thread_id: string | null;
   readonly error: string | null;

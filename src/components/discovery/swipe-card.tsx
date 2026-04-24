@@ -1,16 +1,18 @@
 /**
- * Swipeable discovery card with pan gesture.
+ * Swipeable discovery card with pan + tap gestures.
  *
  * Full-screen photo card — profile info is overlaid on the photo via
  * PhotoCarousel's bottom gradient. No scroll within the card.
  *
- * Horizontal pan gesture:
- *   - Swipe right → like (green LIKE pill indicator)
- *   - Swipe left  → pass (red NOPE pill indicator)
- * Spring animation flies card off-screen, then next profile appears.
+ * Gestures:
+ *   - Swipe right → like (green LIKE pill)
+ *   - Swipe left  → pass (red NOPE pill)
+ *   - Swipe up    → super-like (blue SUPER pill)
+ *   - Double-tap center → expand profile (via PhotoCarousel onDoubleTap)
+ *   - Tap edges   → photo navigation (via PhotoCarousel)
  *
- * Gesture: activeOffsetX: [-15, 15] to avoid competing with page scrolls.
- * Swipe threshold: 30% screen width. Rotation: max 12 degrees.
+ * Pan activates once either axis crosses 15px. Dominant axis wins on release.
+ * Horizontal threshold: 30% screen width. Vertical threshold: 25% screen height.
  *
  * Block/report overflow menu lives in the parent screen header (index.tsx).
  */
@@ -28,16 +30,19 @@ import Animated, {
 import * as Haptics from "expo-haptics";
 
 import { PhotoCarousel } from "@/components/discovery/photo-carousel";
+import { FILTER_VALUE_LABELS } from "@/constants/filter-options";
 import type { DiscoveryProfile } from "@/types/filters";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const SWIPE_THRESHOLD_X = SCREEN_WIDTH * 0.3;
+const SWIPE_THRESHOLD_Y = SCREEN_HEIGHT * 0.18;
 const MAX_ROTATION = 12;
 const FLY_OUT_X = SCREEN_WIDTH * 1.5;
+const FLY_OUT_Y = SCREEN_HEIGHT * 1.2;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -46,8 +51,14 @@ const FLY_OUT_X = SCREEN_WIDTH * 1.5;
 function getHabitChips(profile: DiscoveryProfile): string[] {
   const self = profile.nitty_gritty?.self ?? {};
   const chips: string[] = [];
-  if (self.sleep_schedule) chips.push(self.sleep_schedule);
-  if (self.cleanliness) chips.push(self.cleanliness);
+  const sleep = self.sleep_schedule
+    ? (FILTER_VALUE_LABELS.sleep_schedule[self.sleep_schedule] ?? self.sleep_schedule)
+    : null;
+  const clean = self.cleanliness
+    ? (FILTER_VALUE_LABELS.cleanliness[self.cleanliness] ?? self.cleanliness)
+    : null;
+  if (sleep) chips.push(sleep);
+  if (clean) chips.push(clean);
   if (profile.year) chips.push(`Class of ${profile.year}`);
   return chips.slice(0, 3);
 }
@@ -60,14 +71,23 @@ type SwipeCardProps = {
   readonly profile: DiscoveryProfile;
   readonly onSwipeRight: () => void;
   readonly onSwipeLeft: () => void;
+  readonly onSwipeUp: () => void;
+  readonly onExpand: () => void;
 };
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function SwipeCard({ profile, onSwipeRight, onSwipeLeft }: SwipeCardProps) {
+export function SwipeCard({
+  profile,
+  onSwipeRight,
+  onSwipeLeft,
+  onSwipeUp,
+  onExpand,
+}: SwipeCardProps) {
   const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
   const isAnimating = useSharedValue(false);
 
   const habitChips = getHabitChips(profile);
@@ -83,25 +103,44 @@ export function SwipeCard({ profile, onSwipeRight, onSwipeLeft }: SwipeCardProps
     onSwipeLeft();
   }, [onSwipeLeft]);
 
+  const triggerSuperLike = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    onSwipeUp();
+  }, [onSwipeUp]);
+
   const panGesture = Gesture.Pan()
     .activeOffsetX([-15, 15])
+    .activeOffsetY([-15, 15])
     .onUpdate((event) => {
       "worklet";
       if (isAnimating.value) return;
       translateX.value = event.translationX;
+      translateY.value = event.translationY;
     })
     .onEnd((event) => {
       "worklet";
       if (isAnimating.value) return;
 
-      if (event.translationX > SWIPE_THRESHOLD) {
+      const absX = Math.abs(event.translationX);
+      const absY = Math.abs(event.translationY);
+      // Vertical-up wins only if Y motion dominates X and user moved up
+      const verticalUpDominant = event.translationY < 0 && absY > absX;
+
+      if (verticalUpDominant && absY > SWIPE_THRESHOLD_Y) {
+        isAnimating.value = true;
+        translateY.value = withSpring(
+          -FLY_OUT_Y,
+          { damping: 20, stiffness: 200, mass: 0.8 },
+          () => { runOnJS(triggerSuperLike)(); },
+        );
+      } else if (event.translationX > SWIPE_THRESHOLD_X) {
         isAnimating.value = true;
         translateX.value = withSpring(
           FLY_OUT_X,
           { damping: 20, stiffness: 200, mass: 0.8 },
           () => { runOnJS(triggerLike)(); },
         );
-      } else if (event.translationX < -SWIPE_THRESHOLD) {
+      } else if (event.translationX < -SWIPE_THRESHOLD_X) {
         isAnimating.value = true;
         translateX.value = withSpring(
           -FLY_OUT_X,
@@ -110,6 +149,7 @@ export function SwipeCard({ profile, onSwipeRight, onSwipeLeft }: SwipeCardProps
         );
       } else {
         translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
+        translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
       }
     });
 
@@ -122,28 +162,39 @@ export function SwipeCard({ profile, onSwipeRight, onSwipeLeft }: SwipeCardProps
     return {
       transform: [
         { translateX: translateX.value },
+        { translateY: translateY.value },
         { rotate: `${rotation}deg` },
       ],
     };
   });
 
   const likeOverlayStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(translateX.value, [0, SWIPE_THRESHOLD], [0, 0.4], "clamp");
+    const opacity = interpolate(translateX.value, [0, SWIPE_THRESHOLD_X], [0, 0.4], "clamp");
     return { opacity };
   });
 
   const passOverlayStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(translateX.value, [-SWIPE_THRESHOLD, 0], [0.4, 0], "clamp");
+    const opacity = interpolate(translateX.value, [-SWIPE_THRESHOLD_X, 0], [0.4, 0], "clamp");
+    return { opacity };
+  });
+
+  const superOverlayStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(translateY.value, [-SWIPE_THRESHOLD_Y, 0], [0.4, 0], "clamp");
     return { opacity };
   });
 
   const likeIndicatorStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(translateX.value, [0, SWIPE_THRESHOLD], [0, 1], "clamp");
+    const opacity = interpolate(translateX.value, [0, SWIPE_THRESHOLD_X], [0, 1], "clamp");
     return { opacity };
   });
 
   const passIndicatorStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(translateX.value, [-SWIPE_THRESHOLD, 0], [1, 0], "clamp");
+    const opacity = interpolate(translateX.value, [-SWIPE_THRESHOLD_X, 0], [1, 0], "clamp");
+    return { opacity };
+  });
+
+  const superIndicatorStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(translateY.value, [-SWIPE_THRESHOLD_Y, 0], [1, 0], "clamp");
     return { opacity };
   });
 
@@ -159,6 +210,10 @@ export function SwipeCard({ profile, onSwipeRight, onSwipeLeft }: SwipeCardProps
           style={[styles.overlay, styles.passOverlay, passOverlayStyle]}
           pointerEvents="none"
         />
+        <Animated.View
+          style={[styles.overlay, styles.superOverlay, superOverlayStyle]}
+          pointerEvents="none"
+        />
 
         {/* Full-screen photo with overlaid profile info */}
         <PhotoCarousel
@@ -171,6 +226,7 @@ export function SwipeCard({ profile, onSwipeRight, onSwipeLeft }: SwipeCardProps
           compatibility={compatibility}
           bio={profile.bio}
           habitChips={habitChips}
+          onDoubleTap={onExpand}
         />
 
         {/* LIKE pill indicator */}
@@ -181,6 +237,11 @@ export function SwipeCard({ profile, onSwipeRight, onSwipeLeft }: SwipeCardProps
         {/* NOPE pill indicator */}
         <Animated.View style={[styles.nopePill, passIndicatorStyle]} pointerEvents="none">
           <Text style={styles.nopePillText}>NOPE</Text>
+        </Animated.View>
+
+        {/* SUPER pill indicator (center-top, appears when swiping up) */}
+        <Animated.View style={[styles.superPill, superIndicatorStyle]} pointerEvents="none">
+          <Text style={styles.superPillText}>SUPER</Text>
         </Animated.View>
       </Animated.View>
     </GestureDetector>
@@ -212,6 +273,9 @@ const styles = StyleSheet.create({
   },
   passOverlay: {
     backgroundColor: "#ef4444",
+  },
+  superOverlay: {
+    backgroundColor: "#3b82f6",
   },
   likePill: {
     position: "absolute",
@@ -250,5 +314,23 @@ const styles = StyleSheet.create({
     fontSize: 19,
     fontWeight: "800",
     letterSpacing: 1,
+  },
+  superPill: {
+    position: "absolute",
+    top: 80,
+    alignSelf: "center",
+    backgroundColor: "#3b82f6",
+    borderWidth: 3,
+    borderColor: "#fff",
+    borderRadius: 999,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    zIndex: 20,
+  },
+  superPillText: {
+    color: "#fff",
+    fontSize: 19,
+    fontWeight: "800",
+    letterSpacing: 1.2,
   },
 });

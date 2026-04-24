@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { COLORS } from "@/lib/constants";
 import type { ReactNode } from "react";
 
@@ -27,13 +28,22 @@ export function StepContainer({
 }: StepContainerProps) {
   const progress = totalSteps > 0 ? ((currentStep + 1) / totalSteps) * 100 : 0;
 
+  const handleBack = () => {
+    if (!onBack) return;
+    if (router.canGoBack()) {
+      onBack();
+    } else {
+      router.replace("/(auth)/welcome");
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       {/* Top bar: back button + progress */}
       <View className="px-6 pt-4 pb-2">
         <View className="flex-row items-center mb-4">
           {showBack && onBack ? (
-            <TouchableOpacity onPress={onBack} className="mr-3">
+            <TouchableOpacity onPress={handleBack} className="mr-3">
               <Ionicons name="chevron-back" size={28} color={COLORS.gray[800]} />
             </TouchableOpacity>
           ) : (

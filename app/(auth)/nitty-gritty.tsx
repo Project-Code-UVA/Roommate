@@ -14,9 +14,8 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { COLORS } from "@/lib/constants";
 import { useSession } from "@/contexts/auth-context";
-import { useOnboarding } from "@/hooks/use-onboarding";
 import { updateProfile } from "@/services/profile-service";
-import { markOnboardingComplete } from "@/services/auth-service";
+import { getNittyGritty } from "@/services/filter-service";
 import {
   FILTER_OPTIONS,
   FILTER_LABELS,
@@ -28,8 +27,8 @@ import type { FilterCategory } from "@/types/filters";
 
 type SelfSelections = Partial<Record<FilterCategory, string>>;
 
-const TOTAL_STEPS = 10;
-const CURRENT_STEP = 9;
+const TOTAL_STEPS = 11;
+const CURRENT_STEP = 8;
 
 const CATEGORY_ICONS: Record<FilterCategory, string> = {
   sleep_schedule: "moon-outline",
@@ -41,12 +40,13 @@ const CATEGORY_ICONS: Record<FilterCategory, string> = {
   partying: "musical-notes-outline",
   study_habits: "book-outline",
   budget_range: "cash-outline",
+  rushing: "ribbon-outline",
+  social_energy: "people-circle-outline",
 };
 
 export default function NittyGrittyScreen() {
   const router = useRouter();
-  const { session, refreshOnboardingStatus } = useSession();
-  const { clearProgress } = useOnboarding();
+  const { session } = useSession();
   const [selections, setSelections] = useState<SelfSelections>({});
   const [loading, setLoading] = useState(false);
 
@@ -64,40 +64,34 @@ export default function NittyGrittyScreen() {
     });
   }, []);
 
-  const handleComplete = useCallback(async () => {
+  const handleContinue = useCallback(async () => {
     if (!session?.user.id) return;
     const userId = session.user.id;
     setLoading(true);
 
     try {
-      const nittyGritty = {
+      const current = await getNittyGritty(userId);
+      const existing = current.data ?? { self: {}, preferences: {} };
+      const next = {
         self: selections,
-        preferences: {},
-        dealbreakers: {},
+        preferences: existing.preferences,
       };
 
       const profileResult = await updateProfile(userId, {
-        nitty_gritty: nittyGritty as unknown as Json,
+        nitty_gritty: next as unknown as Json,
       });
       if (profileResult.error) {
         Alert.alert("Error", `Failed to save: ${profileResult.error}`);
         return;
       }
 
-      const onboardingResult = await markOnboardingComplete(userId);
-      if (onboardingResult.error) {
-        Alert.alert("Error", `Failed to complete profile: ${onboardingResult.error}`);
-        return;
-      }
-
-      await Promise.all([refreshOnboardingStatus(), clearProgress()]);
-      router.replace("/(tabs)");
+      router.push("/(auth)/roommate-preferences");
     } catch {
-      Alert.alert("Error", "Failed to save your preferences. Please try again.");
+      Alert.alert("Error", "Failed to save your lifestyle. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, [session?.user.id, selections, refreshOnboardingStatus, clearProgress, router]);
+  }, [session?.user.id, selections, router]);
 
   const progress = ((CURRENT_STEP + 1) / TOTAL_STEPS) * 100;
 
@@ -168,7 +162,7 @@ export default function NittyGrittyScreen() {
           </Text>
         )}
         <TouchableOpacity
-          onPress={handleComplete}
+          onPress={handleContinue}
           disabled={loading}
           activeOpacity={0.85}
           style={styles.button}
@@ -177,7 +171,7 @@ export default function NittyGrittyScreen() {
             <ActivityIndicator color={COLORS.white} />
           ) : (
             <Text style={styles.buttonText}>
-              {answeredCount === 0 ? "Skip for now" : "Complete Profile"}
+              {answeredCount === 0 ? "Skip for now" : "Continue"}
             </Text>
           )}
         </TouchableOpacity>

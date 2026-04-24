@@ -87,6 +87,7 @@ describe("useDiscoveryStack", () => {
     mockLikeProfile.mockResolvedValue({
       success: true,
       is_match: false,
+      is_super_like: false,
       match_id: null,
       thread_id: null,
       error: null,
@@ -105,7 +106,7 @@ describe("useDiscoveryStack", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(mockGetDiscoveryStack).toHaveBeenCalledWith(TEST_USER_ID, 20, 0);
+    expect(mockGetDiscoveryStack).toHaveBeenCalledWith(TEST_USER_ID, 20, 0, {});
     expect(result.current.stack).toEqual(profiles);
   });
 
@@ -246,6 +247,7 @@ describe("useDiscoveryStack", () => {
     mockLikeProfile.mockResolvedValue({
       success: false,
       is_match: false,
+      is_super_like: false,
       match_id: null,
       thread_id: null,
       error: "Rate limited",
@@ -336,6 +338,7 @@ describe("useDiscoveryStack", () => {
     mockLikeProfile.mockResolvedValue({
       success: true,
       is_match: true,
+      is_super_like: false,
       match_id: "match-123",
       thread_id: "thread-456",
       error: null,
@@ -386,6 +389,7 @@ describe("useDiscoveryStack", () => {
     mockLikeProfile.mockResolvedValue({
       success: true,
       is_match: true,
+      is_super_like: false,
       match_id: "match-123",
       thread_id: "thread-456",
       error: null,
@@ -420,6 +424,7 @@ describe("useDiscoveryStack", () => {
     mockLikeProfile.mockResolvedValue({
       success: true,
       is_match: true,
+      is_super_like: false,
       match_id: "match-abc",
       thread_id: "thread-xyz",
       error: null,
