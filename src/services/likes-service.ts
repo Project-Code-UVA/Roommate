@@ -90,3 +90,29 @@ export async function getLikedMeCount(
 
   return { count: typeof data === "number" ? data : 0, error: null };
 }
+
+// ---------------------------------------------------------------------------
+// Unlike a profile (remove an outbound like before it becomes a match)
+// ---------------------------------------------------------------------------
+
+type UnlikeResult = {
+  readonly success: boolean;
+  readonly error: string | null;
+};
+
+export async function unlikeProfile(
+  userId: string,
+  targetId: string,
+): Promise<UnlikeResult> {
+  const { error } = await supabase
+    .from("likes")
+    .delete()
+    .eq("liker_id", userId)
+    .eq("liked_id", targetId);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, error: null };
+}

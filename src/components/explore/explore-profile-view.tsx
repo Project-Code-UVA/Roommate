@@ -219,7 +219,6 @@ export function ExploreProfileView({
   profile,
   onLike,
   onDismiss,
-  onMessage,
   onClose,
   visible,
   onBlock,
@@ -281,12 +280,6 @@ export function ExploreProfileView({
     onDismiss();
     onClose();
   }, [onDismiss, onClose]);
-
-  const triggerMessage = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onMessage();
-    onClose();
-  }, [onMessage, onClose]);
 
   // ---------------------------------------------------------------------------
   // Swipe gesture (horizontal pan on hero → like/dismiss)
@@ -401,7 +394,7 @@ export function ExploreProfileView({
             style={styles.scroll}
             contentContainerStyle={[
               styles.scrollContent,
-              { paddingBottom: insets.bottom + 120 },
+              { paddingBottom: insets.bottom + 32 },
             ]}
             showsVerticalScrollIndicator={false}
           >
@@ -503,7 +496,8 @@ export function ExploreProfileView({
               ) : null}
             </View>
 
-            {/* ── About ── */}
+            {/* ── Text info clustered up top so users see it without scrolling far ── */}
+            {/* About */}
             {profile.bio ? (
               <View style={styles.contentBlock}>
                 <SectionCard title="About me">
@@ -512,34 +506,7 @@ export function ExploreProfileView({
               </View>
             ) : null}
 
-            {/* ── Photo 2 ── */}
-            {photo2 ? (
-              <View style={styles.contentBlock}>
-                <PhotoCard url={photo2.url} />
-              </View>
-            ) : null}
-
-            {/* ── Lifestyle grid ── */}
-            {lifestyleEntries.length > 0 ? (
-              <View style={styles.contentBlock}>
-                <SectionCard title="Living vibes">
-                  <View style={styles.lifestyleGrid}>
-                    {lifestyleEntries.map((entry) => (
-                      <LifestyleCell key={entry.category} entry={entry} />
-                    ))}
-                  </View>
-                </SectionCard>
-              </View>
-            ) : null}
-
-            {/* ── Photo 3 ── */}
-            {photo3 ? (
-              <View style={styles.contentBlock}>
-                <PhotoCard url={photo3.url} />
-              </View>
-            ) : null}
-
-            {/* ── Tag chips ── */}
+            {/* Tag chips */}
             {tagChips.length > 0 ? (
               <View style={styles.contentBlock}>
                 <SectionCard title="At a glance">
@@ -554,47 +521,36 @@ export function ExploreProfileView({
               </View>
             ) : null}
 
-            {/* ── Remaining photos ── */}
+            {/* Lifestyle grid */}
+            {lifestyleEntries.length > 0 ? (
+              <View style={styles.contentBlock}>
+                <SectionCard title="Living vibes">
+                  <View style={styles.lifestyleGrid}>
+                    {lifestyleEntries.map((entry) => (
+                      <LifestyleCell key={entry.category} entry={entry} />
+                    ))}
+                  </View>
+                </SectionCard>
+              </View>
+            ) : null}
+
+            {/* ── Photo gallery below the fold ── */}
+            {photo2 ? (
+              <View style={styles.contentBlock}>
+                <PhotoCard url={photo2.url} />
+              </View>
+            ) : null}
+            {photo3 ? (
+              <View style={styles.contentBlock}>
+                <PhotoCard url={photo3.url} />
+              </View>
+            ) : null}
             {remainingPhotos.map((photo) => (
               <View key={photo.id} style={styles.contentBlock}>
                 <PhotoCard url={photo.url} />
               </View>
             ))}
           </ScrollView>
-
-          {/* ── Floating action bar ── */}
-          <View
-            style={[styles.actionBar, { paddingBottom: insets.bottom + 12 }]}
-            pointerEvents="box-none"
-          >
-            <Pressable
-              onPress={triggerDismiss}
-              style={[styles.actionButton, styles.passButton]}
-              testID="explore-profile-pass"
-              accessibilityRole="button"
-              accessibilityLabel="Pass"
-            >
-              <Ionicons name="close" size={28} color="#ef4444" />
-            </Pressable>
-            <Pressable
-              onPress={triggerMessage}
-              style={[styles.actionButton, styles.superButton]}
-              testID="explore-profile-message"
-              accessibilityRole="button"
-              accessibilityLabel="Super like"
-            >
-              <Ionicons name="star" size={24} color="#fff" />
-            </Pressable>
-            <Pressable
-              onPress={triggerLike}
-              style={[styles.actionButton, styles.likeButton]}
-              testID="explore-profile-like"
-              accessibilityRole="button"
-              accessibilityLabel="Like"
-            >
-              <Ionicons name="heart" size={28} color="#22c55e" />
-            </Pressable>
-          </View>
         </Animated.View>
       </GestureDetector>
 
@@ -893,48 +849,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: COLORS.primary[700],
-  },
-
-  // ── Floating action bar ──
-  actionBar: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 18,
-    paddingTop: 12,
-    backgroundColor: "transparent",
-  },
-  actionButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#fff",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.16,
-    shadowRadius: 14,
-    elevation: 8,
-  },
-  passButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-  },
-  superButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: COLORS.primary[600],
-    shadowColor: COLORS.primary[900],
-    shadowOpacity: 0.35,
-  },
-  likeButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
   },
 
   // ── Swipe indicators ──

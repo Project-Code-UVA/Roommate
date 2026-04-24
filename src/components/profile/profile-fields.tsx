@@ -1,18 +1,18 @@
 /**
- * Editable profile fields — directory/settings style.
+ * Editable profile fields — onboarding-style, modern and thematic.
  *
- * Grouped rows inside rounded cards. Tap a row to edit inline.
- * Visibility toggles are shown inline on gender and hometown rows.
+ * - Bio / Grad year / Gender / Hometown: labeled inputs, save on blur.
+ * - Gender & Hometown include an inline Visibility pill (eye icon toggle).
+ * - Lifestyle: inline chip rows per category, single-select, mirrors the
+ *   onboarding `nitty-gritty` screen for consistency.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
-  Alert,
   View,
   Text,
   TextInput,
-  Pressable,
-  Switch,
+  TouchableOpacity,
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -24,16 +24,36 @@ import {
   FILTER_OPTIONS,
   FILTER_VALUE_LABELS,
 } from "@/constants/filter-options";
-
-const LIFESTYLE_CATEGORIES: readonly FilterCategory[] = FILTER_CATEGORY_ORDER.filter(
-  (c) => c !== "smoking" && c !== "budget_range",
-);
 import type { ProfileUpdate } from "@/services/profile-service";
 import type { Json } from "@/types/database.types";
 import type { FilterCategory, NittyGritty } from "@/types/filters";
 
 // ---------------------------------------------------------------------------
-// Types
+// Lifestyle categories shown on the edit profile screen.
+// Smoking + budget_range are filtering-only; they aren't displayed as
+// self-identifiers on the profile.
+// ---------------------------------------------------------------------------
+
+const LIFESTYLE_CATEGORIES: readonly FilterCategory[] = FILTER_CATEGORY_ORDER.filter(
+  (c) => c !== "smoking" && c !== "budget_range",
+);
+
+const LIFESTYLE_ICONS: Readonly<Record<FilterCategory, string>> = {
+  sleep_schedule: "moon-outline",
+  cleanliness: "sparkles-outline",
+  noise_level: "volume-medium-outline",
+  guests: "people-outline",
+  pets: "paw-outline",
+  smoking: "flame-outline",
+  partying: "musical-notes-outline",
+  study_habits: "book-outline",
+  budget_range: "cash-outline",
+  rushing: "ribbon-outline",
+  social_energy: "people-circle-outline",
+};
+
+// ---------------------------------------------------------------------------
+// Props
 // ---------------------------------------------------------------------------
 
 type ProfileFieldsProps = {
@@ -55,8 +75,81 @@ function SectionHeader({ title }: { title: string }) {
   return <Text style={styles.sectionHeader}>{title}</Text>;
 }
 
-function Separator() {
-  return <View style={styles.separator} />;
+type VisibilityPillProps = {
+  readonly value: boolean;
+  readonly onToggle: (next: boolean) => void;
+};
+
+function VisibilityPill({ value, onToggle }: VisibilityPillProps) {
+  return (
+    <TouchableOpacity
+      onPress={() => onToggle(!value)}
+      activeOpacity={0.7}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
+      accessibilityLabel={value ? "Visible on profile" : "Hidden from profile"}
+      style={[styles.visibilityPill, value ? styles.visibilityPillOn : styles.visibilityPillOff]}
+    >
+      <Ionicons
+        name={value ? "eye-outline" : "eye-off-outline"}
+        size={14}
+        color={value ? COLORS.primary[600] : COLORS.gray[500]}
+      />
+      <Text style={[styles.visibilityPillText, value ? styles.visibilityPillTextOn : styles.visibilityPillTextOff]}>
+        {value ? "Visible on profile" : "Hidden from profile"}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+type LabeledInputProps = {
+  readonly label: string;
+  readonly value: string;
+  readonly placeholder: string;
+  readonly onChangeText: (v: string) => void;
+  readonly onCommit: () => void;
+  readonly multiline?: boolean;
+  readonly maxLength?: number;
+  readonly keyboardType?: "default" | "number-pad";
+  readonly showCounter?: boolean;
+};
+
+function LabeledInput({
+  label,
+  value,
+  placeholder,
+  onChangeText,
+  onCommit,
+  multiline = false,
+  maxLength,
+  keyboardType = "default",
+  showCounter = false,
+}: LabeledInputProps) {
+  return (
+    <View style={styles.fieldBlock}>
+      <View style={styles.fieldLabelRow}>
+        <Text style={styles.fieldLabel}>{label}</Text>
+        {showCounter && maxLength ? (
+          <Text style={styles.counter}>
+            {value.length}/{maxLength}
+          </Text>
+        ) : null}
+      </View>
+      <TextInput
+        style={[styles.input, multiline && styles.inputMultiline]}
+        value={value}
+        onChangeText={onChangeText}
+        onEndEditing={onCommit}
+        placeholder={placeholder}
+        placeholderTextColor={COLORS.gray[400]}
+        multiline={multiline}
+        maxLength={maxLength}
+        keyboardType={keyboardType}
+        returnKeyType={multiline ? "default" : "done"}
+        textAlignVertical={multiline ? "top" : "center"}
+      />
+    </View>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -73,63 +166,51 @@ export function ProfileFields({
   nittyGritty,
   onUpdate,
 }: ProfileFieldsProps) {
-  const [editingField, setEditingField] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState("");
+  // Local editable copies — sync back to server on field blur.
+  const [bioDraft, setBioDraft] = useState(bio ?? "");
+  const [yearDraft, setYearDraft] = useState(year ?? "");
+  const [genderDraft, setGenderDraft] = useState(gender ?? "");
+  const [hometownDraft, setHometownDraft] = useState(hometown ?? "");
 
-  const startEdit = useCallback((field: string, currentValue: string | null) => {
-    setEditingField(field);
-    setEditValue(currentValue ?? "");
-  }, []);
+  // Re-sync drafts if the parent profile changes underneath us (e.g. remote refresh).
+  useEffect(() => setBioDraft(bio ?? ""), [bio]);
+  useEffect(() => setYearDraft(year ?? ""), [year]);
+  useEffect(() => setGenderDraft(gender ?? ""), [gender]);
+  useEffect(() => setHometownDraft(hometown ?? ""), [hometown]);
 
-  const saveEdit = useCallback(
-    async (field: string) => {
-      setEditingField(null);
-      await onUpdate({ [field]: editValue || null });
+  const commit = useCallback(
+    (field: keyof ProfileUpdate, next: string, current: string | null) => {
+      const normalized = next.trim() === "" ? null : next.trim();
+      if (normalized === (current ?? null)) return;
+      void onUpdate({ [field]: normalized } as ProfileUpdate);
     },
-    [editValue, onUpdate],
+    [onUpdate],
   );
 
-  const pickLifestyleOption = useCallback(
-    (category: FilterCategory) => {
-      const currentValue = nittyGritty?.self?.[category];
-      const options = FILTER_OPTIONS[category];
+  const toggleVisibility = useCallback(
+    (field: "show_gender" | "show_hometown", next: boolean) => {
+      void onUpdate({ [field]: next } as ProfileUpdate);
+    },
+    [onUpdate],
+  );
 
-      Alert.alert(
-        FILTER_LABELS[category],
-        currentValue ? `Currently: ${FILTER_VALUE_LABELS[category][currentValue]}` : undefined,
-        [
-          ...options.map((value) => ({
-            text: currentValue === value ? `✓  ${FILTER_VALUE_LABELS[category][value]}` : FILTER_VALUE_LABELS[category][value],
-            onPress: () => {
-              const updatedSelf = { ...(nittyGritty?.self ?? {}), [category]: value };
-              onUpdate({
-                nitty_gritty: {
-                  self: updatedSelf,
-                  preferences: nittyGritty?.preferences ?? {},
-                } as unknown as Json,
-              });
-            },
-          })),
-          ...(currentValue
-            ? [
-                {
-                  text: "Remove",
-                  style: "destructive" as const,
-                  onPress: () => {
-                    const { [category]: _removed, ...remainingSelf } = nittyGritty?.self ?? {};
-                    onUpdate({
-                      nitty_gritty: {
-                        self: remainingSelf,
-                        preferences: nittyGritty?.preferences ?? {},
-                      } as unknown as Json,
-                    });
-                  },
-                },
-              ]
-            : []),
-          { text: "Cancel", style: "cancel" as const },
-        ],
-      );
+  const pickLifestyle = useCallback(
+    (category: FilterCategory, value: string) => {
+      const existingSelf = nittyGritty?.self ?? {};
+      const currentValue = existingSelf[category];
+      // Tap same chip to deselect; otherwise replace.
+      const nextSelf: Record<string, string> = { ...existingSelf };
+      if (currentValue === value) {
+        delete nextSelf[category];
+      } else {
+        nextSelf[category] = value;
+      }
+      void onUpdate({
+        nitty_gritty: {
+          self: nextSelf,
+          preferences: nittyGritty?.preferences ?? {},
+        } as unknown as Json,
+      });
     },
     [nittyGritty, onUpdate],
   );
@@ -137,190 +218,90 @@ export function ProfileFields({
   return (
     <View style={styles.container}>
       {/* ── ABOUT ── */}
-      <SectionHeader title="ABOUT" />
-      <View style={styles.group}>
-        {/* Bio */}
-        <Pressable
-          style={styles.row}
-          onPress={() => editingField !== "bio" && startEdit("bio", bio)}
-        >
-          <Ionicons name="chatbubble-outline" size={16} color={COLORS.primary[500]} style={styles.rowIcon} />
-          <Text style={styles.rowLabel}>Bio</Text>
-          {editingField === "bio" ? (
-            <TextInput
-              style={[styles.inlineInput, styles.inlineInputMultiline]}
-              value={editValue}
-              onChangeText={setEditValue}
-              onBlur={() => saveEdit("bio")}
-              autoFocus
-              multiline
-              maxLength={500}
-              placeholder="Tell roommates about yourself"
-              placeholderTextColor={COLORS.gray[400]}
-            />
-          ) : (
-            <View style={styles.rowRight}>
-              <Text
-                style={bio ? styles.rowValue : styles.rowPlaceholder}
-                numberOfLines={2}
-              >
-                {bio ?? "Add your bio"}
-              </Text>
-              <Ionicons name="chevron-forward" size={16} color={COLORS.gray[300]} />
-            </View>
-          )}
-        </Pressable>
-
-        <Separator />
-
-        {/* Year */}
-        <Pressable
-          style={styles.row}
-          onPress={() => editingField !== "year" && startEdit("year", year)}
-        >
-          <Ionicons name="school-outline" size={16} color={COLORS.primary[500]} style={styles.rowIcon} />
-          <Text style={styles.rowLabel}>Grad year</Text>
-          {editingField === "year" ? (
-            <TextInput
-              style={styles.inlineInput}
-              value={editValue}
-              onChangeText={setEditValue}
-              onSubmitEditing={() => saveEdit("year")}
-              onBlur={() => saveEdit("year")}
-              autoFocus
-              keyboardType="number-pad"
-              maxLength={4}
-              placeholder="e.g. 2026"
-              placeholderTextColor={COLORS.gray[400]}
-            />
-          ) : (
-            <View style={styles.rowRight}>
-              <Text style={year ? styles.rowValue : styles.rowPlaceholder}>
-                {year ?? "Add"}
-              </Text>
-              <Ionicons name="chevron-forward" size={16} color={COLORS.gray[300]} />
-            </View>
-          )}
-        </Pressable>
-      </View>
+      <SectionHeader title="About" />
+      <LabeledInput
+        label="Bio"
+        value={bioDraft}
+        placeholder="Tell roommates about yourself"
+        onChangeText={setBioDraft}
+        onCommit={() => commit("bio", bioDraft, bio)}
+        multiline
+        maxLength={500}
+        showCounter
+      />
+      <LabeledInput
+        label="Grad year"
+        value={yearDraft}
+        placeholder="e.g. 2027"
+        onChangeText={setYearDraft}
+        onCommit={() => commit("year", yearDraft, year)}
+        keyboardType="number-pad"
+        maxLength={4}
+      />
 
       {/* ── DETAILS ── */}
-      <SectionHeader title="DETAILS" />
-      <View style={styles.group}>
-        {/* Gender */}
-        <View>
-          <Pressable
-            style={styles.row}
-            onPress={() => editingField !== "gender" && startEdit("gender", gender)}
-          >
-            <Ionicons name="person-outline" size={16} color={COLORS.primary[500]} style={styles.rowIcon} />
-            <Text style={styles.rowLabel}>Gender</Text>
-            {editingField === "gender" ? (
-              <TextInput
-                style={styles.inlineInput}
-                value={editValue}
-                onChangeText={setEditValue}
-                onSubmitEditing={() => saveEdit("gender")}
-                onBlur={() => saveEdit("gender")}
-                autoFocus
-                maxLength={50}
-                placeholder="Your gender"
-                placeholderTextColor={COLORS.gray[400]}
-              />
-            ) : (
-              <View style={styles.rowRight}>
-                <Text style={gender ? styles.rowValue : styles.rowPlaceholder}>
-                  {gender ?? "Add"}
-                </Text>
-                <Ionicons name="chevron-forward" size={16} color={COLORS.gray[300]} />
-              </View>
-            )}
-          </Pressable>
-          <View style={styles.toggleRow}>
-            <Text style={styles.toggleLabel}>Visible on profile</Text>
-            <Switch
-              value={showGender}
-              onValueChange={(val) => onUpdate({ show_gender: val })}
-              trackColor={{ true: COLORS.primary[400], false: COLORS.gray[200] }}
-              thumbColor="#fff"
-            />
-          </View>
-        </View>
+      <SectionHeader title="Details" />
+      <LabeledInput
+        label="Gender"
+        value={genderDraft}
+        placeholder="Your gender"
+        onChangeText={setGenderDraft}
+        onCommit={() => commit("gender", genderDraft, gender)}
+        maxLength={50}
+      />
+      <VisibilityPill value={showGender} onToggle={(next) => toggleVisibility("show_gender", next)} />
 
-        <Separator />
-
-        {/* Hometown */}
-        <View>
-          <Pressable
-            style={styles.row}
-            onPress={() => editingField !== "hometown" && startEdit("hometown", hometown)}
-          >
-            <Ionicons name="location-outline" size={16} color={COLORS.primary[500]} style={styles.rowIcon} />
-            <Text style={styles.rowLabel}>Hometown</Text>
-            {editingField === "hometown" ? (
-              <TextInput
-                style={styles.inlineInput}
-                value={editValue}
-                onChangeText={setEditValue}
-                onSubmitEditing={() => saveEdit("hometown")}
-                onBlur={() => saveEdit("hometown")}
-                autoFocus
-                maxLength={100}
-                placeholder="Your hometown"
-                placeholderTextColor={COLORS.gray[400]}
-              />
-            ) : (
-              <View style={styles.rowRight}>
-                <Text style={hometown ? styles.rowValue : styles.rowPlaceholder}>
-                  {hometown ?? "Add"}
-                </Text>
-                <Ionicons name="chevron-forward" size={16} color={COLORS.gray[300]} />
-              </View>
-            )}
-          </Pressable>
-          <View style={styles.toggleRow}>
-            <Text style={styles.toggleLabel}>Visible on profile</Text>
-            <Switch
-              value={showHometown}
-              onValueChange={(val) => onUpdate({ show_hometown: val } as ProfileUpdate)}
-              trackColor={{ true: COLORS.primary[400], false: COLORS.gray[200] }}
-              thumbColor="#fff"
-            />
-          </View>
-        </View>
-      </View>
+      <LabeledInput
+        label="Hometown"
+        value={hometownDraft}
+        placeholder="Your hometown"
+        onChangeText={setHometownDraft}
+        onCommit={() => commit("hometown", hometownDraft, hometown)}
+        maxLength={100}
+      />
+      <VisibilityPill value={showHometown} onToggle={(next) => toggleVisibility("show_hometown", next)} />
 
       {/* ── LIFESTYLE ── */}
-      <SectionHeader title="LIFESTYLE" />
-      <View style={styles.group}>
-        {LIFESTYLE_CATEGORIES.map((category, idx) => {
-          const currentValue = nittyGritty?.self?.[category];
-          const isLast = idx === LIFESTYLE_CATEGORIES.length - 1;
-          return (
-            <View key={category}>
-              <Pressable
-                style={styles.row}
-                onPress={() => pickLifestyleOption(category)}
-              >
-                <Text style={styles.rowLabelLifestyle}>{FILTER_LABELS[category]}</Text>
-                <View style={styles.rowRight}>
-                  {currentValue ? (
-                    <View style={styles.lifestyleChip}>
-                      <Text style={styles.lifestyleChipText}>
-                        {FILTER_VALUE_LABELS[category][currentValue] ?? currentValue}
-                      </Text>
-                    </View>
-                  ) : (
-                    <Text style={styles.rowPlaceholder}>Add</Text>
-                  )}
-                  <Ionicons name="chevron-forward" size={16} color={COLORS.gray[300]} />
-                </View>
-              </Pressable>
-              {!isLast && <Separator />}
+      <SectionHeader title="Lifestyle" />
+      <Text style={styles.sectionCaption}>
+        Help future roommates know what it's like to live with you.
+      </Text>
+      {LIFESTYLE_CATEGORIES.map((category) => {
+        const current = nittyGritty?.self?.[category];
+        const icon = LIFESTYLE_ICONS[category] as keyof typeof import("@expo/vector-icons").Ionicons.glyphMap;
+        return (
+          <View key={category} style={styles.categoryBlock}>
+            <View style={styles.categoryHeader}>
+              <Ionicons
+                name={icon}
+                size={16}
+                color={COLORS.primary[500]}
+                style={styles.categoryIcon}
+              />
+              <Text style={styles.categoryLabel}>{FILTER_LABELS[category]}</Text>
             </View>
-          );
-        })}
-      </View>
+            <View style={styles.chipRow}>
+              {FILTER_OPTIONS[category].map((value) => {
+                const selected = current === value;
+                return (
+                  <TouchableOpacity
+                    key={value}
+                    onPress={() => pickLifestyle(category, value)}
+                    activeOpacity={0.7}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected }}
+                    style={[styles.chip, selected && styles.chipSelected]}
+                  >
+                    <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+                      {FILTER_VALUE_LABELS[category][value]}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -331,109 +312,133 @@ export function ProfileFields({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 0,
+    paddingHorizontal: 8,
   },
   sectionHeader: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: COLORS.gray[400],
-    letterSpacing: 0.8,
-    marginBottom: 6,
-    marginTop: 20,
-    marginLeft: 4,
-  },
-  group: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    overflow: "hidden",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.gray[200],
-  },
-  separator: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: COLORS.gray[200],
-    marginLeft: 40,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    minHeight: 52,
-  },
-  rowIcon: {
-    marginRight: 10,
-    width: 18,
-    textAlign: "center",
-  },
-  rowLabel: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: COLORS.gray[800],
-    width: 80,
-  },
-  rowRight: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    gap: 4,
-  },
-  rowValue: {
-    fontSize: 15,
+    fontSize: 13,
+    fontWeight: "700",
     color: COLORS.gray[500],
-    textAlign: "right",
-    flex: 1,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginTop: 28,
+    marginBottom: 12,
+    marginHorizontal: 4,
   },
-  rowPlaceholder: {
-    fontSize: 15,
-    color: COLORS.gray[300],
-    textAlign: "right",
-    flex: 1,
+  sectionCaption: {
+    fontSize: 14,
+    color: COLORS.gray[500],
+    marginHorizontal: 4,
+    marginBottom: 16,
+    marginTop: -4,
+    lineHeight: 20,
   },
-  inlineInput: {
-    flex: 1,
-    fontSize: 15,
-    color: COLORS.gray[800],
-    textAlign: "right",
-    borderBottomWidth: 1.5,
-    borderBottomColor: COLORS.primary[400],
-    paddingVertical: 2,
-    paddingHorizontal: 4,
+  fieldBlock: {
+    marginBottom: 18,
   },
-  inlineInputMultiline: {
-    textAlign: "left",
-    minHeight: 48,
-    textAlignVertical: "top",
-  },
-  toggleRow: {
+  fieldLabelRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    paddingTop: 0,
-    marginLeft: 28,
+    marginBottom: 6,
+    paddingHorizontal: 4,
   },
-  toggleLabel: {
+  fieldLabel: {
     fontSize: 13,
+    fontWeight: "600",
+    color: COLORS.gray[600],
+    letterSpacing: 0.2,
+  },
+  counter: {
+    fontSize: 12,
     color: COLORS.gray[400],
+    fontVariant: ["tabular-nums"],
   },
-  rowLabelLifestyle: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: COLORS.gray[800],
-    flex: 1,
+  input: {
+    fontSize: 16,
+    color: COLORS.gray[900],
+    backgroundColor: COLORS.gray[50],
+    borderWidth: 1,
+    borderColor: COLORS.gray[200],
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    minHeight: 48,
   },
-  lifestyleChip: {
-    backgroundColor: COLORS.primary[50],
+  inputMultiline: {
+    minHeight: 100,
+    paddingTop: 12,
+  },
+  visibilityPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 6,
     borderRadius: 9999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    borderWidth: 1.5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginTop: -8,
+    marginBottom: 18,
+    marginLeft: 4,
   },
-  lifestyleChipText: {
-    fontSize: 14,
+  visibilityPillOn: {
+    borderColor: COLORS.primary[300],
+    backgroundColor: COLORS.primary[50],
+  },
+  visibilityPillOff: {
+    borderColor: COLORS.gray[300],
+    backgroundColor: "#fff",
+  },
+  visibilityPillText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  visibilityPillTextOn: {
     color: COLORS.primary[700],
+  },
+  visibilityPillTextOff: {
+    color: COLORS.gray[600],
+  },
+  categoryBlock: {
+    marginBottom: 20,
+    paddingHorizontal: 4,
+  },
+  categoryHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  categoryIcon: {
+    marginRight: 6,
+  },
+  categoryLabel: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: COLORS.gray[700],
+  },
+  chipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  chip: {
+    borderWidth: 1.5,
+    borderColor: COLORS.gray[300],
+    borderRadius: 9999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: "#fff",
+  },
+  chipSelected: {
+    backgroundColor: COLORS.primary[600],
+    borderColor: COLORS.primary[600],
+  },
+  chipText: {
+    fontSize: 14,
     fontWeight: "500",
+    color: COLORS.gray[700],
+  },
+  chipTextSelected: {
+    color: "#fff",
   },
 });

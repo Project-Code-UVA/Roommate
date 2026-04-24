@@ -23,12 +23,22 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 
 import { useSession } from "@/contexts/auth-context";
 import { useLikes } from "@/hooks/use-likes";
 import { LikedMeCard } from "@/components/likes/liked-me-card";
-import { ProfileDetailModal } from "@/components/likes/profile-detail-modal";
+import { ExploreProfileView } from "@/components/explore/explore-profile-view";
 import { getProfileDetail } from "@/services/explore-service";
+import { unlikeProfile } from "@/services/likes-service";
+import { unmatchUser } from "@/services/match-service";
 import { COLORS } from "@/lib/constants";
 import type { DiscoveryProfile } from "@/types/filters";
 import type { LikedMeProfile, MyLike } from "@/types/explore";
@@ -359,35 +369,69 @@ const paywallStyles = StyleSheet.create({
 // My Likes card (2-col)
 // ---------------------------------------------------------------------------
 
+const SWIPE_AWAY_THRESHOLD = LIKES_CARD_SIZE * 0.5;
+
 function MyLikeCard({
   like,
   onPress,
+  onSwipeAway,
 }: {
   readonly like: MyLike;
   readonly onPress: () => void;
+  readonly onSwipeAway: () => void;
 }) {
+  const translateX = useSharedValue(0);
+  const opacity = useSharedValue(1);
+
+  const pan = Gesture.Pan()
+    .activeOffsetX([-12, 12])
+    .failOffsetY([-8, 8])
+    .onUpdate((e) => {
+      // Only allow left-drag; clamp right drag.
+      translateX.value = Math.min(0, e.translationX);
+    })
+    .onEnd((e) => {
+      if (e.translationX < -SWIPE_AWAY_THRESHOLD) {
+        translateX.value = withTiming(-LIKES_CARD_SIZE * 2, { duration: 180 });
+        opacity.value = withTiming(0, { duration: 180 }, () => {
+          runOnJS(onSwipeAway)();
+        });
+      } else {
+        translateX.value = withSpring(0);
+      }
+    });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+    opacity: opacity.value,
+  }));
+
   return (
-    <Pressable
-      style={[styles.myLikeCard, { width: LIKES_CARD_SIZE, height: LIKES_CARD_SIZE * 1.45 }]}
-      onPress={onPress}
-    >
-      <Image
-        source={{ uri: like.photo_url }}
-        style={styles.myLikeImage}
-        resizeMode="cover"
-      />
-      <LinearGradient
-        colors={["transparent", "rgba(0,0,0,0.75)"]}
-        style={styles.myLikeGradient}
-      >
-        <Text style={styles.myLikeName} numberOfLines={1}>
-          {like.display_name}
-        </Text>
-        {like.year && (
-          <Text style={styles.myLikeYear}>{like.year}</Text>
-        )}
-      </LinearGradient>
-    </Pressable>
+    <GestureDetector gesture={pan}>
+      <Animated.View style={animatedStyle}>
+        <Pressable
+          style={[styles.myLikeCard, { width: LIKES_CARD_SIZE, height: LIKES_CARD_SIZE * 1.45 }]}
+          onPress={onPress}
+        >
+          <Image
+            source={{ uri: like.photo_url }}
+            style={styles.myLikeImage}
+            resizeMode="cover"
+          />
+          <LinearGradient
+            colors={["transparent", "rgba(0,0,0,0.75)"]}
+            style={styles.myLikeGradient}
+          >
+            <Text style={styles.myLikeName} numberOfLines={1}>
+              {like.display_name}
+            </Text>
+            {like.year && (
+              <Text style={styles.myLikeYear}>{like.year}</Text>
+            )}
+          </LinearGradient>
+        </Pressable>
+      </Animated.View>
+    </GestureDetector>
   );
 }
 
@@ -448,6 +492,46 @@ export default function LikesScreen() {
 
   const handleLikedMeLike = useCallback((_profile: LikedMeProfile) => {
     // TODO: Phase 9 — like back action for paid users
+  }, []);
+
+  // Remove relationship for a given target: unmatch if matched, else unlike.
+  const removeRelationship = useCallback(
+    async (targetId: string) => {
+      if (!userId) return;
+      const unmatched = await unmatchUser(userId, targetId);
+      if (!unmatched.success) {
+        await unlikeProfile(userId, targetId);
+      }
+      await refresh();
+    },
+    [userId, refresh],
+  );
+
+  // Swipe-left on profile expansion — close modal, then remove relationship.
+  const handleUnmatchOrUnlike = useCallback(async () => {
+    const target = viewingProfile;
+    if (!target) return;
+    setViewingProfile(null);
+    await removeRelationship(target.user_id);
+  }, [viewingProfile, removeRelationship]);
+
+  // Swipe-left on a grid card — remove without opening the expansion.
+  const handleSwipeAwayLike = useCallback(
+    (targetId: string) => {
+      void removeRelationship(targetId);
+    },
+    [removeRelationship],
+  );
+
+  const handleExpansionMessage = useCallback(() => {
+    Alert.alert(
+      "Not matched yet",
+      "You'll be able to message once they like you back.",
+    );
+  }, []);
+
+  const handleExpansionLike = useCallback(() => {
+    Alert.alert("Already liked", "You've already liked this profile.");
   }, []);
 
   // -------------------------------------------------------------------------
@@ -610,6 +694,7 @@ export default function LikesScreen() {
                   key={like.user_id}
                   like={like}
                   onPress={() => handlePressMyLike(like.user_id)}
+                  onSwipeAway={() => handleSwipeAwayLike(like.user_id)}
                 />
               ))}
             </View>
@@ -619,9 +704,13 @@ export default function LikesScreen() {
         <View style={styles.bottomSpacer} />
       </ScrollView>
 
-      {/* Profile detail modal */}
-      <ProfileDetailModal
+      {/* Full-screen profile detail (same layout as Discovery/Explore). */}
+      <ExploreProfileView
         profile={viewingProfile}
+        nextProfile={null}
+        onLike={handleExpansionLike}
+        onDismiss={handleUnmatchOrUnlike}
+        onMessage={handleExpansionMessage}
         onClose={() => setViewingProfile(null)}
         visible={viewingProfile !== null}
       />

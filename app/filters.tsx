@@ -3,7 +3,7 @@ import {
   View,
   Text,
   ScrollView,
-  Pressable,
+  TouchableOpacity,
   StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -11,14 +11,16 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import {
+  FILTER_OPTIONS,
   FILTER_LABELS,
   FILTER_VALUE_LABELS,
 } from "@/constants/filter-options";
 import { COLORS } from "@/lib/constants";
-import type { FilterCategory } from "@/types/filters";
+import type { DiscoveryFilters, FilterCategory } from "@/types/filters";
 import { countActiveFilters } from "@/types/filters";
 import {
   useFilterDraft,
+  updateFilterDraft,
   clearFilterDraft,
   applyFilterDraft,
 } from "@/stores/filter-draft";
@@ -59,76 +61,91 @@ const SECTIONS: readonly FilterSection[] = [
 
 const CATEGORY_ICONS: Readonly<Record<FilterCategory, string>> = {
   sleep_schedule: "moon-outline",
-  cleanliness: "water-outline",
+  cleanliness: "sparkles-outline",
   noise_level: "volume-medium-outline",
   smoking: "flame-outline",
-  partying: "wine-outline",
+  partying: "musical-notes-outline",
   guests: "people-outline",
   pets: "paw-outline",
-  social_energy: "happy-outline",
-  rushing: "school-outline",
+  social_energy: "people-circle-outline",
+  rushing: "ribbon-outline",
   study_habits: "book-outline",
   budget_range: "cash-outline",
 };
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Pure helper (immutable) — toggles one value on/off for a category
 // ---------------------------------------------------------------------------
 
-function summarize(category: FilterCategory, values: readonly string[]): string {
-  if (values.length === 0) return "Any";
-  const labels = values.map((v) => FILTER_VALUE_LABELS[category][v] ?? v);
-  if (labels.length <= 2) return labels.join(", ");
-  return `${labels[0]}, +${labels.length - 1}`;
+function toggleValue(
+  filters: DiscoveryFilters,
+  category: FilterCategory,
+  value: string,
+): DiscoveryFilters {
+  const current = filters[category] ?? [];
+  const next = current.includes(value)
+    ? current.filter((v) => v !== value)
+    : [...current, value];
+
+  if (next.length === 0) {
+    const copy: Record<string, readonly string[]> = { ...filters };
+    delete copy[category];
+    return copy as DiscoveryFilters;
+  }
+
+  return { ...filters, [category]: next };
 }
 
 // ---------------------------------------------------------------------------
-// FilterRow
+// CategoryBlock — icon + label + chip row
 // ---------------------------------------------------------------------------
 
-type FilterRowProps = {
+type CategoryBlockProps = {
   readonly category: FilterCategory;
-  readonly selectedValues: readonly string[];
-  readonly onPress: () => void;
+  readonly selected: readonly string[];
+  readonly onToggle: (value: string) => void;
 };
 
-function FilterRow({ category, selectedValues, onPress }: FilterRowProps) {
-  const hasSelection = selectedValues.length > 0;
-  const summary = summarize(category, selectedValues);
-  const iconName = CATEGORY_ICONS[category] as keyof typeof Ionicons.glyphMap;
+function CategoryBlock({ category, selected, onToggle }: CategoryBlockProps) {
+  const icon = CATEGORY_ICONS[category] as keyof typeof Ionicons.glyphMap;
+  const options = FILTER_OPTIONS[category];
 
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${FILTER_LABELS[category]}, ${summary}`}
-      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
-    >
-      <View style={styles.rowLeft}>
-        <View
-          style={[
-            styles.iconContainer,
-            hasSelection && styles.iconContainerActive,
-          ]}
-        >
-          <Ionicons
-            name={iconName}
-            size={17}
-            color={hasSelection ? "#fff" : COLORS.gray[500]}
-          />
-        </View>
-        <Text style={styles.rowLabel}>{FILTER_LABELS[category]}</Text>
+    <View style={styles.categoryBlock}>
+      <View style={styles.categoryHeader}>
+        <Ionicons
+          name={icon}
+          size={16}
+          color={COLORS.primary[500]}
+          style={styles.categoryIcon}
+        />
+        <Text style={styles.categoryLabel}>{FILTER_LABELS[category]}</Text>
       </View>
-      <View style={styles.rowRight}>
-        <Text
-          style={[styles.rowValue, hasSelection && styles.rowValueActive]}
-          numberOfLines={1}
-        >
-          {summary}
-        </Text>
-        <Ionicons name="chevron-forward" size={15} color="#C7C7CC" />
+      <View style={styles.chipRow}>
+        {options.map((value) => {
+          const isSelected = selected.includes(value);
+          return (
+            <TouchableOpacity
+              key={value}
+              onPress={() => onToggle(value)}
+              activeOpacity={0.7}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: isSelected }}
+              style={[styles.chip, isSelected && styles.chipSelected]}
+            >
+              <Text
+                style={[
+                  styles.chipText,
+                  isSelected && styles.chipTextSelected,
+                ]}
+              >
+                {FILTER_VALUE_LABELS[category][value]}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
-    </Pressable>
+    </View>
   );
 }
 
@@ -140,6 +157,13 @@ export default function FiltersScreen() {
   const router = useRouter();
   const { draft } = useFilterDraft();
   const activeCount = useMemo(() => countActiveFilters(draft), [draft]);
+
+  const handleToggle = useCallback(
+    (category: FilterCategory, value: string) => {
+      updateFilterDraft(toggleValue(draft, category, value));
+    },
+    [draft],
+  );
 
   const handleApply = useCallback(() => {
     applyFilterDraft();
@@ -155,24 +179,24 @@ export default function FiltersScreen() {
   }, [router]);
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-      {/* Custom header */}
-      <View style={styles.header}>
-        <Pressable
+    <SafeAreaView style={styles.screen}>
+      {/* Top bar: close + clear all */}
+      <View style={styles.topBar}>
+        <TouchableOpacity
           onPress={handleClose}
-          style={styles.headerSide}
+          style={styles.closeButton}
           accessibilityRole="button"
           accessibilityLabel="Close filters"
+          hitSlop={8}
         >
-          <Ionicons name="close" size={24} color="#1C1C1E" />
-        </Pressable>
-        <Text style={styles.headerTitle}>Filters</Text>
-        <Pressable
+          <Ionicons name="close" size={28} color={COLORS.gray[800]} />
+        </TouchableOpacity>
+        <TouchableOpacity
           onPress={handleClearAll}
-          style={styles.headerSide}
+          disabled={activeCount === 0}
           accessibilityRole="button"
           accessibilityLabel="Clear all filters"
-          disabled={activeCount === 0}
+          hitSlop={8}
         >
           <Text
             style={[
@@ -182,7 +206,15 @@ export default function FiltersScreen() {
           >
             Clear all
           </Text>
-        </Pressable>
+        </TouchableOpacity>
+      </View>
+
+      {/* Hero title */}
+      <View style={styles.titleArea}>
+        <Text style={styles.title}>Filters</Text>
+        <Text style={styles.subtitle}>
+          Fine-tune who you see on Discovery and Explore.
+        </Text>
       </View>
 
       {/* Sections */}
@@ -196,49 +228,42 @@ export default function FiltersScreen() {
             key={section.title}
             style={sectionIdx > 0 ? styles.sectionGap : undefined}
           >
-            <Text style={styles.sectionTitle}>
-              {section.title.toUpperCase()}
-            </Text>
-            <View style={styles.sectionCard}>
-              {section.categories.map((category, idx) => (
-                <View key={category}>
-                  {idx > 0 && <View style={styles.separator} />}
-                  <FilterRow
-                    category={category}
-                    selectedValues={draft[category] ?? []}
-                    onPress={() =>
-                      router.push(
-                        `/filter-category?category=${category}` as never,
-                      )
-                    }
-                  />
-                </View>
-              ))}
-            </View>
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+            {section.categories.map((category) => (
+              <CategoryBlock
+                key={category}
+                category={category}
+                selected={draft[category] ?? []}
+                onToggle={(value) => handleToggle(category, value)}
+              />
+            ))}
           </View>
         ))}
         <View style={styles.bottomPad} />
       </ScrollView>
 
-      {/* Sticky footer */}
+      {/* Footer */}
       <View style={styles.footer}>
-        <Pressable
+        {activeCount > 0 && (
+          <Text style={styles.activeCount}>
+            {activeCount} {activeCount === 1 ? "filter" : "filters"} applied
+          </Text>
+        )}
+        <TouchableOpacity
           onPress={handleApply}
+          activeOpacity={0.85}
           accessibilityRole="button"
           accessibilityLabel={
             activeCount > 0
               ? `Show results, ${activeCount} filter${activeCount === 1 ? "" : "s"} active`
               : "Show results"
           }
-          style={({ pressed }) => [
-            styles.applyButton,
-            pressed && styles.applyButtonPressed,
-          ]}
+          style={styles.button}
         >
-          <Text style={styles.applyButtonText}>
+          <Text style={styles.buttonText}>
             {activeCount > 0 ? `Show results (${activeCount})` : "Show results"}
           </Text>
-        </Pressable>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -249,144 +274,135 @@ export default function FiltersScreen() {
 // ---------------------------------------------------------------------------
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    backgroundColor: "#F2F2F7",
+    backgroundColor: "#fff",
   },
-  header: {
+  topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    backgroundColor: "#fff",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#E5E5EA",
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
-  headerSide: {
-    minWidth: 70,
-    alignItems: "flex-start",
+  closeButton: {
+    width: 28,
+    height: 28,
+    alignItems: "center",
     justifyContent: "center",
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: "600",
-    color: "#1C1C1E",
-    letterSpacing: -0.2,
   },
   clearText: {
     fontSize: 15,
+    fontWeight: "600",
     color: COLORS.primary[600],
-    fontWeight: "500",
-    textAlign: "right",
   },
   clearTextDisabled: {
-    color: "#C7C7CC",
+    color: COLORS.gray[300],
+  },
+  titleArea: {
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 20,
+  },
+  title: {
+    fontSize: 32,
+    lineHeight: 40,
+    fontWeight: "700",
+    color: COLORS.gray[900],
+  },
+  subtitle: {
+    fontSize: 16,
+    color: COLORS.gray[500],
+    marginTop: 6,
+    lineHeight: 22,
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 24,
+    paddingHorizontal: 24,
+    paddingBottom: 16,
   },
   sectionGap: {
-    marginTop: 28,
+    marginTop: 32,
   },
   sectionTitle: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#8E8E93",
-    letterSpacing: 0.7,
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.gray[500],
+    letterSpacing: 1,
     textTransform: "uppercase",
-    marginBottom: 8,
-    paddingHorizontal: 4,
+    marginBottom: 16,
   },
-  sectionCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    overflow: "hidden",
+  categoryBlock: {
+    marginBottom: 22,
   },
-  separator: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: "#E5E5EA",
-    marginLeft: 60,
-  },
-  row: {
+  categoryHeader: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-    minHeight: 54,
-    backgroundColor: "#fff",
+    marginBottom: 10,
   },
-  rowPressed: {
-    backgroundColor: "#F9F9F9",
+  categoryIcon: {
+    marginRight: 6,
   },
-  rowLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    flex: 1,
-  },
-  iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: "#F2F2F7",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconContainerActive: {
-    backgroundColor: COLORS.primary[600],
-  },
-  rowLabel: {
+  categoryLabel: {
     fontSize: 15,
-    color: "#1C1C1E",
-    fontWeight: "400",
+    fontWeight: "600",
+    color: COLORS.gray[700],
   },
-  rowRight: {
+  chipRow: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    maxWidth: "45%",
+    flexWrap: "wrap",
+    gap: 8,
   },
-  rowValue: {
+  chip: {
+    borderWidth: 1.5,
+    borderColor: COLORS.gray[300],
+    borderRadius: 9999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: "#fff",
+  },
+  chipSelected: {
+    backgroundColor: COLORS.primary[600],
+    borderColor: COLORS.primary[600],
+  },
+  chipText: {
     fontSize: 14,
-    color: "#8E8E93",
-    textAlign: "right",
-    flexShrink: 1,
-  },
-  rowValueActive: {
-    color: COLORS.primary[600],
     fontWeight: "500",
+    color: COLORS.gray[700],
+  },
+  chipTextSelected: {
+    color: "#fff",
   },
   bottomPad: {
-    height: 24,
+    height: 16,
   },
   footer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
     paddingTop: 12,
-    paddingBottom: 8,
-    backgroundColor: "#F2F2F7",
+    backgroundColor: "#fff",
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#E5E5EA",
+    borderTopColor: COLORS.gray[200],
+    gap: 8,
   },
-  applyButton: {
-    height: 52,
-    borderRadius: 14,
+  activeCount: {
+    fontSize: 13,
+    color: COLORS.gray[500],
+    textAlign: "center",
+  },
+  button: {
     backgroundColor: COLORS.primary[600],
-    alignItems: "center",
-    justifyContent: "center",
+    borderRadius: 9999,
+    paddingVertical: 18,
   },
-  applyButtonPressed: {
-    opacity: 0.85,
-  },
-  applyButtonText: {
-    color: "#fff",
-    fontSize: 16,
+  buttonText: {
+    fontSize: 17,
     fontWeight: "700",
+    color: "#fff",
+    textAlign: "center",
     letterSpacing: 0.2,
   },
 });

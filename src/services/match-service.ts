@@ -82,9 +82,14 @@ export async function unmatchUser(
   }
 
   const result = data as Record<string, unknown> | null;
+  const rpcError = result?.error as string | undefined;
+
+  if (rpcError) {
+    return { success: false, error: rpcError };
+  }
 
   return {
-    success: (result?.success as boolean) ?? true,
+    success: (result?.success as boolean) ?? false,
     error: null,
   };
 }

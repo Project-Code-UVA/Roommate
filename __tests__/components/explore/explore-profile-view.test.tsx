@@ -7,6 +7,7 @@
  */
 
 jest.mock("react-native-safe-area-context", () => ({
+  __esModule: true,
   useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),
   SafeAreaView: require("react-native").View,
 }));
@@ -26,39 +27,39 @@ jest.mock("react-native-gesture-handler", () => {
     chain[m] = () => chain;
   });
   return {
+    __esModule: true,
     GestureHandlerRootView: require("react-native").View,
     Gesture: { Pan: () => chain },
     GestureDetector: ({ children }: { children: React.ReactNode }) => children,
   };
 });
 
-jest.mock("react-native-reanimated", () => {
-  const RN = require("react-native");
-  return {
-    default: {
-      View: RN.View,
-      createAnimatedComponent: (c: unknown) => c,
-    },
-    useSharedValue: (v: unknown) => ({ value: v }),
-    useAnimatedStyle: () => ({}),
-    withSpring: (v: unknown) => v,
-    withTiming: (v: unknown) => v,
-    interpolate: () => 0,
-    runOnJS: (fn: () => void) => fn,
-  };
-});
-
-jest.mock("expo-haptics", () => ({
-  impactAsync: jest.fn(),
-  ImpactFeedbackStyle: { Medium: "medium", Light: "light" },
-}));
-
-jest.mock("expo-linear-gradient", () => ({
-  LinearGradient: require("react-native").View,
-}));
-
 jest.mock("@/components/discovery/photo-indicator", () => ({
   PhotoIndicator: () => null,
+}));
+
+jest.mock("@/contexts/auth-context", () => ({
+  useSession: () => ({ session: { user: { id: "test-user" } } }),
+}));
+
+jest.mock("@/services/block-service", () => ({
+  blockUser: jest.fn(() => Promise.resolve({ success: true })),
+}));
+
+jest.mock("@/services/report-service", () => ({
+  submitReport: jest.fn(() => Promise.resolve({ success: true })),
+}));
+
+jest.mock("@/components/safety/block-confirm-dialog", () => ({
+  showBlockConfirmDialog: jest.fn(),
+}));
+
+jest.mock("@/components/safety/report-sheet", () => ({
+  ReportSheet: () => null,
+}));
+
+jest.mock("@/components/shared/overflow-menu", () => ({
+  OverflowMenu: () => null,
 }));
 
 jest.mock("@/lib/constants", () => ({
@@ -153,24 +154,21 @@ describe("ExploreProfileView", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("fires onLike when like action button is pressed", () => {
-    const onLike = jest.fn();
-    const onClose = jest.fn();
-    const { getByTestId } = render(
+  it("renders bio and match percentage when profile has data", () => {
+    const { getByText } = render(
       <ExploreProfileView
         profile={mockProfile}
         nextProfile={mockNextProfile}
-        onLike={onLike}
+        onLike={jest.fn()}
         onDismiss={jest.fn()}
         onMessage={jest.fn()}
-        onClose={onClose}
+        onClose={jest.fn()}
         visible
       />,
     );
 
-    fireEvent.press(getByTestId("explore-profile-like"));
-    expect(onLike).toHaveBeenCalledTimes(1);
-    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(getByText("Hello")).toBeTruthy();
+    expect(getByText("75% MATCH")).toBeTruthy();
   });
 
   it("renders nothing when profile is null", () => {

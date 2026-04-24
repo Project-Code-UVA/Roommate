@@ -55,7 +55,6 @@ function AppContent() {
         <Stack.Screen name="profile/status" options={{ headerShown: true, presentation: "card" }} />
         <Stack.Screen name="profile/preferences" options={{ headerShown: true, presentation: "card" }} />
         <Stack.Screen name="filters" options={{ headerShown: false, presentation: "card" }} />
-        <Stack.Screen name="filter-category" options={{ headerShown: true, presentation: "card" }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />
