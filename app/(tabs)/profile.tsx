@@ -5,7 +5,7 @@
  * that navigate to dedicated sub-pages for editing.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -18,7 +18,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { SelfieCapture } from "@/components/verification/selfie-capture";
@@ -110,10 +110,14 @@ export default function ProfileScreen() {
   const [showSelfieCapture, setShowSelfieCapture] = useState(false);
   const [schoolCount, setSchoolCount] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (!userId) return;
-    getUserSchools(userId).then((schools) => setSchoolCount(schools.length));
-  }, [userId]);
+  // Re-fetch the school count whenever this tab regains focus so the count
+  // reflects additions/removals made on the /profile/schools sub-page.
+  useFocusEffect(
+    useCallback(() => {
+      if (!userId) return;
+      getUserSchools(userId).then((schools) => setSchoolCount(schools.length));
+    }, [userId]),
+  );
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
