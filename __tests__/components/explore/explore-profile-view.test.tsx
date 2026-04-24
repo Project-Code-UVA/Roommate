@@ -11,11 +11,26 @@ jest.mock("react-native-safe-area-context", () => ({
   SafeAreaView: require("react-native").View,
 }));
 
-jest.mock("react-native-gesture-handler", () => ({
-  GestureHandlerRootView: require("react-native").View,
-  Gesture: { Pan: () => ({ activeOffsetX: () => ({ onUpdate: () => ({ onEnd: () => ({}) }) }) }) },
-  GestureDetector: ({ children }: { children: React.ReactNode }) => children,
-}));
+jest.mock("react-native-gesture-handler", () => {
+  const chain: Record<string, (...args: unknown[]) => unknown> = {};
+  const methods = [
+    "activeOffsetX",
+    "activeOffsetY",
+    "failOffsetX",
+    "failOffsetY",
+    "onUpdate",
+    "onEnd",
+    "onStart",
+  ];
+  methods.forEach((m) => {
+    chain[m] = () => chain;
+  });
+  return {
+    GestureHandlerRootView: require("react-native").View,
+    Gesture: { Pan: () => chain },
+    GestureDetector: ({ children }: { children: React.ReactNode }) => children,
+  };
+});
 
 jest.mock("react-native-reanimated", () => {
   const RN = require("react-native");
@@ -35,7 +50,7 @@ jest.mock("react-native-reanimated", () => {
 
 jest.mock("expo-haptics", () => ({
   impactAsync: jest.fn(),
-  ImpactFeedbackStyle: { Medium: "medium" },
+  ImpactFeedbackStyle: { Medium: "medium", Light: "light" },
 }));
 
 jest.mock("expo-linear-gradient", () => ({
@@ -48,8 +63,22 @@ jest.mock("@/components/discovery/photo-indicator", () => ({
 
 jest.mock("@/lib/constants", () => ({
   COLORS: {
-    primary: { 50: "#f0f", 400: "#a0a", 500: "#909", 600: "#808" },
-    gray: { 200: "#ccc", 300: "#aaa", 400: "#888", 700: "#333", 900: "#111" },
+    primary: {
+      50: "#f0f",
+      400: "#a0a",
+      500: "#909",
+      600: "#808",
+      700: "#707",
+      900: "#505",
+    },
+    gray: {
+      200: "#ccc",
+      300: "#aaa",
+      400: "#888",
+      500: "#666",
+      700: "#333",
+      900: "#111",
+    },
   },
 }));
 
@@ -124,21 +153,24 @@ describe("ExploreProfileView", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("renders next profile behind current when provided", () => {
-    const { getByText } = render(
+  it("fires onLike when like action button is pressed", () => {
+    const onLike = jest.fn();
+    const onClose = jest.fn();
+    const { getByTestId } = render(
       <ExploreProfileView
         profile={mockProfile}
         nextProfile={mockNextProfile}
-        onLike={jest.fn()}
+        onLike={onLike}
         onDismiss={jest.fn()}
         onMessage={jest.fn()}
-        onClose={jest.fn()}
+        onClose={onClose}
         visible
       />,
     );
 
-    expect(getByText("Bob")).toBeTruthy();
-    expect(getByText("Alice")).toBeTruthy();
+    fireEvent.press(getByTestId("explore-profile-like"));
+    expect(onLike).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("renders nothing when profile is null", () => {
