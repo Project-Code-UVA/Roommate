@@ -42,14 +42,13 @@ export function FilterButton({
       testID={testID}
       style={({ pressed }) => [
         styles.button,
-        active && styles.buttonActive,
         pressed && styles.pressed,
       ]}
     >
       <Ionicons
         name="options-outline"
         size={18}
-        color={active ? "#fff" : COLORS.primary[600]}
+        color={COLORS.primary[600]}
       />
       {active && (
         <View style={styles.badge}>
@@ -72,23 +71,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: COLORS.primary[100],
-  },
-  buttonActive: {
-    backgroundColor: COLORS.primary[600],
+    overflow: "visible",
   },
   pressed: {
     opacity: 0.75,
   },
   badge: {
     position: "absolute",
-    top: -2,
-    right: -2,
-    minWidth: 18,
-    height: 18,
+    top: -4,
+    right: -4,
+    minWidth: 16,
+    height: 16,
     paddingHorizontal: 4,
-    borderRadius: 9,
+    borderRadius: 8,
     backgroundColor: "#ef4444",
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
