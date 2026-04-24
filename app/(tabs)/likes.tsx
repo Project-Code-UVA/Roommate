@@ -370,6 +370,23 @@ const paywallStyles = StyleSheet.create({
 // ---------------------------------------------------------------------------
 
 const SWIPE_AWAY_THRESHOLD = LIKES_CARD_SIZE * 0.5;
+const SWIPE_HOLD_OFFSET = -Math.min(80, LIKES_CARD_SIZE * 0.35);
+
+function confirmUnmatch(
+  name: string,
+  onConfirm: () => void,
+  onCancel: () => void,
+) {
+  Alert.alert(
+    `Unmatch ${name}?`,
+    "They'll be removed from your likes and won't see you in Discovery.",
+    [
+      { text: "Cancel", style: "cancel", onPress: onCancel },
+      { text: "Unmatch", style: "destructive", onPress: onConfirm },
+    ],
+    { cancelable: true, onDismiss: onCancel },
+  );
+}
 
 function MyLikeCard({
   like,
@@ -383,19 +400,32 @@ function MyLikeCard({
   const translateX = useSharedValue(0);
   const opacity = useSharedValue(1);
 
+  const handleConfirm = useCallback(() => {
+    translateX.value = withTiming(-LIKES_CARD_SIZE * 2, { duration: 180 });
+    opacity.value = withTiming(0, { duration: 180 }, (finished) => {
+      if (finished) runOnJS(onSwipeAway)();
+    });
+  }, [translateX, opacity, onSwipeAway]);
+
+  const handleCancel = useCallback(() => {
+    translateX.value = withSpring(0);
+  }, [translateX]);
+
+  const promptUnmatch = useCallback(() => {
+    confirmUnmatch(like.display_name, handleConfirm, handleCancel);
+  }, [like.display_name, handleConfirm, handleCancel]);
+
   const pan = Gesture.Pan()
     .activeOffsetX([-12, 12])
     .failOffsetY([-8, 8])
     .onUpdate((e) => {
-      // Only allow left-drag; clamp right drag.
       translateX.value = Math.min(0, e.translationX);
     })
     .onEnd((e) => {
       if (e.translationX < -SWIPE_AWAY_THRESHOLD) {
-        translateX.value = withTiming(-LIKES_CARD_SIZE * 2, { duration: 180 });
-        opacity.value = withTiming(0, { duration: 180 }, () => {
-          runOnJS(onSwipeAway)();
-        });
+        // Hold the card in a "pending" position while the user confirms.
+        translateX.value = withSpring(SWIPE_HOLD_OFFSET, { damping: 16 });
+        runOnJS(promptUnmatch)();
       } else {
         translateX.value = withSpring(0);
       }
@@ -405,6 +435,11 @@ function MyLikeCard({
     transform: [{ translateX: translateX.value }],
     opacity: opacity.value,
   }));
+
+  const unmatchPillStyle = useAnimatedStyle(() => {
+    const progress = Math.min(1, Math.max(0, -translateX.value / SWIPE_AWAY_THRESHOLD));
+    return { opacity: progress };
+  });
 
   return (
     <GestureDetector gesture={pan}>
@@ -429,6 +464,14 @@ function MyLikeCard({
               <Text style={styles.myLikeYear}>{like.year}</Text>
             )}
           </LinearGradient>
+
+          {/* Red UNMATCH pill — fades in as the user drags left. */}
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.unmatchPill, unmatchPillStyle]}
+          >
+            <Text style={styles.unmatchPillText}>UNMATCH</Text>
+          </Animated.View>
         </Pressable>
       </Animated.View>
     </GestureDetector>
@@ -823,6 +866,23 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.75)",
     fontSize: 12,
     marginTop: 2,
+  },
+  unmatchPill: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    borderWidth: 2,
+    borderColor: "#ef4444",
+  },
+  unmatchPillText: {
+    color: "#ef4444",
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.5,
   },
   emptyText: {
     fontSize: 14,
