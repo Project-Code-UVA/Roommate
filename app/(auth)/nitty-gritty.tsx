@@ -43,6 +43,7 @@ const CATEGORY_ICONS: Record<FilterCategory, string> = {
   budget_range: "cash-outline",
   rushing: "ribbon-outline",
   social_energy: "people-circle-outline",
+  looking_for: "search-outline",
 };
 
 export default function NittyGrittyScreen() {

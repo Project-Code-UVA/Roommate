@@ -20,7 +20,9 @@ export type FilterCategory =
   | "noise_level"
   | "study_habits"
   | "rushing"
-  | "social_energy";
+  | "social_energy"
+  | "looking_for";
+
 
 // ---------------------------------------------------------------------------
 // Nitty-gritty JSONB schema

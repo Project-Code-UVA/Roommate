@@ -35,7 +35,8 @@ import Animated, {
 import { useSession } from "@/contexts/auth-context";
 import { useLikes } from "@/hooks/use-likes";
 import { LikedMeCard } from "@/components/likes/liked-me-card";
-import { ExploreProfileView } from "@/components/explore/explore-profile-view";
+import { ProfileDetailModal } from "@/components/likes/profile-detail-modal";
+
 import { getProfileDetail } from "@/services/explore-service";
 import { unlikeProfile } from "@/services/likes-service";
 import { unmatchUser } from "@/services/match-service";
@@ -749,15 +750,15 @@ export default function LikesScreen() {
       </ScrollView>
 
       {/* Full-screen profile detail (same layout as Discovery/Explore). */}
-      <ExploreProfileView
+      <ProfileDetailModal
         profile={viewingProfile}
-        nextProfile={null}
         onLike={handleExpansionLike}
-        onDismiss={handleUnmatchOrUnlike}
+        onUnmatch={handleUnmatchOrUnlike}
         onMessage={handleExpansionMessage}
         onClose={() => setViewingProfile(null)}
         visible={viewingProfile !== null}
       />
+
     </SafeAreaView>
   );
 }

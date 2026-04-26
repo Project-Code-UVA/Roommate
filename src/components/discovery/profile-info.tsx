@@ -27,6 +27,8 @@ const CATEGORY_LABELS: Record<FilterCategory, string> = {
   study_habits: "Study Habits",
   rushing: "Rushing",
   social_energy: "Introvert / Extrovert",
+  looking_for: "Looking For",
+
 };
 
 const CATEGORY_EMOJI: Record<FilterCategory, string> = {
@@ -41,6 +43,8 @@ const CATEGORY_EMOJI: Record<FilterCategory, string> = {
   study_habits: "📚",
   rushing: "🏛️",
   social_energy: "🗣️",
+  looking_for: "🔍",
+
 };
 
 const CATEGORY_ICONS: Record<FilterCategory, keyof typeof Ionicons.glyphMap> = {
@@ -55,6 +59,8 @@ const CATEGORY_ICONS: Record<FilterCategory, keyof typeof Ionicons.glyphMap> = {
   study_habits: "book-outline",
   rushing: "ribbon-outline",
   social_energy: "people-circle-outline",
+  looking_for: "search-outline",
+
 };
 
 // ---------------------------------------------------------------------------

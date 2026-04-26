@@ -23,6 +23,8 @@ export const FILTER_OPTIONS: Readonly<Record<FilterCategory, readonly string[]>>
   study_habits: ["home_studier", "library", "mixed", "minimal"],
   rushing: ["not_interested", "considering", "active_rush", "in_greek_life"],
   social_energy: ["introvert", "ambivert", "extrovert"],
+  looking_for: ["roommate", "friends", "both"],
+
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -41,6 +43,8 @@ export const FILTER_LABELS: Readonly<Record<FilterCategory, string>> = {
   study_habits: "Study Habits",
   rushing: "Rushing",
   social_energy: "Introvert / Extrovert",
+  looking_for: "Looking For",
+
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -70,6 +74,8 @@ export const FILTER_VALUE_LABELS: Readonly<Record<FilterCategory, Readonly<Recor
     in_greek_life: "In Greek Life",
   },
   social_energy: { introvert: "Introvert", ambivert: "Ambivert", extrovert: "Extrovert" },
+  looking_for: { roommate: "Roommate", friends: "Friends", both: "Both" },
+
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -82,10 +88,9 @@ export const FILTER_CATEGORY_ORDER: readonly FilterCategory[] = [
   "noise_level",
   "guests",
   "pets",
-  "smoking",
   "partying",
   "social_energy",
   "rushing",
   "study_habits",
-  "budget_range",
+  "looking_for",
 ] as const;
