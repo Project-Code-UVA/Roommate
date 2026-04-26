@@ -16,7 +16,7 @@ describe("explore-service", () => {
   beforeEach(resetAllMocks);
 
   describe("getExploreFeed", () => {
-    it("calls get_explore_feed RPC with correct params", async () => {
+    it("calls get_explore_feed RPC without p_filters when unfiltered", async () => {
       mockSupabase.rpc.mockResolvedValueOnce({ data: [], error: null });
 
       await getExploreFeed(TEST_USER_ID);
@@ -27,6 +27,34 @@ describe("explore-service", () => {
         p_offset: 0,
         p_seed: 0,
       });
+      const call = mockSupabase.rpc.mock.calls[0];
+      expect(call[1]).not.toHaveProperty("p_filters");
+    });
+
+    it("forwards session filters as p_filters payload", async () => {
+      mockSupabase.rpc.mockResolvedValueOnce({ data: [], error: null });
+
+      await getExploreFeed(TEST_USER_ID, 24, 0, 123, {
+        sleep_schedule: ["early_bird"],
+      });
+
+      expect(mockSupabase.rpc).toHaveBeenCalledWith("get_explore_feed", {
+        p_user_id: TEST_USER_ID,
+        p_limit: 24,
+        p_offset: 0,
+        p_seed: 123,
+        p_filters: { sleep_schedule: ["early_bird"] },
+      });
+    });
+
+    it("omits p_filters when all category arrays are empty", async () => {
+      mockSupabase.rpc.mockResolvedValueOnce({ data: [], error: null });
+
+      await getExploreFeed(TEST_USER_ID, 24, 0, 0, { pets: [] });
+
+      const call = mockSupabase.rpc.mock.calls[0];
+      expect(call[0]).toBe("get_explore_feed");
+      expect(call[1]).not.toHaveProperty("p_filters");
     });
 
     it("returns empty array on error", async () => {

@@ -1,15 +1,14 @@
 /**
- * Explore tab screen — 3-column Instagram-style grid of profiles.
+ * Explore tab screen — 2-column grid of profiles.
  *
  * Shows profiles from any school, ranked by engagement/popularity
- * with random profiles mixed in. Tap card to view full Hinge-style
- * profile with like/dismiss actions.
+ * with random profiles mixed in. Tap card to view full profile.
  *
  * Pull-to-refresh shuffles the feed with a new seed.
  * Scroll loads more profiles with the same seed.
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -18,37 +17,42 @@ import {
   ActivityIndicator,
   Dimensions,
   StyleSheet,
-  Alert,
   Share,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 
 import { ExploreGridCard } from "@/components/explore/explore-grid-card";
 import { ExploreProfileView } from "@/components/explore/explore-profile-view";
 import { MatchModal } from "@/components/match/match-modal";
+import { FilterButton } from "@/components/shared/filter-button";
 import { useExploreFeed } from "@/hooks/use-explore-feed";
+import { openFilterDraft } from "@/stores/filter-draft";
 import { useSession } from "@/contexts/auth-context";
 import { COLORS } from "@/lib/constants";
 import type { ExploreProfile } from "@/types/explore";
+import type { DiscoveryFilters } from "@/types/filters";
+import { countActiveFilters } from "@/types/filters";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const NUM_COLUMNS = 3;
-const CARD_GAP = 1;
-const CARD_SIZE = (SCREEN_WIDTH - CARD_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
-const ROW_HEIGHT = CARD_SIZE * 1.3 + CARD_GAP;
+const NUM_COLUMNS = 2;
+const GRID_PADDING = 16;
+const CARD_GAP = 10;
+const CARD_SIZE =
+  (SCREEN_WIDTH - GRID_PADDING * 2 - CARD_GAP * (NUM_COLUMNS - 1)) /
+  NUM_COLUMNS;
 
 // ---------------------------------------------------------------------------
 // Loading skeleton placeholder
 // ---------------------------------------------------------------------------
 
 function LoadingSkeleton() {
-  const cards = Array.from({ length: 12 }, (_, i) => i);
+  const cards = Array.from({ length: 6 }, (_, i) => i);
   return (
     <View style={styles.skeletonContainer}>
       {cards.map((i) => (
@@ -56,7 +60,7 @@ function LoadingSkeleton() {
           key={i}
           style={[
             styles.skeletonCard,
-            { width: CARD_SIZE, height: CARD_SIZE * 1.3 },
+            { width: CARD_SIZE, height: CARD_SIZE * 1.4 },
           ]}
         />
       ))}
@@ -71,7 +75,7 @@ function LoadingSkeleton() {
 function EmptyState() {
   return (
     <View style={styles.emptyContainer}>
-      <Ionicons name="compass-outline" size={64} color={COLORS.gray[300]} />
+      <Ionicons name="compass-outline" size={64} color={COLORS.primary[300]} />
       <Text style={styles.emptyTitle}>No profiles to explore right now</Text>
       <Text style={styles.emptySubtext}>
         Pull down to refresh and check back later
@@ -89,6 +93,12 @@ export default function ExploreScreen() {
   const router = useRouter();
   const userId = session?.user.id ?? "";
 
+  const [filters, setFilters] = useState<DiscoveryFilters>({});
+  const activeFilterCount = useMemo(
+    () => countActiveFilters(filters),
+    [filters],
+  );
+
   const {
     profiles,
     selectedProfile,
@@ -104,9 +114,8 @@ export default function ExploreScreen() {
     dismissSelected,
     clearSelected,
     dismissMatch,
-  } = useExploreFeed(userId);
+  } = useExploreFeed(userId, filters);
 
-  // Track current user photo for match modal
   const [currentUserPhotoUrl] = useState<string | null>(null);
 
   // -------------------------------------------------------------------------
@@ -120,11 +129,6 @@ export default function ExploreScreen() {
   const handleDismiss = useCallback(async () => {
     await dismissSelected();
   }, [dismissSelected]);
-
-  const handleMessage = useCallback(async () => {
-    // Swipe-up = message intent; treated as like (match triggers messaging)
-    await likeSelected();
-  }, [likeSelected]);
 
   const handleMatchSendMessage = useCallback(() => {
     if (matchData?.threadId) {
@@ -145,32 +149,35 @@ export default function ExploreScreen() {
     }
   }, []);
 
+  const handleOpenFilters = useCallback(() => {
+    openFilterDraft(filters, setFilters);
+    router.push("/filters" as never);
+  }, [filters, router]);
+
   // -------------------------------------------------------------------------
   // Render item
   // -------------------------------------------------------------------------
 
   const renderItem = useCallback(
-    ({ item }: { item: ExploreProfile }) => (
-      <ExploreGridCard
-        profile={item}
-        onPress={() => selectProfile(item)}
-        size={CARD_SIZE}
-      />
+    ({ item, index }: { item: ExploreProfile; index: number }) => (
+      <View
+        style={[
+          styles.cardWrapper,
+          index % NUM_COLUMNS === 0 ? styles.cardLeft : styles.cardRight,
+        ]}
+      >
+        <ExploreGridCard
+          profile={item}
+          onPress={() => selectProfile(item)}
+          size={CARD_SIZE}
+        />
+      </View>
     ),
     [selectProfile],
   );
 
   const keyExtractor = useCallback(
     (item: ExploreProfile) => item.user_id,
-    [],
-  );
-
-  const getItemLayout = useCallback(
-    (_data: unknown, index: number) => ({
-      length: ROW_HEIGHT,
-      offset: ROW_HEIGHT * Math.floor(index / NUM_COLUMNS),
-      index,
-    }),
     [],
   );
 
@@ -186,7 +193,24 @@ export default function ExploreScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Explore</Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.headerTitle}>Explore</Text>
+          {profiles.length > 0 && (
+            <Text style={styles.headerSubtitle}>
+              {profiles.length} potential roommates nearby
+            </Text>
+          )}
+        </View>
+        <View style={styles.headerRight}>
+          <FilterButton
+            activeCount={activeFilterCount}
+            onPress={handleOpenFilters}
+            testID="explore-filter-button"
+          />
+          <View style={styles.sparklesBadge}>
+            <Ionicons name="sparkles" size={18} color={COLORS.primary[600]} />
+          </View>
+        </View>
       </View>
 
       {/* Content */}
@@ -200,9 +224,8 @@ export default function ExploreScreen() {
           renderItem={renderItem}
           keyExtractor={keyExtractor}
           numColumns={NUM_COLUMNS}
-          getItemLayout={getItemLayout}
-          initialNumToRender={12}
-          maxToRenderPerBatch={9}
+          initialNumToRender={8}
+          maxToRenderPerBatch={6}
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
           refreshControl={
@@ -213,6 +236,7 @@ export default function ExploreScreen() {
             />
           }
           contentContainerStyle={styles.listContent}
+          columnWrapperStyle={styles.columnWrapper}
           showsVerticalScrollIndicator={false}
           ListFooterComponent={
             hasMore ? (
@@ -230,11 +254,10 @@ export default function ExploreScreen() {
         nextProfile={nextProfile}
         onLike={handleLike}
         onDismiss={handleDismiss}
-        onMessage={handleMessage}
+        onMessage={handleLike}
         onClose={clearSelected}
         visible={selectedProfile !== null}
       />
-
 
       {/* Match modal */}
       <MatchModal
@@ -245,6 +268,7 @@ export default function ExploreScreen() {
         onKeepSwiping={handleKeepBrowsing}
         onShare={handleShare}
       />
+
     </SafeAreaView>
   );
 }
@@ -256,22 +280,56 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#ffffff",
   },
   header: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.gray[200],
+    borderBottomColor: "rgba(167, 139, 250, 0.2)",
+  },
+  headerLeft: {
+    gap: 2,
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: "800",
     color: COLORS.gray[900],
+    letterSpacing: -0.5,
+  },
+  headerSubtitle: {
+    fontSize: 13,
+    color: COLORS.gray[400],
+  },
+  sparklesBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.primary[100],
+    alignItems: "center",
+    justifyContent: "center",
   },
   listContent: {
-    paddingBottom: 90,
+    padding: GRID_PADDING,
+    paddingBottom: 100,
   },
+  columnWrapper: {
+    justifyContent: "space-between",
+    marginBottom: CARD_GAP,
+  },
+  cardWrapper: {
+    // handled by columnWrapper spacing
+  },
+  cardLeft: {},
+  cardRight: {},
   footer: {
     paddingVertical: 20,
     alignItems: "center",
@@ -280,12 +338,13 @@ const styles = StyleSheet.create({
   skeletonContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    paddingTop: 1,
+    padding: GRID_PADDING,
+    gap: CARD_GAP,
   },
   skeletonCard: {
-    backgroundColor: COLORS.gray[200],
-    borderRadius: 8,
-    margin: 0.5,
+    backgroundColor: COLORS.primary[100],
+    borderRadius: 16,
+    opacity: 0.6,
   },
   // Empty state
   emptyContainer: {

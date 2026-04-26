@@ -11,7 +11,7 @@ If a request conflicts with the PRD, the PRD takes precedence.
 
 # 1. Product Overview
 
-Room is an 18+ roommate-first swipe discovery application with shared-school gated messaging and a secondary Explore layer.
+Room is a 17+ roommate-first swipe discovery application with shared-school gated messaging and a secondary Explore layer.
 
 Core principles:
 
@@ -49,9 +49,9 @@ If behavior is unclear:
 
 ## 3.1 Age Gate
 
-- Users must be 18+.
+- Users must be 17+.
 - Birthdate must be collected.
-- Under-18 accounts must be blocked at signup.
+- Under-17 accounts must be blocked at signup.
 - Reporting must include “Underage”.
 
 No exceptions.

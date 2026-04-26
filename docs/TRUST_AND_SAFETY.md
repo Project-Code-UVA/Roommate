@@ -3,7 +3,7 @@
 ---
 
 # 1. Age Enforcement
-18+ required.
+17+ required.
 Underage accounts must be removed immediately.
 
 ---

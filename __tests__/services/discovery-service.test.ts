@@ -19,16 +19,68 @@ describe("discovery-service", () => {
   beforeEach(resetAllMocks);
 
   describe("getDiscoveryStack", () => {
-    it("calls rpc with get_discovery_stack and user ID", async () => {
+    it("calls rpc with get_discovery_stack without p_filters when unfiltered", async () => {
       mockSupabase.rpc.mockResolvedValueOnce({ data: [], error: null });
 
       await getDiscoveryStack(TEST_USER_ID);
 
+      // No p_filters key so the call still matches the legacy 3-arg overload
+      // on remote DBs where the filter migration hasn't been applied yet.
       expect(mockSupabase.rpc).toHaveBeenCalledWith("get_discovery_stack", {
         p_user_id: TEST_USER_ID,
         p_limit: 20,
         p_offset: 0,
       });
+      const call = mockSupabase.rpc.mock.calls[0];
+      expect(call[1]).not.toHaveProperty("p_filters");
+    });
+
+    it("forwards session filters as p_filters payload", async () => {
+      mockSupabase.rpc.mockResolvedValueOnce({ data: [], error: null });
+
+      await getDiscoveryStack(TEST_USER_ID, 20, 0, {
+        cleanliness: ["very_tidy", "tidy"],
+        pets: ["no_pets"],
+      });
+
+      expect(mockSupabase.rpc).toHaveBeenCalledWith("get_discovery_stack", {
+        p_user_id: TEST_USER_ID,
+        p_limit: 20,
+        p_offset: 0,
+        p_filters: {
+          cleanliness: ["very_tidy", "tidy"],
+          pets: ["no_pets"],
+        },
+      });
+    });
+
+    it("omits p_filters when all category arrays are empty", async () => {
+      mockSupabase.rpc.mockResolvedValueOnce({ data: [], error: null });
+
+      await getDiscoveryStack(TEST_USER_ID, 20, 0, {
+        cleanliness: [],
+        pets: [],
+      });
+
+      const call = mockSupabase.rpc.mock.calls[0];
+      expect(call[0]).toBe("get_discovery_stack");
+      expect(call[1]).not.toHaveProperty("p_filters");
+    });
+
+    it("drops empty category arrays but keeps populated ones", async () => {
+      mockSupabase.rpc.mockResolvedValueOnce({ data: [], error: null });
+
+      await getDiscoveryStack(TEST_USER_ID, 20, 0, {
+        cleanliness: ["very_tidy"],
+        pets: [],
+      });
+
+      expect(mockSupabase.rpc).toHaveBeenCalledWith(
+        "get_discovery_stack",
+        expect.objectContaining({
+          p_filters: { cleanliness: ["very_tidy"] },
+        }),
+      );
     });
 
     it("returns array of DiscoveryProfile objects on success", async () => {

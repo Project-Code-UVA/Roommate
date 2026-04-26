@@ -7,8 +7,7 @@
  * 3. Bio card
  * 4. Living preferences (detailed habits grid)
  * 5. Roommate preferences card (what they want)
- * 6. Dealbreakers card
- * 7. Remaining photos (4+)
+ * 6. Remaining photos (4+)
  */
 
 import { Ionicons } from "@expo/vector-icons";
@@ -49,6 +48,8 @@ const CATEGORY_LABELS: Record<FilterCategory, string> = {
   pets: "Pets",
   noise_level: "Noise Level",
   study_habits: "Study Habits",
+  rushing: "Rushing",
+  social_energy: "Introvert / Extrovert",
 };
 
 const CATEGORY_ICONS: Record<FilterCategory, keyof typeof Ionicons.glyphMap> = {
@@ -61,6 +62,8 @@ const CATEGORY_ICONS: Record<FilterCategory, keyof typeof Ionicons.glyphMap> = {
   pets: "paw-outline",
   noise_level: "volume-medium-outline",
   study_habits: "book-outline",
+  rushing: "ribbon-outline",
+  social_energy: "people-circle-outline",
 };
 
 const CATEGORY_EMOJI: Record<FilterCategory, string> = {
@@ -73,6 +76,8 @@ const CATEGORY_EMOJI: Record<FilterCategory, string> = {
   pets: "🐾",
   noise_level: "🔊",
   study_habits: "📚",
+  rushing: "🏛️",
+  social_energy: "🗣️",
 };
 
 // ---------------------------------------------------------------------------
@@ -105,10 +110,6 @@ export function ProfileCard({ profile, onProfileTap }: ProfileCardProps) {
 
   const prefEntries = profile.nitty_gritty?.preferences
     ? (Object.entries(profile.nitty_gritty.preferences) as [FilterCategory, readonly string[]][])
-    : [];
-
-  const dealEntries = profile.nitty_gritty?.dealbreakers
-    ? (Object.entries(profile.nitty_gritty.dealbreakers) as [FilterCategory, readonly string[]][])
     : [];
 
   const matchPercent = Math.round(profile.rank_score * 100);
@@ -192,7 +193,7 @@ export function ProfileCard({ profile, onProfileTap }: ProfileCardProps) {
       </Pressable>
 
       {/* Content cards interleaved with remaining photos.
-       * Order: compat → bio → photo → habits → photo → prefs → photo → deals → ...
+       * Order: compat → bio → photo → habits → photo → prefs → ...
        * Photos are pulled from remainingPhotos as available. */}
       {(() => {
         let photoIdx = 0;
@@ -297,28 +298,6 @@ export function ProfileCard({ profile, onProfileTap }: ProfileCardProps) {
                     />
                     <Text style={styles.prefCategory}>{CATEGORY_LABELS[category]}:</Text>
                     <Text style={styles.prefValues}>{values.join(", ")}</Text>
-                  </View>
-                ))}
-              </View>
-            </ProfileSection>,
-          );
-        }
-
-        // Photo break
-        const p3 = nextPhoto();
-        if (p3) sections.push(p3);
-
-        // Dealbreakers
-        if (dealEntries.length > 0) {
-          sections.push(
-            <ProfileSection key="deals" title="Dealbreakers" icon="warning-outline" iconColor="#ef4444">
-              <View style={styles.dealList}>
-                {dealEntries.map(([category, values]) => (
-                  <View key={category} style={styles.dealRow}>
-                    <View style={styles.dealDot} />
-                    <Text style={styles.dealText}>
-                      {CATEGORY_LABELS[category]}: {values.join(", ")}
-                    </Text>
                   </View>
                 ))}
               </View>
@@ -539,26 +518,6 @@ const styles = StyleSheet.create({
   prefValues: {
     fontSize: 14,
     color: "#1f2937",
-    flex: 1,
-  },
-  // Dealbreakers
-  dealList: {
-    gap: 8,
-  },
-  dealRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  dealDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#ef4444",
-  },
-  dealText: {
-    fontSize: 14,
-    color: "#374151",
     flex: 1,
   },
   // Remaining photos

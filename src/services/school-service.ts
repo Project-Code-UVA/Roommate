@@ -18,10 +18,13 @@ export async function searchSchools(query: string): Promise<School[]> {
     return [];
   }
 
+  // Escape SQL ilike wildcards to prevent unexpected pattern matching
+  const escaped = query.replace(/[%_]/g, "\\$&");
+
   const { data, error } = await supabase
     .from("schools")
     .select("*")
-    .ilike("name", `%${query}%`)
+    .ilike("name", `%${escaped}%`)
     .order("name")
     .limit(20);
 

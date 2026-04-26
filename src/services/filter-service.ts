@@ -1,7 +1,7 @@
 /**
  * Filter service: Read/write nitty-gritty preference data.
  *
- * Manages the three-layer NittyGritty JSONB column (self, preferences, dealbreakers)
+ * Manages the two-layer NittyGritty JSONB column (self, preferences)
  * using immutable update patterns.
  */
 
@@ -17,7 +17,6 @@ import { FILTER_OPTIONS } from "@/constants/filter-options";
 const DEFAULT_NITTY_GRITTY: NittyGritty = {
   self: {},
   preferences: {},
-  dealbreakers: {},
 };
 
 const VALID_CATEGORIES = Object.keys(FILTER_OPTIONS) as readonly FilterCategory[];
@@ -133,21 +132,3 @@ export async function updatePreferences(
   }));
 }
 
-// ---------------------------------------------------------------------------
-// Update dealbreakers (array of hard-exclude values per category)
-// ---------------------------------------------------------------------------
-
-export async function updateDealbreakers(
-  userId: string,
-  category: FilterCategory,
-  values: readonly string[],
-): Promise<{ error: string | null }> {
-  if (!isValidCategory(category)) {
-    return { error: `Invalid filter category: ${category}` };
-  }
-
-  return readAndUpdate(userId, (current) => ({
-    ...current,
-    dealbreakers: { ...current.dealbreakers, [category]: [...values] },
-  }));
-}

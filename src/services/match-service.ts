@@ -19,16 +19,19 @@ const rpc = supabase.rpc.bind(supabase) as any;
 export async function likeProfile(
   likerId: string,
   likedId: string,
+  isSuperLike = false,
 ): Promise<LikeResult> {
   const { data, error } = await rpc("like_profile", {
     p_liker_id: likerId,
     p_liked_id: likedId,
+    p_is_super_like: isSuperLike,
   });
 
   if (error) {
     return {
       success: false,
       is_match: false,
+      is_super_like: isSuperLike,
       match_id: null,
       thread_id: null,
       error: error.message,
@@ -42,6 +45,7 @@ export async function likeProfile(
     return {
       success: false,
       is_match: false,
+      is_super_like: isSuperLike,
       match_id: null,
       thread_id: null,
       error: result.error as string,
@@ -51,6 +55,7 @@ export async function likeProfile(
   return {
     success: true,
     is_match: (result.is_match as boolean) ?? false,
+    is_super_like: (result.is_super_like as boolean) ?? isSuperLike,
     match_id: (result.match_id as string) ?? null,
     thread_id: (result.thread_id as string) ?? null,
     error: null,
@@ -77,9 +82,14 @@ export async function unmatchUser(
   }
 
   const result = data as Record<string, unknown> | null;
+  const rpcError = result?.error as string | undefined;
+
+  if (rpcError) {
+    return { success: false, error: rpcError };
+  }
 
   return {
-    success: (result?.success as boolean) ?? true,
+    success: (result?.success as boolean) ?? false,
     error: null,
   };
 }

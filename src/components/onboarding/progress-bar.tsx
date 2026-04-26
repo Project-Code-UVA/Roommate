@@ -1,62 +1,70 @@
-/**
- * Segmented progress bar for onboarding flow.
- *
- * Renders thin segments that fill purple as steps complete.
- * verify-otp is grouped with phone visually, so 7 visible segments.
- */
-
-import { View } from "react-native";
+import { useEffect } from "react";
+import { View, type ViewStyle } from "react-native";
 import Animated, {
   useAnimatedStyle,
+  useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { COLORS } from "@/lib/constants";
 
-/** Number of visible segments (verify-otp grouped with phone). */
-const VISIBLE_SEGMENTS = 7;
+// Module-level cache so a newly-mounted screen picks up the previous bar
+// value and animates forward, instead of snapping to its new target. During a
+// stack slide transition, both the outgoing and incoming bars briefly read the
+// same cached value, so visually it looks like one persistent bar.
+let lastProgressPct = 0;
 
-type ProgressBarProps = {
+type Props = {
   readonly currentStep: number;
-  readonly totalSteps?: number;
+  readonly totalSteps: number;
+  readonly fillColor?: string;
+  readonly trackStyle?: ViewStyle;
 };
 
-function Segment({
-  isFilled,
-  isCurrent,
-}: {
-  readonly isFilled: boolean;
-  readonly isCurrent: boolean;
-}) {
-  const animatedStyle = useAnimatedStyle(() => {
-    const targetWidth = isFilled ? "100%" : isCurrent ? "50%" : "0%";
-
-    return {
-      width: withTiming(targetWidth, { duration: 300 }),
-    };
-  }, [isFilled, isCurrent]);
-
-  return (
-    <View className="mx-0.5 h-1 flex-1 overflow-hidden rounded-full bg-gray-200">
-      <Animated.View
-        className="h-full rounded-full bg-primary-600"
-        style={animatedStyle}
-      />
-    </View>
-  );
-}
-
-export function ProgressBar({
+export function OnboardingProgressBar({
   currentStep,
-  totalSteps = VISIBLE_SEGMENTS,
-}: ProgressBarProps) {
+  totalSteps,
+  fillColor = COLORS.primary[600],
+  trackStyle,
+}: Props) {
+  const target =
+    totalSteps > 0
+      ? Math.max(0, Math.min(100, ((currentStep + 1) / totalSteps) * 100))
+      : 0;
+  const pct = useSharedValue(lastProgressPct);
+
+  useEffect(() => {
+    if (target < pct.value) {
+      // Reset without a reverse animation (e.g. returning to step 1).
+      pct.value = target;
+    } else {
+      pct.value = withTiming(target, { duration: 320 });
+    }
+    lastProgressPct = target;
+  }, [target, pct]);
+
+  const fillStyle = useAnimatedStyle(() => ({
+    width: `${pct.value}%`,
+  }));
+
   return (
-    <View className="flex-row px-6 py-2">
-      {Array.from({ length: totalSteps }, (_, i) => (
-        <Segment
-          key={i}
-          isFilled={i < currentStep}
-          isCurrent={i === currentStep}
-        />
-      ))}
+    <View
+      style={[
+        {
+          flex: 1,
+          height: 8,
+          backgroundColor: COLORS.gray[200],
+          borderRadius: 9999,
+          overflow: "hidden",
+        },
+        trackStyle,
+      ]}
+    >
+      <Animated.View
+        style={[
+          fillStyle,
+          { height: "100%", backgroundColor: fillColor, borderRadius: 9999 },
+        ]}
+      />
     </View>
   );
 }

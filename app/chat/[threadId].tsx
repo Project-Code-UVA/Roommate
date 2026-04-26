@@ -82,6 +82,13 @@ export default function ChatScreen() {
   const { session } = useSession();
   const currentUserId = session?.user.id ?? "";
 
+  // Guard: redirect to messages if missing required params or session
+  useEffect(() => {
+    if (!session?.user.id || !threadId) {
+      router.replace("/(tabs)/messages");
+    }
+  }, [session?.user.id, threadId, router]);
+
   // Hooks
   const { messages, isLoading, hasMore, loadMore, hideMessageLocally, reactionsMap } = useChatMessages(
     threadId,
@@ -504,7 +511,7 @@ export default function ChatScreen() {
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 50 : 0}
       >
         {/* Chat header */}
         <ChatHeader

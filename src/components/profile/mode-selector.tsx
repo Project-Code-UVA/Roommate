@@ -1,7 +1,8 @@
 /**
  * Mode selector — roommate / friends / found-roommate picker.
  *
- * PRD: Setting to "found_roommate" removes user from Discovery stack.
+ * Used standalone on the Your Status sub-page.
+ * PRD: "found_roommate" removes user from Discovery.
  */
 
 import { useCallback } from "react";
@@ -45,13 +46,13 @@ const MODES: readonly ModeOption[] = [
   {
     value: "friends",
     label: "Looking for friends",
-    description: "Appear in Discovery for friend matching",
+    description: "Appear in Discovery to meet new people",
     icon: "people-outline",
   },
   {
     value: "found_roommate",
     label: "Found my roommate!",
-    description: "Hide from Discovery (you can change this later)",
+    description: "Hide from Discovery — you can change this later",
     icon: "checkmark-circle-outline",
   },
 ];
@@ -89,31 +90,38 @@ export function ModeSelector({ userId, currentMode, onModeChange }: ModeSelector
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Your Status</Text>
+      <Text style={styles.hint}>Choose how you appear in Discovery</Text>
       <View style={styles.options}>
-        {MODES.map((mode) => {
+        {MODES.map((mode, index) => {
           const isActive = currentMode === mode.value;
+          const isLast = index === MODES.length - 1;
           return (
-            <Pressable
-              key={mode.value}
-              style={[styles.option, isActive && styles.optionActive]}
-              onPress={() => handleSelect(mode.value)}
-            >
-              <Ionicons
-                name={mode.icon}
-                size={24}
-                color={isActive ? COLORS.primary[600] : COLORS.gray[400]}
-              />
-              <View style={styles.optionText}>
-                <Text style={[styles.optionLabel, isActive && styles.optionLabelActive]}>
-                  {mode.label}
-                </Text>
-                <Text style={styles.optionDesc}>{mode.description}</Text>
-              </View>
-              {isActive && (
-                <Ionicons name="checkmark-circle" size={22} color={COLORS.primary[600]} />
-              )}
-            </Pressable>
+            <View key={mode.value}>
+              <Pressable
+                style={[styles.option, isActive && styles.optionActive]}
+                onPress={() => handleSelect(mode.value)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isActive }}
+              >
+                <View style={[styles.iconWrap, isActive && styles.iconWrapActive]}>
+                  <Ionicons
+                    name={mode.icon}
+                    size={20}
+                    color={isActive ? "#fff" : COLORS.gray[400]}
+                  />
+                </View>
+                <View style={styles.optionText}>
+                  <Text style={[styles.optionLabel, isActive && styles.optionLabelActive]}>
+                    {mode.label}
+                  </Text>
+                  <Text style={styles.optionDesc}>{mode.description}</Text>
+                </View>
+                {isActive && (
+                  <Ionicons name="checkmark-circle" size={20} color={COLORS.primary[600]} />
+                )}
+              </Pressable>
+              {!isLast && <View style={styles.separator} />}
+            </View>
           );
         })}
       </View>
@@ -126,53 +134,60 @@ export function ModeSelector({ userId, currentMode, onModeChange }: ModeSelector
 // ---------------------------------------------------------------------------
 
 const styles = StyleSheet.create({
-  container: {
-    marginTop: 8,
-  },
-  title: {
+  container: {},
+  hint: {
     fontSize: 13,
-    fontWeight: "600",
-    color: COLORS.gray[500],
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 10,
+    color: COLORS.gray[400],
+    marginBottom: 12,
+    marginLeft: 2,
   },
   options: {
-    gap: 8,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: COLORS.gray[200],
+  },
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: COLORS.gray[200],
+    marginLeft: 64,
   },
   option: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: "transparent",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
   optionActive: {
-    borderColor: COLORS.primary[400],
     backgroundColor: COLORS.primary[50],
+  },
+  iconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: COLORS.gray[100],
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconWrapActive: {
+    backgroundColor: COLORS.primary[600],
   },
   optionText: {
     flex: 1,
   },
   optionLabel: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
-    color: "#1f2937",
+    color: COLORS.gray[800],
   },
   optionLabelActive: {
     color: COLORS.primary[700],
   },
   optionDesc: {
-    fontSize: 13,
-    color: COLORS.gray[500],
-    marginTop: 2,
+    fontSize: 12,
+    color: COLORS.gray[400],
+    marginTop: 1,
   },
 });

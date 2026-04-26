@@ -17,7 +17,8 @@ import {
   unsaveProfile,
 } from "@/services/discovery-service";
 import { likeProfile } from "@/services/match-service";
-import type { DiscoveryProfile } from "@/types/filters";
+import type { DiscoveryFilters, DiscoveryProfile } from "@/types/filters";
+import { EMPTY_FILTERS, normalizeFilters } from "@/types/filters";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -38,9 +39,11 @@ type DiscoveryStackState = {
   readonly matchData: MatchData | null;
   readonly dismissCurrent: () => void;
   readonly likeCurrent: () => void;
+  readonly superLikeCurrent: () => void;
   readonly saveCurrent: () => void;
   readonly unsaveCurrent: () => void;
   readonly dismissMatch: () => void;
+  readonly refresh: () => Promise<void>;
 };
 
 // ---------------------------------------------------------------------------
@@ -54,7 +57,10 @@ const PREFETCH_THRESHOLD = 5;
 // Hook
 // ---------------------------------------------------------------------------
 
-export function useDiscoveryStack(userId: string): DiscoveryStackState {
+export function useDiscoveryStack(
+  userId: string,
+  filters: DiscoveryFilters = EMPTY_FILTERS,
+): DiscoveryStackState {
   const [stack, setStack] = useState<readonly DiscoveryProfile[]>([]);
   const [offset, setOffset] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -68,8 +74,17 @@ export function useDiscoveryStack(userId: string): DiscoveryStackState {
   // Track whether we've reached end of available profiles
   const hasReachedEnd = useRef(false);
 
+  // Stable key for filter-dependency tracking — lets us reset when the
+  // filter payload meaningfully changes (not when a new object identity is
+  // passed with the same contents).
+  const filtersKey = JSON.stringify(normalizeFilters(filters));
+
+  // Ref holding the latest filter so async callbacks don't capture stale state.
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
+
   // -------------------------------------------------------------------------
-  // Initial load
+  // Initial load — also re-runs on filter change
   // -------------------------------------------------------------------------
 
   useEffect(() => {
@@ -78,13 +93,22 @@ export function useDiscoveryStack(userId: string): DiscoveryStackState {
     async function loadInitial() {
       setIsLoading(true);
       setError(null);
+      hasReachedEnd.current = false;
+      hasLoadedInitial.current = false;
 
-      const result = await getDiscoveryStack(userId, PAGE_SIZE, 0);
+      const result = await getDiscoveryStack(
+        userId,
+        PAGE_SIZE,
+        0,
+        filtersRef.current,
+      );
 
       if (cancelled) return;
 
       if (result.error) {
         setError(result.error);
+        setStack([]);
+        setOffset(0);
         setIsLoading(false);
         return;
       }
@@ -105,7 +129,9 @@ export function useDiscoveryStack(userId: string): DiscoveryStackState {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+    // filtersKey is a serialized snapshot — changing it resets the deck.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, filtersKey]);
 
   // -------------------------------------------------------------------------
   // Pagination: pre-fetch when stack runs low
@@ -122,7 +148,12 @@ export function useDiscoveryStack(userId: string): DiscoveryStackState {
     isFetchingMore.current = true;
 
     async function fetchMore() {
-      const result = await getDiscoveryStack(userId, PAGE_SIZE, offset);
+      const result = await getDiscoveryStack(
+        userId,
+        PAGE_SIZE,
+        offset,
+        filtersRef.current,
+      );
 
       if (cancelled) {
         isFetchingMore.current = false;
@@ -207,6 +238,30 @@ export function useDiscoveryStack(userId: string): DiscoveryStackState {
     });
   }, [stack, userId]);
 
+  const superLikeCurrent = useCallback(() => {
+    if (stack.length === 0) return;
+
+    const liked = stack[0];
+
+    // Optimistic: remove card immediately
+    setStack((prev) => prev.slice(1));
+
+    likeProfile(userId, liked.user_id, true).then((result) => {
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+
+      if (result.is_match && result.match_id && result.thread_id) {
+        setMatchData({
+          matchId: result.match_id,
+          threadId: result.thread_id,
+          profile: liked,
+        });
+      }
+    });
+  }, [stack, userId]);
+
   const saveCurrent = useCallback(() => {
     if (stack.length === 0) return;
 
@@ -235,6 +290,34 @@ export function useDiscoveryStack(userId: string): DiscoveryStackState {
     setMatchData(null);
   }, []);
 
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    hasReachedEnd.current = false;
+
+    const result = await getDiscoveryStack(
+      userId,
+      PAGE_SIZE,
+      0,
+      filtersRef.current,
+    );
+
+    if (result.error) {
+      setError(result.error);
+      setIsLoading(false);
+      return;
+    }
+
+    const profiles = result.data ?? [];
+    setStack(profiles);
+    setOffset(profiles.length);
+    setIsLoading(false);
+
+    if (profiles.length < PAGE_SIZE) {
+      hasReachedEnd.current = true;
+    }
+  }, [userId]);
+
   // -------------------------------------------------------------------------
   // Return
   // -------------------------------------------------------------------------
@@ -248,8 +331,10 @@ export function useDiscoveryStack(userId: string): DiscoveryStackState {
     matchData,
     dismissCurrent,
     likeCurrent,
+    superLikeCurrent,
     saveCurrent,
     unsaveCurrent,
     dismissMatch,
+    refresh,
   };
 }

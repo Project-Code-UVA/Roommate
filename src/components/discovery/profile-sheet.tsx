@@ -258,7 +258,7 @@ export function ProfileSheet({
           </View>
 
           {/* Nitty-gritty preferences */}
-          {nittyGritty && (
+          {nittyGritty?.self && (
             <View>
               <Text className="mb-3 text-sm font-semibold text-gray-400">
                 Preferences

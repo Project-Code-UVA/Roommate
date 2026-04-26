@@ -1,22 +1,24 @@
 /**
- * Swipeable discovery card with pan gesture.
+ * Swipeable discovery card with pan + tap gestures.
  *
- * Layout: Photo carousel at top (~55% screen), profile info below in ScrollView.
- * Horizontal pan gesture on the whole card:
- *   - Swipe right = like (green glow)
- *   - Swipe left = pass (red glow)
- * Spring animation flies card off-screen, then next profile appears.
+ * Full-screen photo card — profile info is overlaid on the photo via
+ * PhotoCarousel's bottom gradient. No scroll within the card.
  *
- * Gesture: activeOffsetX: [-15, 15] to avoid competing with vertical scroll.
- * Swipe threshold: 30% screen width.
- * Rotation: max 12 degrees.
+ * Gestures:
+ *   - Swipe right → like (green LIKE pill)
+ *   - Swipe left  → pass (red NOPE pill)
+ *   - Swipe up    → super-like (blue SUPER pill)
+ *   - Double-tap center → expand profile (via PhotoCarousel onDoubleTap)
+ *   - Tap edges   → photo navigation (via PhotoCarousel)
  *
- * Per D-09/D-10: overflow menu with block/report in top-right corner.
- * Overflow menu zIndex 20 to sit above swipe glow overlays (zIndex 10).
+ * Pan activates once either axis crosses 15px. Dominant axis wins on release.
+ * Horizontal threshold: 30% screen width. Vertical threshold: 25% screen height.
+ *
+ * Block/report overflow menu lives in the parent screen header (index.tsx).
  */
 
-import { useCallback, useState } from "react";
-import { Modal, View, ScrollView, Dimensions, StyleSheet } from "react-native";
+import { useCallback } from "react";
+import { View, Text, Dimensions, StyleSheet } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
@@ -27,28 +29,39 @@ import Animated, {
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 
-import { LinearGradient } from "expo-linear-gradient";
-
 import { PhotoCarousel } from "@/components/discovery/photo-carousel";
-import { ProfileInfo } from "@/components/discovery/profile-info";
-import { OverflowMenu } from "@/components/shared/overflow-menu";
-import { ReportSheet } from "@/components/safety/report-sheet";
-import { showBlockConfirmDialog } from "@/components/safety/block-confirm-dialog";
-import { blockUser } from "@/services/block-service";
-import { submitReport } from "@/services/report-service";
-import { useSession } from "@/contexts/auth-context";
+import { FILTER_VALUE_LABELS } from "@/constants/filter-options";
 import type { DiscoveryProfile } from "@/types/filters";
-import type { OverflowMenuItem } from "@/types/safety";
-import type { ReportCategory } from "@/types/chat";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const SWIPE_THRESHOLD_X = SCREEN_WIDTH * 0.3;
+const SWIPE_THRESHOLD_Y = SCREEN_HEIGHT * 0.18;
 const MAX_ROTATION = 12;
 const FLY_OUT_X = SCREEN_WIDTH * 1.5;
+const FLY_OUT_Y = SCREEN_HEIGHT * 1.2;
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function getHabitChips(profile: DiscoveryProfile): string[] {
+  const self = profile.nitty_gritty?.self ?? {};
+  const chips: string[] = [];
+  const sleep = self.sleep_schedule
+    ? (FILTER_VALUE_LABELS.sleep_schedule[self.sleep_schedule] ?? self.sleep_schedule)
+    : null;
+  const clean = self.cleanliness
+    ? (FILTER_VALUE_LABELS.cleanliness[self.cleanliness] ?? self.cleanliness)
+    : null;
+  if (sleep) chips.push(sleep);
+  if (clean) chips.push(clean);
+  if (profile.year) chips.push(`Class of ${profile.year}`);
+  return chips.slice(0, 3);
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -58,22 +71,27 @@ type SwipeCardProps = {
   readonly profile: DiscoveryProfile;
   readonly onSwipeRight: () => void;
   readonly onSwipeLeft: () => void;
-  readonly onBlock?: () => void;
+  readonly onSwipeUp: () => void;
+  readonly onExpand: () => void;
 };
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function SwipeCard({ profile, onSwipeRight, onSwipeLeft, onBlock }: SwipeCardProps) {
+export function SwipeCard({
+  profile,
+  onSwipeRight,
+  onSwipeLeft,
+  onSwipeUp,
+  onExpand,
+}: SwipeCardProps) {
   const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
   const isAnimating = useSharedValue(false);
 
-  // Block/report state
-  const [reportVisible, setReportVisible] = useState(false);
-  const [isReporting, setIsReporting] = useState(false);
-  const { session } = useSession();
-  const userId = session?.user.id ?? "";
+  const habitChips = getHabitChips(profile);
+  const compatibility = Math.round(profile.rank_score * 100);
 
   const triggerLike = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -85,169 +103,148 @@ export function SwipeCard({ profile, onSwipeRight, onSwipeLeft, onBlock }: Swipe
     onSwipeLeft();
   }, [onSwipeLeft]);
 
-  // Block/report handlers
-  const handleBlock = useCallback(() => {
-    showBlockConfirmDialog(profile.display_name, async () => {
-      const result = await blockUser(userId, profile.user_id);
-      if (result.success) {
-        onBlock?.();
-      }
-    });
-  }, [profile, userId, onBlock]);
-
-  const handleReport = useCallback(() => {
-    setReportVisible(true);
-  }, []);
-
-  const handleReportSubmit = useCallback(
-    async (category: ReportCategory, description: string) => {
-      setIsReporting(true);
-      await submitReport(userId, profile.user_id, category, description);
-      setIsReporting(false);
-      setReportVisible(false);
-    },
-    [profile, userId],
-  );
-
-  const overflowItems: readonly OverflowMenuItem[] = [
-    { label: "Block", icon: "ban-outline", onPress: handleBlock, destructive: true },
-    { label: "Report", icon: "flag-outline", onPress: handleReport },
-  ];
+  const triggerSuperLike = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    onSwipeUp();
+  }, [onSwipeUp]);
 
   const panGesture = Gesture.Pan()
     .activeOffsetX([-15, 15])
+    .activeOffsetY([-15, 15])
     .onUpdate((event) => {
       "worklet";
       if (isAnimating.value) return;
       translateX.value = event.translationX;
+      translateY.value = event.translationY;
     })
     .onEnd((event) => {
       "worklet";
       if (isAnimating.value) return;
 
-      if (event.translationX > SWIPE_THRESHOLD) {
-        // Swipe right -- like
+      const absX = Math.abs(event.translationX);
+      const absY = Math.abs(event.translationY);
+      // Vertical-up wins only if Y motion dominates X and user moved up
+      const verticalUpDominant = event.translationY < 0 && absY > absX;
+
+      if (verticalUpDominant && absY > SWIPE_THRESHOLD_Y) {
+        isAnimating.value = true;
+        translateY.value = withSpring(
+          -FLY_OUT_Y,
+          { damping: 20, stiffness: 200, mass: 0.8 },
+          () => { runOnJS(triggerSuperLike)(); },
+        );
+      } else if (event.translationX > SWIPE_THRESHOLD_X) {
         isAnimating.value = true;
         translateX.value = withSpring(
           FLY_OUT_X,
           { damping: 20, stiffness: 200, mass: 0.8 },
-          () => {
-            runOnJS(triggerLike)();
-          },
+          () => { runOnJS(triggerLike)(); },
         );
-      } else if (event.translationX < -SWIPE_THRESHOLD) {
-        // Swipe left -- dismiss
+      } else if (event.translationX < -SWIPE_THRESHOLD_X) {
         isAnimating.value = true;
         translateX.value = withSpring(
           -FLY_OUT_X,
           { damping: 20, stiffness: 200, mass: 0.8 },
-          () => {
-            runOnJS(triggerDismiss)();
-          },
+          () => { runOnJS(triggerDismiss)(); },
         );
       } else {
-        // Snap back
         translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
+        translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
       }
     });
 
-  // Card transform: translate + rotate
   const cardStyle = useAnimatedStyle(() => {
     const rotation = interpolate(
       translateX.value,
       [-SCREEN_WIDTH, 0, SCREEN_WIDTH],
       [-MAX_ROTATION, 0, MAX_ROTATION],
     );
-
     return {
       transform: [
         { translateX: translateX.value },
+        { translateY: translateY.value },
         { rotate: `${rotation}deg` },
       ],
     };
   });
 
-  // Green glow for right swipe
   const likeOverlayStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(
-      translateX.value,
-      [0, SWIPE_THRESHOLD],
-      [0, 0.4],
-      "clamp",
-    );
+    const opacity = interpolate(translateX.value, [0, SWIPE_THRESHOLD_X], [0, 0.4], "clamp");
     return { opacity };
   });
 
-  // Red glow for left swipe
   const passOverlayStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(
-      translateX.value,
-      [-SWIPE_THRESHOLD, 0],
-      [0.4, 0],
-      "clamp",
-    );
+    const opacity = interpolate(translateX.value, [-SWIPE_THRESHOLD_X, 0], [0.4, 0], "clamp");
+    return { opacity };
+  });
+
+  const superOverlayStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(translateY.value, [-SWIPE_THRESHOLD_Y, 0], [0.4, 0], "clamp");
+    return { opacity };
+  });
+
+  const likeIndicatorStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(translateX.value, [0, SWIPE_THRESHOLD_X], [0, 1], "clamp");
+    return { opacity };
+  });
+
+  const passIndicatorStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(translateX.value, [-SWIPE_THRESHOLD_X, 0], [1, 0], "clamp");
+    return { opacity };
+  });
+
+  const superIndicatorStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(translateY.value, [-SWIPE_THRESHOLD_Y, 0], [1, 0], "clamp");
     return { opacity };
   });
 
   return (
-    <>
-      <GestureDetector gesture={panGesture}>
-        <Animated.View style={[styles.card, cardStyle]}>
-          {/* Like glow overlay */}
-          <Animated.View
-            style={[styles.overlay, styles.likeOverlay, likeOverlayStyle]}
-            pointerEvents="none"
-          />
-          {/* Pass glow overlay */}
-          <Animated.View
-            style={[styles.overlay, styles.passOverlay, passOverlayStyle]}
-            pointerEvents="none"
-          />
-
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            bounces
-          >
-            <PhotoCarousel
-              photos={profile.photos}
-              displayName={profile.display_name}
-              year={profile.year}
-              selfieVerified={profile.selfie_verified}
-              hometown={profile.hometown}
-              profileId={profile.user_id}
-            />
-            <ProfileInfo profile={profile} />
-          </ScrollView>
-
-          {/* Top bar overlay — rendered last so it paints above the ScrollView.
-              Gradient fades into the photo so it feels native to the card. */}
-          <LinearGradient
-            colors={["rgba(0,0,0,0.32)", "transparent"]}
-            style={styles.topBar}
-            pointerEvents="box-none"
-          >
-            {/* Left slot — reserved for future actions (save, boost, etc.) */}
-            <View style={styles.topBarSlot} />
-            <View style={styles.topBarSlot} pointerEvents="auto">
-              <OverflowMenu items={overflowItems} testIDPrefix="swipe-card" />
-            </View>
-          </LinearGradient>
-        </Animated.View>
-      </GestureDetector>
-
-      {/* Report sheet -- rendered outside GestureDetector to avoid gesture conflicts */}
-      <Modal transparent visible={reportVisible} animationType="none">
-        <ReportSheet
-          visible={reportVisible}
-          userName={profile.display_name}
-          onSubmit={handleReportSubmit}
-          onClose={() => setReportVisible(false)}
-          isSubmitting={isReporting}
+    <GestureDetector gesture={panGesture}>
+      <Animated.View style={[styles.card, cardStyle]}>
+        {/* Swipe glow overlays */}
+        <Animated.View
+          style={[styles.overlay, styles.likeOverlay, likeOverlayStyle]}
+          pointerEvents="none"
         />
-      </Modal>
-    </>
+        <Animated.View
+          style={[styles.overlay, styles.passOverlay, passOverlayStyle]}
+          pointerEvents="none"
+        />
+        <Animated.View
+          style={[styles.overlay, styles.superOverlay, superOverlayStyle]}
+          pointerEvents="none"
+        />
+
+        {/* Full-screen photo with overlaid profile info */}
+        <PhotoCarousel
+          photos={profile.photos}
+          displayName={profile.display_name}
+          year={profile.year}
+          selfieVerified={profile.selfie_verified}
+          hometown={profile.hometown}
+          profileId={profile.user_id}
+          compatibility={compatibility}
+          bio={profile.bio}
+          habitChips={habitChips}
+          onDoubleTap={onExpand}
+        />
+
+        {/* LIKE pill indicator */}
+        <Animated.View style={[styles.likePill, likeIndicatorStyle]} pointerEvents="none">
+          <Text style={styles.likePillText}>LIKE</Text>
+        </Animated.View>
+
+        {/* NOPE pill indicator */}
+        <Animated.View style={[styles.nopePill, passIndicatorStyle]} pointerEvents="none">
+          <Text style={styles.nopePillText}>NOPE</Text>
+        </Animated.View>
+
+        {/* SUPER pill indicator (center-top, appears when swiping up) */}
+        <Animated.View style={[styles.superPill, superIndicatorStyle]} pointerEvents="none">
+          <Text style={styles.superPillText}>SUPER</Text>
+        </Animated.View>
+      </Animated.View>
+    </GestureDetector>
   );
 }
 
@@ -258,8 +255,7 @@ export function SwipeCard({ profile, onSwipeRight, onSwipeLeft, onBlock }: Swipe
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 16,
+    borderRadius: 24,
     overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -267,38 +263,74 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
-  topBar: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 72,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    paddingTop: 10,
-    paddingHorizontal: 10,
-  },
-  topBarSlot: {
-    width: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 100,
-  },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 10,
-    borderRadius: 16,
+    borderRadius: 24,
   },
   likeOverlay: {
     backgroundColor: "#4ade80",
   },
   passOverlay: {
     backgroundColor: "#ef4444",
+  },
+  superOverlay: {
+    backgroundColor: "#3b82f6",
+  },
+  likePill: {
+    position: "absolute",
+    top: 20,
+    right: 20,
+    backgroundColor: "#22c55e",
+    borderWidth: 3,
+    borderColor: "#fff",
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    transform: [{ rotate: "12deg" }],
+    zIndex: 20,
+  },
+  likePillText: {
+    color: "#fff",
+    fontSize: 19,
+    fontWeight: "800",
+    letterSpacing: 1,
+  },
+  nopePill: {
+    position: "absolute",
+    top: 20,
+    left: 20,
+    backgroundColor: "#ef4444",
+    borderWidth: 3,
+    borderColor: "#fff",
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    transform: [{ rotate: "-12deg" }],
+    zIndex: 20,
+  },
+  nopePillText: {
+    color: "#fff",
+    fontSize: 19,
+    fontWeight: "800",
+    letterSpacing: 1,
+  },
+  superPill: {
+    position: "absolute",
+    top: 80,
+    alignSelf: "center",
+    backgroundColor: "#3b82f6",
+    borderWidth: 3,
+    borderColor: "#fff",
+    borderRadius: 999,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    zIndex: 20,
+  },
+  superPillText: {
+    color: "#fff",
+    fontSize: 19,
+    fontWeight: "800",
+    letterSpacing: 1.2,
   },
 });

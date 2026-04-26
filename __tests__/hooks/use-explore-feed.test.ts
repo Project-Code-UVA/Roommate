@@ -96,6 +96,7 @@ describe("useExploreFeed", () => {
     mockLikeProfile.mockResolvedValue({
       success: true,
       is_match: false,
+      is_super_like: false,
       match_id: null,
       thread_id: null,
       error: null,
@@ -118,6 +119,7 @@ describe("useExploreFeed", () => {
       24,
       0,
       expect.any(Number),
+      {},
     );
   });
 

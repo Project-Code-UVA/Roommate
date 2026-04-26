@@ -73,6 +73,8 @@ export async function uploadPhoto(
     });
 
     if (insertError) {
+      // Clean up orphaned storage file on DB insert failure
+      await supabase.storage.from("photos").remove([filePath]);
       return { url: "", error: insertError.message };
     }
 

@@ -14,7 +14,12 @@ import { getExploreFeed, getProfileDetail } from "@/services/explore-service";
 import { likeProfile } from "@/services/match-service";
 import { dismissProfile } from "@/services/discovery-service";
 import type { ExploreProfile } from "@/types/explore";
-import type { DiscoveryProfile, LikeResult } from "@/types/filters";
+import type {
+  DiscoveryFilters,
+  DiscoveryProfile,
+  LikeResult,
+} from "@/types/filters";
+import { EMPTY_FILTERS, normalizeFilters } from "@/types/filters";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -54,7 +59,10 @@ type ExploreFeedState = {
 // Hook
 // ---------------------------------------------------------------------------
 
-export function useExploreFeed(userId: string): ExploreFeedState {
+export function useExploreFeed(
+  userId: string,
+  filters: DiscoveryFilters = EMPTY_FILTERS,
+): ExploreFeedState {
   const [profiles, setProfiles] = useState<readonly ExploreProfile[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<DiscoveryProfile | null>(null);
   const [nextProfile, setNextProfile] = useState<DiscoveryProfile | null>(null);
@@ -69,8 +77,15 @@ export function useExploreFeed(userId: string): ExploreFeedState {
   const offsetRef = useRef(0);
   const isFetchingRef = useRef(false);
 
+  // Stable serialized key for filter change detection.
+  const filtersKey = JSON.stringify(normalizeFilters(filters));
+
+  // Ref keeps async callbacks in sync with the latest filter value.
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
+
   // -------------------------------------------------------------------------
-  // Initial load
+  // Initial load — also re-runs on filter change with a fresh shuffle seed
   // -------------------------------------------------------------------------
 
   useEffect(() => {
@@ -78,8 +93,18 @@ export function useExploreFeed(userId: string): ExploreFeedState {
 
     async function loadInitial() {
       setIsLoading(true);
+      // Fresh seed on filter change so ranking ordering is stable
+      // across pagination without reusing old randomness.
+      seedRef.current = Math.floor(Math.random() * 2147483647);
+      offsetRef.current = 0;
 
-      const result = await getExploreFeed(userId, PAGE_SIZE, 0, seedRef.current);
+      const result = await getExploreFeed(
+        userId,
+        PAGE_SIZE,
+        0,
+        seedRef.current,
+        filtersRef.current,
+      );
 
       if (cancelled) return;
 
@@ -95,7 +120,8 @@ export function useExploreFeed(userId: string): ExploreFeedState {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, filtersKey]);
 
   // -------------------------------------------------------------------------
   // Load more (infinite scroll)
@@ -111,6 +137,7 @@ export function useExploreFeed(userId: string): ExploreFeedState {
       PAGE_SIZE,
       offsetRef.current,
       seedRef.current,
+      filtersRef.current,
     );
 
     isFetchingRef.current = false;
@@ -137,7 +164,13 @@ export function useExploreFeed(userId: string): ExploreFeedState {
     seedRef.current = Math.floor(Math.random() * 2147483647);
     offsetRef.current = 0;
 
-    const result = await getExploreFeed(userId, PAGE_SIZE, 0, seedRef.current);
+    const result = await getExploreFeed(
+      userId,
+      PAGE_SIZE,
+      0,
+      seedRef.current,
+      filtersRef.current,
+    );
 
     const items = result.data;
     setProfiles(items);

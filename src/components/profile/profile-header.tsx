@@ -1,7 +1,8 @@
 /**
- * Profile header — user's photo carousel with name and verified badge.
+ * Profile header — circular avatar with edit overlay, name, and verified badge.
  *
- * Shows primary photo with navigation dots. Tap to cycle through photos.
+ * Tap left/right halves of avatar to cycle photos.
+ * Camera button opens photo manager.
  */
 
 import { useState, useCallback } from "react";
@@ -10,20 +11,11 @@ import {
   Text,
   Image,
   Pressable,
-  Dimensions,
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 
 import { COLORS } from "@/lib/constants";
-
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const HEADER_HEIGHT = 320;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -46,6 +38,8 @@ type ProfileHeaderProps = {
 // Component
 // ---------------------------------------------------------------------------
 
+const AVATAR_SIZE = 110;
+
 export function ProfileHeader({
   photos,
   displayName,
@@ -57,13 +51,11 @@ export function ProfileHeader({
   const currentPhoto = photos[photoIndex] ?? null;
 
   const handleTap = useCallback(
-    (tapX: number) => {
+    (tapX: number, containerWidth: number) => {
       if (photoCount <= 1) return;
-      const isLeftHalf = tapX < SCREEN_WIDTH / 2;
+      const isLeftHalf = tapX < containerWidth / 2;
       setPhotoIndex((prev) => {
-        if (isLeftHalf) {
-          return prev > 0 ? prev - 1 : photoCount - 1;
-        }
+        if (isLeftHalf) return prev > 0 ? prev - 1 : photoCount - 1;
         return (prev + 1) % photoCount;
       });
     },
@@ -72,62 +64,56 @@ export function ProfileHeader({
 
   return (
     <View style={styles.container}>
-      <Pressable
-        style={styles.photoWrap}
-        onPress={(e) => handleTap(e.nativeEvent.locationX)}
-      >
-        {currentPhoto ? (
-          <Image
-            source={{ uri: currentPhoto.url }}
-            style={styles.photo}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={[styles.photo, styles.placeholder]}>
-            <Ionicons name="person" size={64} color={COLORS.gray[300]} />
-          </View>
-        )}
-
-        {/* Gradient overlay */}
-        <LinearGradient
-          colors={["transparent", "rgba(0,0,0,0.6)"]}
-          style={styles.gradient}
-          pointerEvents="none"
+      {/* Circular avatar */}
+      <View style={styles.avatarSection}>
+        <Pressable
+          style={styles.avatarWrap}
+          onPress={(e) =>
+            handleTap(e.nativeEvent.locationX, AVATAR_SIZE)
+          }
         >
-          <View style={styles.nameRow}>
-            <Text style={styles.nameText}>{displayName ?? "Your Name"}</Text>
-            {selfieVerified && (
-              <Ionicons
-                name="checkmark-circle"
-                size={22}
-                color={COLORS.primary[400]}
-                style={styles.verifiedIcon}
-              />
-            )}
-          </View>
-        </LinearGradient>
+          {currentPhoto ? (
+            <Image
+              source={{ uri: currentPhoto.url }}
+              style={styles.avatar}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={[styles.avatar, styles.avatarPlaceholder]}>
+              <Ionicons name="person" size={40} color={COLORS.gray[300]} />
+            </View>
+          )}
+        </Pressable>
 
-        {/* Photo dots */}
-        {photoCount > 1 && (
-          <View style={styles.dotsRow}>
-            {photos.map((_, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.dot,
-                  i === photoIndex ? styles.dotActive : styles.dotInactive,
-                ]}
-              />
-            ))}
-          </View>
+        {/* Camera edit button */}
+        <Pressable style={styles.cameraButton} onPress={onEditPhotos}>
+          <Ionicons name="camera" size={14} color="#fff" />
+        </Pressable>
+      </View>
+
+      {/* Photo navigation dots */}
+      {photoCount > 1 && (
+        <View style={styles.dotsRow}>
+          {photos.map((_, i) => (
+            <View
+              key={i}
+              style={[styles.dot, i === photoIndex ? styles.dotActive : styles.dotInactive]}
+            />
+          ))}
+        </View>
+      )}
+
+      {/* Name + verified */}
+      <View style={styles.nameRow}>
+        <Text style={styles.name}>{displayName ?? "Your Name"}</Text>
+        {selfieVerified && (
+          <Ionicons
+            name="checkmark-circle"
+            size={20}
+            color={COLORS.primary[500]}
+          />
         )}
-      </Pressable>
-
-      {/* Edit photos button */}
-      <Pressable style={styles.editButton} onPress={onEditPhotos}>
-        <Ionicons name="camera-outline" size={20} color={COLORS.primary[600]} />
-        <Text style={styles.editText}>Edit Photos</Text>
-      </Pressable>
+      </View>
     </View>
   );
 }
@@ -138,79 +124,69 @@ export function ProfileHeader({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    alignItems: "center",
+    paddingVertical: 20,
+    marginBottom: 8,
   },
-  photoWrap: {
-    height: HEADER_HEIGHT,
-    borderRadius: 20,
-    overflow: "hidden",
+  avatarSection: {
     position: "relative",
   },
-  photo: {
+  avatarWrap: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
+    overflow: "hidden",
+    borderWidth: 3,
+    borderColor: COLORS.primary[200],
+  },
+  avatar: {
     width: "100%",
     height: "100%",
   },
-  placeholder: {
+  avatarPlaceholder: {
     backgroundColor: COLORS.gray[100],
     alignItems: "center",
     justifyContent: "center",
   },
-  gradient: {
+  cameraButton: {
     position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingTop: 40,
-    paddingBottom: 16,
-    paddingHorizontal: 16,
+    bottom: 2,
+    right: 2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: COLORS.primary[600],
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  dotsRow: {
+    flexDirection: "row",
+    gap: 5,
+    marginTop: 10,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  dotActive: {
+    backgroundColor: COLORS.primary[500],
+  },
+  dotInactive: {
+    backgroundColor: COLORS.gray[300],
   },
   nameRow: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  nameText: {
-    color: "#fff",
-    fontSize: 26,
-    fontWeight: "700",
-  },
-  verifiedIcon: {
-    marginLeft: 8,
-  },
-  dotsRow: {
-    position: "absolute",
-    top: 12,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    justifyContent: "center",
     gap: 6,
+    marginTop: 10,
   },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  dotActive: {
-    backgroundColor: "#fff",
-  },
-  dotInactive: {
-    backgroundColor: "rgba(255,255,255,0.4)",
-  },
-  editButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    marginTop: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: COLORS.primary[50],
-    borderRadius: 12,
-    alignSelf: "center",
-  },
-  editText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.primary[600],
+  name: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: COLORS.gray[900],
+    letterSpacing: -0.3,
   },
 });

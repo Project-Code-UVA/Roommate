@@ -75,12 +75,12 @@ export default function TabLayout() {
 
   // Unauthenticated -> welcome screen
   if (!session) {
-    return <Redirect href="/welcome" />;
+    return <Redirect href="/(auth)/welcome" />;
   }
 
-  // Authenticated but not onboarded -> onboarding flow
+  // Authenticated but not onboarded -> send to welcome (user can continue from there)
   if (!onboardingComplete) {
-    return <Redirect href="/(auth)/birthday" />;
+    return <Redirect href="/(auth)/welcome" />;
   }
 
   return (
@@ -90,8 +90,7 @@ export default function TabLayout() {
         tabBarStyle: {
           position: "absolute",
           backgroundColor: "rgba(245,245,245,0.95)",
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: "rgba(0,0,0,0.08)",
+          borderTopWidth: 0,
           elevation: 0,
         },
         tabBarInactiveTintColor: "rgba(0,0,0,0.35)",

@@ -7,49 +7,79 @@
  */
 
 jest.mock("react-native-safe-area-context", () => ({
+  __esModule: true,
   useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),
   SafeAreaView: require("react-native").View,
 }));
 
-jest.mock("react-native-gesture-handler", () => ({
-  GestureHandlerRootView: require("react-native").View,
-  Gesture: { Pan: () => ({ activeOffsetX: () => ({ onUpdate: () => ({ onEnd: () => ({}) }) }) }) },
-  GestureDetector: ({ children }: { children: React.ReactNode }) => children,
-}));
-
-jest.mock("react-native-reanimated", () => {
-  const RN = require("react-native");
+jest.mock("react-native-gesture-handler", () => {
+  const chain: Record<string, (...args: unknown[]) => unknown> = {};
+  const methods = [
+    "activeOffsetX",
+    "activeOffsetY",
+    "failOffsetX",
+    "failOffsetY",
+    "onUpdate",
+    "onEnd",
+    "onStart",
+  ];
+  methods.forEach((m) => {
+    chain[m] = () => chain;
+  });
   return {
-    default: {
-      View: RN.View,
-      createAnimatedComponent: (c: unknown) => c,
-    },
-    useSharedValue: (v: unknown) => ({ value: v }),
-    useAnimatedStyle: () => ({}),
-    withSpring: (v: unknown) => v,
-    withTiming: (v: unknown) => v,
-    interpolate: () => 0,
-    runOnJS: (fn: () => void) => fn,
+    __esModule: true,
+    GestureHandlerRootView: require("react-native").View,
+    Gesture: { Pan: () => chain },
+    GestureDetector: ({ children }: { children: React.ReactNode }) => children,
   };
 });
-
-jest.mock("expo-haptics", () => ({
-  impactAsync: jest.fn(),
-  ImpactFeedbackStyle: { Medium: "medium" },
-}));
-
-jest.mock("expo-linear-gradient", () => ({
-  LinearGradient: require("react-native").View,
-}));
 
 jest.mock("@/components/discovery/photo-indicator", () => ({
   PhotoIndicator: () => null,
 }));
 
+jest.mock("@/contexts/auth-context", () => ({
+  useSession: () => ({ session: { user: { id: "test-user" } } }),
+}));
+
+jest.mock("@/services/block-service", () => ({
+  blockUser: jest.fn(() => Promise.resolve({ success: true })),
+}));
+
+jest.mock("@/services/report-service", () => ({
+  submitReport: jest.fn(() => Promise.resolve({ success: true })),
+}));
+
+jest.mock("@/components/safety/block-confirm-dialog", () => ({
+  showBlockConfirmDialog: jest.fn(),
+}));
+
+jest.mock("@/components/safety/report-sheet", () => ({
+  ReportSheet: () => null,
+}));
+
+jest.mock("@/components/shared/overflow-menu", () => ({
+  OverflowMenu: () => null,
+}));
+
 jest.mock("@/lib/constants", () => ({
   COLORS: {
-    primary: { 50: "#f0f", 400: "#a0a", 500: "#909", 600: "#808" },
-    gray: { 200: "#ccc", 300: "#aaa", 400: "#888", 700: "#333", 900: "#111" },
+    primary: {
+      50: "#f0f",
+      400: "#a0a",
+      500: "#909",
+      600: "#808",
+      700: "#707",
+      900: "#505",
+    },
+    gray: {
+      200: "#ccc",
+      300: "#aaa",
+      400: "#888",
+      500: "#666",
+      700: "#333",
+      900: "#111",
+    },
   },
 }));
 
@@ -124,7 +154,7 @@ describe("ExploreProfileView", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("renders next profile behind current when provided", () => {
+  it("renders bio and match percentage when profile has data", () => {
     const { getByText } = render(
       <ExploreProfileView
         profile={mockProfile}
@@ -137,8 +167,8 @@ describe("ExploreProfileView", () => {
       />,
     );
 
-    expect(getByText("Bob")).toBeTruthy();
-    expect(getByText("Alice")).toBeTruthy();
+    expect(getByText("Hello")).toBeTruthy();
+    expect(getByText("75% MATCH")).toBeTruthy();
   });
 
   it("renders nothing when profile is null", () => {

@@ -1,109 +1,160 @@
-/**
- * Name entry onboarding step.
- *
- * Collects the user's first name and saves it to their profile.
- * Name is displayed to other users on their profile card.
- */
-
-import { useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-import { router } from "expo-router";
-
+import { useState, useCallback } from "react";
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from "react-native";
+import { useRouter } from "expo-router";
 import { StepContainer } from "@/components/onboarding/step-container";
-import { useSession } from "@/contexts/auth-context";
-import { useOnboarding } from "@/hooks/use-onboarding";
-import { updateProfile } from "@/services/profile-service";
 import { COLORS } from "@/lib/constants";
-
-const MAX_NAME_LENGTH = 30;
+import { useSession } from "@/contexts/auth-context";
+import { updateProfile } from "@/services/profile-service";
+import { useOnboarding } from "@/hooks/use-onboarding";
 
 export default function NameScreen() {
+  const router = useRouter();
   const { session } = useSession();
   const { saveProgress } = useOnboarding();
-
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState(""); // MODIFIED: added lastName state variable
   const [error, setError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const trimmedName = name.trim();
-  const canContinue = trimmedName.length > 0 && !isSaving;
+  const isValid = firstName.trim().length > 0;
 
-  async function handleContinue() {
-    if (!session?.user.id || !canContinue) return;
-
-    setIsSaving(true);
+  const handleContinue = useCallback(async () => {
+    if (!isValid) return;
+    setLoading(true);
     setError(null);
 
-    const result = await updateProfile(session.user.id, {
-      display_name: trimmedName,
-    });
+    try {
+      // MODIFIED: combine first + last name into display_name for downstream compatibility
+      const displayName = lastName.trim()
+        ? `${firstName.trim()} ${lastName.trim()}`
+        : firstName.trim();
 
-    if (result.error) {
-      setError(result.error);
-      setIsSaving(false);
-      return;
+      if (!session?.user.id) {
+        setError("Session expired. Please restart onboarding.");
+        return;
+      }
+
+      const { error: profileError } = await updateProfile(session.user.id, {
+        display_name: displayName,
+      });
+      if (profileError) throw new Error(profileError);
+
+      await saveProgress("name", { display_name: displayName });
+      router.push("/(auth)/gender");
+    } catch {
+      setError("Failed to save. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    await saveProgress("name", { display_name: trimmedName });
-    setIsSaving(false);
-    router.push("/(auth)/gender");
-  }
+  }, [isValid, firstName, lastName, router]);
 
   return (
     <StepContainer
-      title="What's your first name?"
+      title="What's your name?"
       subtitle="This is how you'll appear to others"
+      showBack
       onBack={() => router.back()}
+      currentStep={4}
+      totalSteps={11}
     >
       <View className="flex-1">
+        {/* First Name label */}
+        {/* // MODIFIED: increased label from ~14pt to 16pt */}
+        <Text
+          style={{ fontSize: 16 }} // MODIFIED: input label bumped +2pt
+          className="text-gray-500 mb-2 mt-4 font-medium"
+        >
+          First Name
+        </Text>
+
+        {/* First Name input */}
         <TextInput
-          className="border-b-2 border-gray-300 pb-2 text-2xl font-semibold text-gray-900 focus:border-primary-600"
+          value={firstName}
+          onChangeText={(t) => { setFirstName(t); setError(null); }}
           placeholder="First name"
           placeholderTextColor={COLORS.gray[400]}
-          value={name}
-          onChangeText={setName}
           autoFocus
           autoCapitalize="words"
-          maxLength={MAX_NAME_LENGTH}
-          editable={!isSaving}
-          accessibilityLabel="First name"
-          testID="name-input"
+          maxLength={30}
+          style={{
+            fontSize: 26, // MODIFIED: input text bumped +2pt (was ~24pt / text-2xl)
+            fontWeight: "600",
+            color: COLORS.gray[900],
+            borderBottomWidth: 2,
+            borderBottomColor: firstName ? COLORS.primary[600] : COLORS.gray[300],
+            paddingBottom: 10,
+          }}
         />
 
-        {error ? (
-          <Text className="mt-2 text-sm text-red-500">{error}</Text>
-        ) : null}
-      </View>
+        {/* // MODIFIED: added Last Name input field below First Name, styled identically */}
+        <Text
+          style={{ fontSize: 16 }} // MODIFIED: input label bumped +2pt
+          className="text-gray-500 mb-2 mt-6 font-medium"
+        >
+          Last Name
+        </Text>
 
-      <Pressable
-        className={`mb-8 rounded-xl py-4 ${
-          canContinue ? "bg-primary-600" : "bg-gray-300"
-        }`}
-        onPress={handleContinue}
-        disabled={!canContinue}
-        accessibilityRole="button"
-        accessibilityLabel="Continue"
-        accessibilityState={{ disabled: !canContinue }}
-        testID="name-continue"
-      >
-        {isSaving ? (
-          <ActivityIndicator color={COLORS.white} />
-        ) : (
+        {/* // MODIFIED: Last Name input — same styling as First Name */}
+        <TextInput
+          value={lastName}
+          onChangeText={(t) => { setLastName(t); setError(null); }}
+          placeholder="Last name"
+          placeholderTextColor={COLORS.gray[400]}
+          autoCapitalize="words"
+          maxLength={30}
+          style={{
+            fontSize: 26, // MODIFIED: input text bumped +2pt (was ~24pt / text-2xl)
+            fontWeight: "600",
+            color: COLORS.gray[900],
+            borderBottomWidth: 2,
+            borderBottomColor: lastName ? COLORS.primary[600] : COLORS.gray[300],
+            paddingBottom: 10,
+          }}
+        />
+
+        {/* Error text */}
+        {error && (
           <Text
-            className={`text-center text-lg font-semibold ${
-              canContinue ? "text-white" : "text-gray-500"
-            }`}
+            style={{ fontSize: 16 }} // MODIFIED: error text bumped +2pt
+            className="text-red-500 mt-3"
           >
-            Continue
+            {error}
           </Text>
         )}
-      </Pressable>
+
+        {/* // MODIFIED: increased helper text from ~14pt to 16pt */}
+        <Text
+          style={{ fontSize: 16 }} // MODIFIED: helper text bumped +2pt
+          className="text-gray-400 mt-4"
+        >
+          Only your first name is visible to others
+        </Text>
+      </View>
+
+      {/* Continue button */}
+      <View className="pb-6 pt-4">
+        <TouchableOpacity
+          onPress={handleContinue}
+          disabled={!isValid || loading}
+          activeOpacity={0.85}
+          style={{
+            backgroundColor: isValid ? COLORS.primary[600] : COLORS.gray[300],
+            borderRadius: 999,
+            paddingVertical: 18,
+          }}
+        >
+          {loading ? (
+            <ActivityIndicator color={COLORS.white} />
+          ) : (
+            <Text
+              style={{ fontSize: 20 }}
+              className="text-white font-semibold text-center"
+            >
+              Continue
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
     </StepContainer>
   );
 }

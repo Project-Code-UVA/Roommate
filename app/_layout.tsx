@@ -46,11 +46,23 @@ function AppContent() {
 
   return (
     <BottomSheetModalProvider>
-      <Stack>
+      <Stack
+        screenOptions={{
+          headerBackTitle: "",
+          headerBackButtonDisplayMode: "minimal",
+          contentStyle: { backgroundColor: "#fff" },
+          animation: "slide_from_right",
+        }}
+      >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="welcome" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ headerShown: true, presentation: "card" }} />
+        <Stack.Screen name="profile/edit" options={{ headerShown: true, presentation: "card" }} />
+        <Stack.Screen name="profile/photos" options={{ headerShown: true, presentation: "card" }} />
+        <Stack.Screen name="profile/status" options={{ headerShown: true, presentation: "card" }} />
+        <Stack.Screen name="profile/preferences" options={{ headerShown: true, presentation: "card" }} />
+        <Stack.Screen name="profile/dealbreakers" options={{ headerShown: true, presentation: "card" }} />
+        <Stack.Screen name="filters" options={{ headerShown: false, presentation: "card" }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />

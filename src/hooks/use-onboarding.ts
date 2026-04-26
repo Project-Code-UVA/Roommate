@@ -4,7 +4,7 @@
  * Persists current step and step data to AsyncStorage so users can
  * resume onboarding after closing the app.
  *
- * Step order: birthday -> phone -> verify-otp -> name -> gender -> school -> photos -> bio
+ * Step order: birthday -> phone -> verify-otp -> name -> gender -> school -> photos -> bio -> nitty-gritty
  */
 
 import { useCallback, useEffect, useState } from "react";
@@ -20,7 +20,8 @@ export type OnboardingStepId =
   | "gender"
   | "school"
   | "photos"
-  | "bio";
+  | "bio"
+  | "nitty-gritty";
 
 export type OnboardingStep = {
   readonly id: OnboardingStepId;
@@ -41,6 +42,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStep[] = [
   { id: "school", label: "School", route: "/(auth)/school" },
   { id: "photos", label: "Photos", route: "/(auth)/photos" },
   { id: "bio", label: "Bio", route: "/(auth)/bio" },
+  { id: "nitty-gritty", label: "Lifestyle", route: "/(auth)/nitty-gritty" },
 ] as const;
 
 type OnboardingProgress = {

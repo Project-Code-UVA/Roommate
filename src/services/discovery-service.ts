@@ -6,7 +6,8 @@
  */
 
 import { supabase } from "@/lib/supabase";
-import type { DiscoveryProfile } from "@/types/filters";
+import type { DiscoveryFilters, DiscoveryProfile } from "@/types/filters";
+import { normalizeFilters } from "@/types/filters";
 
 // Cast for RPC functions not yet in generated database types
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -25,12 +26,29 @@ export async function getDiscoveryStack(
   userId: string,
   limit = 20,
   offset = 0,
+  filters?: DiscoveryFilters,
 ): Promise<DiscoveryStackResult> {
-  const { data, error } = await rpc("get_discovery_stack", {
-    p_user_id: userId,
-    p_limit: limit,
-    p_offset: offset,
-  });
+  const normalized = filters ? normalizeFilters(filters) : {};
+  const hasFilters = Object.keys(normalized).length > 0;
+
+  // When no filters are active, omit p_filters entirely so the call matches
+  // the legacy 3-arg overload. PostgREST resolves function overloads by the
+  // exact set of named parameters supplied — including `p_filters: null`
+  // would fail before the filter migration is applied to the remote DB.
+  const payload = hasFilters
+    ? {
+        p_user_id: userId,
+        p_limit: limit,
+        p_offset: offset,
+        p_filters: normalized,
+      }
+    : {
+        p_user_id: userId,
+        p_limit: limit,
+        p_offset: offset,
+      };
+
+  const { data, error } = await rpc("get_discovery_stack", payload);
 
   if (error) {
     return { data: null, error: error.message };

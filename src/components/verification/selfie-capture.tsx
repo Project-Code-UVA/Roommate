@@ -16,6 +16,7 @@ import {
   StyleSheet,
 } from "react-native";
 
+import { Ionicons } from "@expo/vector-icons";
 import { captureSelfie, uploadSelfie } from "@/services/selfie-service";
 
 // ---------------------------------------------------------------------------
@@ -79,6 +80,9 @@ export function SelfieCapture({
   if (capturedUri !== null) {
     return (
       <View style={styles.container}>
+        <Pressable style={styles.closeButton} onPress={onCancel} accessibilityLabel="Close">
+          <Ionicons name="close" size={24} color="#fff" />
+        </Pressable>
         <Image
           source={{ uri: capturedUri }}
           style={styles.previewImage}
@@ -118,6 +122,9 @@ export function SelfieCapture({
 
   return (
     <View style={styles.container}>
+      <Pressable style={styles.closeButton} onPress={onCancel} accessibilityLabel="Close">
+        <Ionicons name="close" size={24} color="#fff" />
+      </Pressable>
       <View style={styles.captureArea}>
         <Text style={styles.instructionText}>
           Position your face within the frame
@@ -152,6 +159,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 56,
+    left: 20,
+    zIndex: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   captureArea: {
     flex: 1,

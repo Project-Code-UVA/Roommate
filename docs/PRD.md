@@ -8,7 +8,7 @@ Status: Locked for Engineering Implementation
 
 ## 1.1 Vision
 
-Room is a roommate-first mobile application for college students (18+) that enables structured roommate discovery through swipe-based browsing, mutual matching, and shared-school gated messaging.
+Room is a roommate-first mobile application for college students (17+) that enables structured roommate discovery through swipe-based browsing, mutual matching, and shared-school gated messaging.
 
 Room prioritizes:
 
@@ -45,9 +45,9 @@ Explore is a secondary school-based social browsing surface.
 
 ## 3.1 Age Requirement
 
-- Users must be 18 years or older.
+- Users must be 17 years or older (lowered from 18 to accommodate incoming first-year college students).
 - Birthdate collected during onboarding.
-- Under-18 accounts are blocked at signup.
+- Under-17 accounts are blocked at signup.
 - Reporting flow must include “Underage User.”
 
 No exceptions.
@@ -232,11 +232,13 @@ Primary roommate discovery interface.
 
 - Swipe left → dismiss
 - Swipe right → like
+- Swipe up → super-like
 - Save → bookmark
-- Tap photos → navigate
+- Tap photo edges → navigate photos
+- Double-tap center → open expanded profile sheet
 - Photo carousel loops
 
-Swipe-up-to-message is removed.
+Swipe-up-to-message is removed. Super-likes follow the same match/creation rules as likes (mutual like → match → thread). See DECISIONS.md 2026-04-17.
 
 ---
 
@@ -479,6 +481,6 @@ Room is:
 - Consent-driven messaging
 - Monetized via power-user tools
 - Moderated and scalable
-- 18+ only
+- 17+ only
 
 This document is the authoritative source for engineering implementation.

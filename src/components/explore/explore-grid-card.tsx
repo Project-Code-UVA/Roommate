@@ -2,8 +2,8 @@
  * Compact grid card for the Explore tab.
  *
  * Shows a profile photo with a gradient overlay at the bottom
- * displaying the user's name and class year. Approximately 1/3
- * screen width in the 3-column grid.
+ * displaying the user's name, verified badge, class year, location,
+ * and match percentage pill. Sized for the 2-column grid.
  */
 
 import { LinearGradient } from "expo-linear-gradient";
@@ -27,10 +27,12 @@ type ExploreGridCardProps = {
 // ---------------------------------------------------------------------------
 
 export function ExploreGridCard({ profile, onPress, size }: ExploreGridCardProps) {
+  const score = profile.match_score;
+
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.card, { width: size, height: size * 1.3 }]}
+      style={[styles.card, { width: size, height: size * 1.4 }]}
       testID={`explore-card-${profile.user_id}`}
     >
       <Image
@@ -39,27 +41,55 @@ export function ExploreGridCard({ profile, onPress, size }: ExploreGridCardProps
         resizeMode="cover"
       />
       <LinearGradient
-        colors={["transparent", "rgba(0,0,0,0.55)"]}
+        colors={["transparent", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.75)"]}
+        locations={[0.4, 0.65, 1]}
         style={styles.gradient}
       >
-        <Text style={styles.name} numberOfLines={1}>
-          {profile.display_name}
-        </Text>
+        {/* Name row + match badge */}
+        <View style={styles.nameRow}>
+          <View style={styles.nameLeft}>
+            <Text style={styles.name} numberOfLines={1}>
+              {profile.display_name}
+            </Text>
+            {profile.selfie_verified && (
+              <Ionicons
+                name="checkmark-circle"
+                size={16}
+                color="#60a5fa"
+                testID={`explore-card-verified-${profile.user_id}`}
+                accessibilityLabel="Verified"
+              />
+            )}
+          </View>
+          {score != null && (
+            <LinearGradient
+              colors={["#8b5cf6", "#7c3aed"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.scoreBadge}
+            >
+              <Text style={styles.scoreText}>{score}%</Text>
+            </LinearGradient>
+          )}
+        </View>
+
+        {/* Year */}
         {profile.year != null && (
           <Text style={styles.year} numberOfLines={1}>
             {profile.year}
           </Text>
         )}
+
+        {/* Location */}
+        {profile.hometown != null && (
+          <View style={styles.locationRow}>
+            <Ionicons name="location-outline" size={11} color="rgba(255,255,255,0.7)" />
+            <Text style={styles.location} numberOfLines={1}>
+              {profile.hometown}
+            </Text>
+          </View>
+        )}
       </LinearGradient>
-      {profile.selfie_verified && (
-        <View
-          style={styles.verifiedBadge}
-          testID={`explore-card-verified-${profile.user_id}`}
-          accessibilityLabel="Verified"
-        >
-          <Ionicons name="checkmark-circle" size={14} color="#a78bfa" />
-        </View>
-      )}
     </Pressable>
   );
 }
@@ -72,8 +102,12 @@ const styles = StyleSheet.create({
   card: {
     position: "relative",
     overflow: "hidden",
-    borderRadius: 8,
-    margin: 0.5,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
   },
   image: {
     width: "100%",
@@ -84,24 +118,55 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 6,
-    paddingBottom: 6,
-    paddingTop: 24,
+    paddingHorizontal: 10,
+    paddingBottom: 12,
+    paddingTop: 52,
+  },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 4,
+  },
+  nameLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    flex: 1,
+    minWidth: 0,
   },
   name: {
     color: "#fff",
-    fontSize: 13,
+    fontSize: 15,
+    fontWeight: "700",
+    flexShrink: 1,
+  },
+  scoreBadge: {
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    flexShrink: 0,
+  },
+  scoreText: {
+    color: "#fff",
+    fontSize: 12,
     fontWeight: "700",
   },
   year: {
+    color: "rgba(255,255,255,0.75)",
+    fontSize: 12,
+    fontWeight: "400",
+    marginTop: 2,
+  },
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    marginTop: 2,
+  },
+  location: {
     color: "rgba(255,255,255,0.7)",
     fontSize: 11,
-    fontWeight: "400",
-    marginTop: 1,
-  },
-  verifiedBadge: {
-    position: "absolute",
-    bottom: 4,
-    right: 4,
+    flex: 1,
   },
 });

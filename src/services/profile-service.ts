@@ -31,7 +31,7 @@ export async function updateProfile(
   const { error } = await supabase
     .from("profiles")
     .upsert(
-      { user_id: userId, ...fields, updated_at: new Date().toISOString() },
+      { user_id: userId, ...fields },
       { onConflict: "user_id" },
     );
 

@@ -20,7 +20,10 @@ type LikedMeCardProps = {
   readonly isPaid: boolean;
   readonly onUpgrade: () => void;
   readonly onSelect: (profile: LikedMeProfile) => void;
+  /** Card width (px). */
   readonly size: number;
+  /** Card height; defaults to `size` (square). */
+  readonly height?: number;
 };
 
 // ---------------------------------------------------------------------------
@@ -33,7 +36,9 @@ export function LikedMeCard({
   onUpgrade,
   onSelect,
   size,
+  height: heightProp,
 }: LikedMeCardProps) {
+  const height = heightProp ?? size;
   const handlePress = () => {
     if (isPaid) {
       onSelect(profile);
@@ -42,22 +47,28 @@ export function LikedMeCard({
     }
   };
 
+  const hasPhoto = Boolean(profile.photo_url?.trim());
+
   return (
     <Pressable
       testID={`liked-me-card-${profile.user_id}`}
       onPress={handlePress}
-      style={[styles.container, { width: size, height: size }]}
+      style={[styles.container, { width: size, height }]}
     >
-      <Image
-        source={{ uri: profile.photo_url }}
-        style={StyleSheet.absoluteFill}
-        resizeMode="cover"
-      />
+      {hasPhoto ? (
+        <Image
+          source={{ uri: profile.photo_url }}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+        />
+      ) : (
+        <View style={[StyleSheet.absoluteFill, styles.photoFallback]} />
+      )}
 
       {!isPaid && (
         <BlurView
           testID="blur-overlay"
-          intensity={60}
+          intensity={76}
           tint="light"
           style={StyleSheet.absoluteFill}
         />
@@ -83,9 +94,12 @@ export function LikedMeCard({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: "hidden",
     backgroundColor: "#e5e7eb",
+  },
+  photoFallback: {
+    backgroundColor: "#d1d5db",
   },
   gradient: {
     position: "absolute",
