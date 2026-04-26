@@ -31,6 +31,7 @@ import { MessageComposer } from "@/components/chat/message-composer";
 import { MessageList } from "@/components/chat/message-list";
 import { MessageLongPress } from "@/components/chat/message-long-press";
 import { PhotoPreview } from "@/components/chat/photo-preview";
+import { ExploreProfileView } from "@/components/explore/explore-profile-view";
 import { EnforcementModal } from "@/components/safety/enforcement-modal";
 import { useSession } from "@/contexts/auth-context";
 import { useChatMessages } from "@/hooks/use-chat-messages";
@@ -38,8 +39,10 @@ import { useEnforcement } from "@/hooks/use-enforcement";
 import { useMessageActions } from "@/hooks/use-message-actions";
 import { COLORS } from "@/lib/constants";
 import { blockFromChat } from "@/services/block-service";
+import { getProfileDetail } from "@/services/explore-service";
 import { submitReport } from "@/services/report-service";
 import type { Message, MessageReaction, ReportCategory } from "@/types/chat";
+import type { DiscoveryProfile } from "@/types/filters";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -124,6 +127,8 @@ export default function ChatScreen() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [showReportSheet, setShowReportSheet] = useState(false);
   const [imageViewerUrl, setImageViewerUrl] = useState<string | null>(null);
+  const [profileDetail, setProfileDetail] = useState<DiscoveryProfile | null>(null);
+  const [showProfile, setShowProfile] = useState(false);
   // ---------------------------------------------------------------------------
   // Reactions State (Optimistic + Live)
   // ---------------------------------------------------------------------------
@@ -460,8 +465,28 @@ export default function ChatScreen() {
     router.back();
   }, [router]);
 
-  const handlePressProfile = useCallback(() => {
-    // Profile bottom sheet -- future iteration
+  const handlePressProfile = useCallback(async () => {
+    if (!currentUserId || !otherUserId) return;
+    setShowProfile(true);
+    if (!profileDetail) {
+      const result = await getProfileDetail(currentUserId, otherUserId);
+      if (result.data) {
+        setProfileDetail(result.data);
+      }
+    }
+  }, [currentUserId, otherUserId, profileDetail]);
+
+  const handleCloseProfile = useCallback(() => {
+    setShowProfile(false);
+  }, []);
+
+  const handleProfileBlock = useCallback(() => {
+    setShowProfile(false);
+    router.back();
+  }, [router]);
+
+  const noopProfileAction = useCallback(() => {
+    setShowProfile(false);
   }, []);
 
   const handlePressBlock = useCallback(() => {
@@ -649,6 +674,18 @@ export default function ChatScreen() {
         endDate={enforcementInfo?.endAt ?? null}
         visible={showDmBanModal}
         onDismiss={() => setShowDmBanModal(false)}
+      />
+
+      {/* Other user's profile (opened from header avatar tap) */}
+      <ExploreProfileView
+        profile={profileDetail}
+        nextProfile={null}
+        visible={showProfile}
+        onClose={handleCloseProfile}
+        onLike={noopProfileAction}
+        onDismiss={noopProfileAction}
+        onMessage={noopProfileAction}
+        onBlock={handleProfileBlock}
       />
     </SafeAreaView>
   );

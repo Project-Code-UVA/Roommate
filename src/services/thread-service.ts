@@ -170,7 +170,11 @@ export async function getThreads(userId: string): Promise<ThreadsResult> {
 }
 
 // ---------------------------------------------------------------------------
-// Get total unread message count across all threads (for tab badge)
+// Get unread thread count for tab badge
+//
+// Counts the number of *distinct threads* with at least one unread message
+// from the other user, not the total number of unread messages. This means
+// 5 unread messages from one person counts as 1, not 5.
 // ---------------------------------------------------------------------------
 
 type UnreadCountResult = {
@@ -181,7 +185,6 @@ type UnreadCountResult = {
 export async function getTotalUnreadCount(
   userId: string,
 ): Promise<UnreadCountResult> {
-  // Get active thread IDs for this user
   const { data: threads, error: threadError } = await supabase
     .from("threads")
     .select("id")
@@ -198,9 +201,9 @@ export async function getTotalUnreadCount(
 
   const threadIds = threads.map((t: Record<string, unknown>) => t.id as string);
 
-  const { count, error } = await supabase
+  const { data: unreadRows, error } = await supabase
     .from("messages")
-    .select("*", { count: "exact", head: true })
+    .select("thread_id")
     .in("thread_id", threadIds)
     .neq("sender_id", userId)
     .is("read_at", null);
@@ -209,7 +212,11 @@ export async function getTotalUnreadCount(
     return { count: 0, error: error.message };
   }
 
-  return { count: count ?? 0, error: null };
+  const uniqueThreadIds = new Set(
+    (unreadRows ?? []).map((row: Record<string, unknown>) => row.thread_id as string),
+  );
+
+  return { count: uniqueThreadIds.size, error: null };
 }
 
 // ---------------------------------------------------------------------------
