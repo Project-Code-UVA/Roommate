@@ -1,4 +1,6 @@
-import { View, Text, Image, TouchableOpacity, useWindowDimensions } from "react-native";
+import { useState } from "react";
+import { View, Text, TouchableOpacity, useWindowDimensions } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/lib/constants";
 
@@ -8,6 +10,7 @@ interface PhotoGridProps {
   photos: PhotoSlot[];
   onAdd: (index: number) => void;
   onRemove: (index: number) => void;
+  onReorder?: (next: PhotoSlot[]) => void;
 }
 
 const MAX_SLOTS = 9;
@@ -15,12 +18,33 @@ const COLUMNS = 3;
 const GAP = 10;
 const REQUIRED_COUNT = 3;
 
-export function PhotoGrid({ photos, onAdd, onRemove }: PhotoGridProps) {
+export function PhotoGrid({ photos, onAdd, onRemove, onReorder }: PhotoGridProps) {
   const { width } = useWindowDimensions();
   const gridPadding = 48; // px-6 on each side
   const slotSize = (width - gridPadding - GAP * (COLUMNS - 1)) / COLUMNS;
 
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
   const filledCount = photos.filter(Boolean).length;
+
+  const handlePhotoPress = (index: number) => {
+    if (!onReorder) return;
+    if (selectedIndex === null) {
+      setSelectedIndex(index);
+      return;
+    }
+    if (selectedIndex === index) {
+      setSelectedIndex(null);
+      return;
+    }
+    const next = [...photos];
+    const a = next[selectedIndex];
+    const b = next[index];
+    next[selectedIndex] = b ?? null;
+    next[index] = a ?? null;
+    setSelectedIndex(null);
+    onReorder(next);
+  };
 
   // Show: all filled slots + one empty "add" slot (up to MAX_SLOTS)
   const visibleCount = Math.min(filledCount + 1, MAX_SLOTS);
@@ -36,11 +60,20 @@ export function PhotoGrid({ photos, onAdd, onRemove }: PhotoGridProps) {
         const isRequired = index < REQUIRED_COUNT;
 
         if (slot) {
-          // Filled slot
+          const isSelected = selectedIndex === index;
           return (
-            <View
-              key={index}
-              style={{ width: slotSize, height: slotSize, borderRadius: 12, overflow: "hidden" }}
+            <TouchableOpacity
+              key={slot.id}
+              activeOpacity={0.85}
+              onPress={() => handlePhotoPress(index)}
+              style={{
+                width: slotSize,
+                height: slotSize,
+                borderRadius: 12,
+                overflow: "hidden",
+                borderWidth: isSelected ? 3 : 0,
+                borderColor: isSelected ? COLORS.primary[500] : "transparent",
+              }}
             >
               <Image
                 source={{ uri: slot.uri }}
@@ -81,7 +114,7 @@ export function PhotoGrid({ photos, onAdd, onRemove }: PhotoGridProps) {
                   </Text>
                 </View>
               )}
-            </View>
+            </TouchableOpacity>
           );
         }
 

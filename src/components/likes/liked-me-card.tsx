@@ -5,7 +5,8 @@
  * Paid users: Full photo + name overlay. Tap triggers selection.
  */
 
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image } from "expo-image";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -59,7 +60,7 @@ export function LikedMeCard({
         <Image
           source={{ uri: profile.photo_url }}
           style={StyleSheet.absoluteFill}
-          resizeMode="cover"
+          contentFit="cover"
         />
       ) : (
         <View style={[StyleSheet.absoluteFill, styles.photoFallback]} />

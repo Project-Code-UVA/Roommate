@@ -10,7 +10,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  Image,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -18,6 +17,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -124,29 +124,20 @@ function ThreadRow({
             </Text>
           )}
         </View>
-        <View style={styles.previewRow}>
-          <Text
-            style={[
-              styles.preview,
-              thread.unread_count > 0 && styles.previewUnread,
-            ]}
-            numberOfLines={1}
-          >
-            {truncateText(
-              getConversationPreview(thread.last_message, currentUserId, {
-                senderName: thread.other_user_display_name,
-                currentUserLabel: "You",
-              }),
-            )}
-          </Text>
-          {thread.unread_count > 0 && (
-            <View style={styles.badge} testID={`badge-${thread.id}`}>
-              <Text style={styles.badgeText}>
-                {thread.unread_count > 99 ? "99+" : thread.unread_count}
-              </Text>
-            </View>
+        <Text
+          style={[
+            styles.preview,
+            thread.unread_count > 0 && styles.previewUnread,
+          ]}
+          numberOfLines={1}
+        >
+          {truncateText(
+            getConversationPreview(thread.last_message, currentUserId, {
+              senderName: thread.other_user_display_name,
+              currentUserLabel: "You",
+            }),
           )}
-        </View>
+        </Text>
 
       </View>
     </Pressable>

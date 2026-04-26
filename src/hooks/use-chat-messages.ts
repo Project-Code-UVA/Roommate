@@ -13,7 +13,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { supabase } from "@/lib/supabase";
-import { markThreadDelivered } from "@/services/thread-service";
+import { markThreadDelivered, markThreadRead } from "@/services/thread-service";
 import type { Message, MessageReaction } from "@/types/chat";
 
 const HIDDEN_MESSAGES_KEY = "room:hidden_messages";
@@ -98,6 +98,8 @@ export function useChatMessages(
         }));
         setMessages(mapped);
         setHasMore(data.length >= PAGE_SIZE);
+        // Opening the thread = marking incoming messages read.
+        markThreadRead(threadId, userId);
       }
 
       setIsLoading(false);
@@ -186,6 +188,10 @@ export function useChatMessages(
           });
 
           markThreadDelivered(threadId, userId);
+          // User is actively in the thread — mark incoming messages read too.
+          if (newMsg.sender_id !== userId) {
+            markThreadRead(threadId, userId);
+          }
         },
       )
       // ── Message UPDATE (edits, delivery, read receipts) ──────────────────

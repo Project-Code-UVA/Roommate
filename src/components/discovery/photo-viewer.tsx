@@ -6,7 +6,8 @@
  * double-tap to reset zoom.
  */
 
-import { Modal, View, TouchableOpacity, Image, Dimensions } from "react-native";
+import { Modal, View, TouchableOpacity, Dimensions } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -154,7 +155,7 @@ export function PhotoViewer({ photoUrl, visible, onClose }: PhotoViewerProps) {
                 width: SCREEN_WIDTH,
                 height: SCREEN_HEIGHT * 0.7,
               }}
-              resizeMode="contain"
+              contentFit="contain"
             />
           </Animated.View>
         </GestureDetector>

@@ -13,11 +13,11 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
   Text,
-  Image,
   Pressable,
   Dimensions,
   StyleSheet,
 } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -77,9 +77,15 @@ export function PhotoCarousel({
   const photoCount = photos.length;
   const currentPhoto = photos[photoIndex] ?? photos[0] ?? null;
 
-  // Reset index when profile changes
+  // Reset index when profile changes; warm the image cache for the
+  // remaining photos so tapping through them is instant on subsequent taps.
+  // Keying off profileId only — `photos` array reference can be unstable.
   useEffect(() => {
     setPhotoIndex(0);
+    photos.forEach((p) => {
+      Image.prefetch(p.url).catch(() => {});
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileId]);
 
   const navPrev = useCallback(() => {
@@ -128,7 +134,10 @@ export function PhotoCarousel({
       <Image
         source={{ uri: currentPhoto.url }}
         style={styles.photo}
-        resizeMode="cover"
+        contentFit="cover"
+        cachePolicy="memory-disk"
+        priority="high"
+        transition={0}
       />
 
       {/* Photo indicator bars at top */}
@@ -209,10 +218,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     overflow: "hidden",
+    backgroundColor: "#e5e7eb",
   },
   photo: {
     width: "100%",
     height: "100%",
+    backgroundColor: "#e5e7eb",
   },
   indicatorWrap: {
     position: "absolute",

@@ -60,7 +60,6 @@ function AppContent() {
         <Stack.Screen name="profile/edit" options={{ headerShown: true, presentation: "card" }} />
         <Stack.Screen name="profile/photos" options={{ headerShown: true, presentation: "card" }} />
         <Stack.Screen name="profile/status" options={{ headerShown: true, presentation: "card" }} />
-        <Stack.Screen name="profile/preferences" options={{ headerShown: true, presentation: "card" }} />
         <Stack.Screen name="profile/dealbreakers" options={{ headerShown: true, presentation: "card" }} />
         <Stack.Screen name="filters" options={{ headerShown: false, presentation: "card" }} />
         <Stack.Screen name="+not-found" />

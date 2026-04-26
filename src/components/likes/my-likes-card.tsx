@@ -5,7 +5,8 @@
  * Similar layout to ExploreGridCard.
  */
 
-import { Image, Pressable, StyleSheet, Text } from "react-native";
+import { Pressable, StyleSheet, Text } from "react-native";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 
 import type { MyLike } from "@/types/explore";
@@ -38,7 +39,7 @@ export function MyLikesCard({ like, onPress, size }: MyLikesCardProps) {
       <Image
         source={{ uri: like.photo_url }}
         style={StyleSheet.absoluteFill}
-        resizeMode="cover"
+        contentFit="cover"
       />
       <LinearGradient
         colors={["transparent", "rgba(0,0,0,0.6)"]}

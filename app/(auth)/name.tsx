@@ -77,16 +77,18 @@ export default function NameScreen() {
           autoCapitalize="words"
           maxLength={30}
           style={{
-            fontSize: 26, // MODIFIED: input text bumped +2pt (was ~24pt / text-2xl)
+            fontSize: 26,
+            lineHeight: 34,
             fontWeight: "600",
             color: COLORS.gray[900],
             borderBottomWidth: 2,
             borderBottomColor: firstName ? COLORS.primary[600] : COLORS.gray[300],
+            paddingTop: 6,
             paddingBottom: 10,
           }}
         />
 
-        {/* // MODIFIED: added Last Name input field below First Name, styled identically */}
+        {/* Last name */}
         <Text
           style={{ fontSize: 16 }} // MODIFIED: input label bumped +2pt
           className="text-gray-500 mb-2 mt-6 font-medium"
@@ -103,11 +105,13 @@ export default function NameScreen() {
           autoCapitalize="words"
           maxLength={30}
           style={{
-            fontSize: 26, // MODIFIED: input text bumped +2pt (was ~24pt / text-2xl)
+            fontSize: 26,
+            lineHeight: 34,
             fontWeight: "600",
             color: COLORS.gray[900],
             borderBottomWidth: 2,
             borderBottomColor: lastName ? COLORS.primary[600] : COLORS.gray[300],
+            paddingTop: 6,
             paddingBottom: 10,
           }}
         />

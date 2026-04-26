@@ -6,7 +6,7 @@ import { PhotoGrid } from "@/components/onboarding/photo-grid";
 import { COLORS } from "@/lib/constants";
 import { useSession } from "@/contexts/auth-context";
 import { useOnboarding } from "@/hooks/use-onboarding";
-import { pickImage, uploadPhoto, deletePhoto } from "@/services/photo-service";
+import { pickImage, uploadPhoto, deletePhoto, reorderPhotos } from "@/services/photo-service";
 import type { PhotoSlot } from "@/components/onboarding/photo-grid";
 
 const MIN_PHOTOS = 3;
@@ -111,6 +111,19 @@ export default function PhotosScreen() {
     }
   }, [photos, session?.user.id]);
 
+  const handleReorder = useCallback((next: PhotoSlot[]) => {
+    setPhotos(next);
+    // Persist the new order_index for any photos already uploaded.
+    const userId = session?.user.id;
+    if (!userId) return;
+    const uploadedIds = next
+      .filter((p): p is NonNullable<PhotoSlot> => Boolean(p?.uploaded && p?.id))
+      .map((p) => p.id);
+    if (uploadedIds.length > 0) {
+      reorderPhotos(userId, uploadedIds);
+    }
+  }, [session?.user.id]);
+
   const handleContinue = useCallback(async () => {
     if (!isValid) return;
     setLoading(true);
@@ -137,7 +150,12 @@ export default function PhotosScreen() {
       <View className="flex-1">
         {/* Photo grid */}
         <View className="mt-2">
-          <PhotoGrid photos={photos} onAdd={handleAdd} onRemove={handleRemove} />
+          <PhotoGrid
+            photos={photos}
+            onAdd={handleAdd}
+            onRemove={handleRemove}
+            onReorder={handleReorder}
+          />
         </View>
 
         {/* Counter text */}

@@ -267,3 +267,24 @@ export async function markThreadDelivered(
 
   return { error: null };
 }
+
+// ---------------------------------------------------------------------------
+// Mark all incoming messages in a thread as read
+// ---------------------------------------------------------------------------
+
+export async function markThreadRead(
+  threadId: string,
+  _userId: string,
+): Promise<SimpleResult> {
+  // RLS has no UPDATE policy on messages — go through SECURITY DEFINER RPC.
+  // The RPC was added in migration 00058; generated types haven't caught up.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rpcAny = supabase.rpc as unknown as (fn: string, args: unknown) => any;
+  const { error } = await rpcAny("mark_thread_read", { p_thread_id: threadId });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { error: null };
+}

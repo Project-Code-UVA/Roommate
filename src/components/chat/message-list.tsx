@@ -203,7 +203,12 @@ export function MessageList({
       onEndReachedThreshold={0.3}
       ListFooterComponent={renderFooter}
       ListEmptyComponent={ListEmptyComponent}
-      contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 8 }}
+      contentContainerStyle={{
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        flexGrow: 1,
+        justifyContent: "flex-end",
+      }}
     />
 
   );

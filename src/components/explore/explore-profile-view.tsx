@@ -24,7 +24,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Dimensions,
-  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -32,6 +31,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { Image } from "expo-image";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
@@ -172,7 +172,7 @@ function buildTagChips(profile: DiscoveryProfile): string[] {
 function PhotoCard({ url }: { readonly url: string }) {
   return (
     <View style={styles.photoCard}>
-      <Image source={{ uri: url }} style={styles.photoCardImage} resizeMode="cover" />
+      <Image source={{ uri: url }} style={styles.photoCardImage} contentFit="cover" />
     </View>
   );
 }
@@ -404,7 +404,7 @@ export function ExploreProfileView({
                 <Image
                   source={{ uri: heroPhoto.url }}
                   style={StyleSheet.absoluteFill}
-                  resizeMode="cover"
+                  contentFit="cover"
                 />
               ) : (
                 <View style={[StyleSheet.absoluteFill, styles.heroPlaceholder]} />

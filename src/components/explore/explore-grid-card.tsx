@@ -7,7 +7,8 @@
  */
 
 import { LinearGradient } from "expo-linear-gradient";
-import { View, Text, Image, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 
 import type { ExploreProfile } from "@/types/explore";
@@ -38,7 +39,7 @@ export function ExploreGridCard({ profile, onPress, size }: ExploreGridCardProps
       <Image
         source={{ uri: profile.photo_url }}
         style={styles.image}
-        resizeMode="cover"
+        contentFit="cover"
       />
       <LinearGradient
         colors={["transparent", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.75)"]}

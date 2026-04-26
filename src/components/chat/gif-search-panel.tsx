@@ -11,13 +11,13 @@ import { useCallback } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  Image,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { Image } from "expo-image";
 
 import { useGifSearch } from "@/hooks/use-gif-search";
 import type { GifResult } from "@/types/chat";
@@ -62,7 +62,7 @@ export function GifSearchPanel({
           <Image
             source={{ uri: item.previewUrl }}
             style={styles.gifImage}
-            resizeMode="cover"
+            contentFit="cover"
           />
         </Pressable>
       );

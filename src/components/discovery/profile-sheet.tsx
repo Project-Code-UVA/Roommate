@@ -12,7 +12,8 @@
  */
 
 import { useRef, useCallback, useEffect, useState } from "react";
-import { View, Text, Image, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import {
   BottomSheetModal,
@@ -188,7 +189,7 @@ export function ProfileSheet({
                     height: PHOTO_HEIGHT,
                     borderRadius: 16,
                   }}
-                  resizeMode="cover"
+                  contentFit="cover"
                 />
               </TouchableOpacity>
             ))}

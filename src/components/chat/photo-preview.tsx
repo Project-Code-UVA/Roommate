@@ -7,14 +7,13 @@
 
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useState } from "react";
-import {
-  Image,
-  Pressable,
+import {  Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { Image } from "expo-image";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -43,7 +42,7 @@ export function PhotoPreview({ uri, onSend, onCancel }: PhotoPreviewProps) {
       <Image
         source={{ uri }}
         style={styles.image}
-        resizeMode="contain"
+        contentFit="contain"
         testID="photo-preview-image"
       />
 

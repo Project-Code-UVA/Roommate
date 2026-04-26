@@ -15,7 +15,8 @@
  */
 
 import * as React from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image } from "expo-image";
 
 import { DeliveryIndicator } from "@/components/chat/delivery-indicator";
 import { MessageReactions } from "@/components/chat/message-reactions";
@@ -164,7 +165,7 @@ export function MessageBubble({
               testID="bubble-media-image"
               source={{ uri: message.media_url }}
               style={styles.mediaImage}
-              resizeMode="cover"
+              contentFit="cover"
             />
           </Pressable>
         )}

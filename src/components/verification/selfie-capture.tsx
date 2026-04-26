@@ -10,11 +10,11 @@ import { useState, useCallback } from "react";
 import {
   View,
   Text,
-  Image,
   Pressable,
   ActivityIndicator,
   StyleSheet,
 } from "react-native";
+import { Image } from "expo-image";
 
 import { Ionicons } from "@expo/vector-icons";
 import { captureSelfie, uploadSelfie } from "@/services/selfie-service";
@@ -86,7 +86,7 @@ export function SelfieCapture({
         <Image
           source={{ uri: capturedUri }}
           style={styles.previewImage}
-          resizeMode="cover"
+          contentFit="cover"
         />
 
         <View style={styles.previewButtons}>

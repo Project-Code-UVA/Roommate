@@ -29,6 +29,7 @@ import { MatchModal } from "@/components/match/match-modal";
 import { FilterButton } from "@/components/shared/filter-button";
 import { useExploreFeed } from "@/hooks/use-explore-feed";
 import { openFilterDraft } from "@/stores/filter-draft";
+import { setAppliedFilters, useAppliedFilters } from "@/stores/applied-filters";
 import { useSession } from "@/contexts/auth-context";
 import { COLORS } from "@/lib/constants";
 import type { ExploreProfile } from "@/types/explore";
@@ -93,7 +94,7 @@ export default function ExploreScreen() {
   const router = useRouter();
   const userId = session?.user.id ?? "";
 
-  const [filters, setFilters] = useState<DiscoveryFilters>({});
+  const filters = useAppliedFilters();
   const activeFilterCount = useMemo(
     () => countActiveFilters(filters),
     [filters],
@@ -150,7 +151,7 @@ export default function ExploreScreen() {
   }, []);
 
   const handleOpenFilters = useCallback(() => {
-    openFilterDraft(filters, setFilters);
+    openFilterDraft(filters, setAppliedFilters);
     router.push("/filters" as never);
   }, [filters, router]);
 

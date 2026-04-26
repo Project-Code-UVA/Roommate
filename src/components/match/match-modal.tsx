@@ -9,7 +9,8 @@
  */
 
 import { useEffect } from "react";
-import { Modal, View, Text, Image, TouchableOpacity } from "react-native";
+import { Modal, View, Text, TouchableOpacity } from "react-native";
+import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import ConfettiCannon from "react-native-confetti-cannon";
 

@@ -14,6 +14,8 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { COLORS } from "@/lib/constants";
 import { useSession } from "@/contexts/auth-context";
+import { useOnboarding } from "@/hooks/use-onboarding";
+import { markOnboardingComplete } from "@/services/auth-service";
 import { updateProfile } from "@/services/profile-service";
 import { getNittyGritty } from "@/services/filter-service";
 import {
@@ -28,8 +30,8 @@ import type { FilterCategory } from "@/types/filters";
 
 type SelfSelections = Partial<Record<FilterCategory, string>>;
 
-const TOTAL_STEPS = 11;
-const CURRENT_STEP = 9;
+const TOTAL_STEPS = 10;
+const CURRENT_STEP = 10;
 
 const CATEGORY_ICONS: Record<FilterCategory, string> = {
   sleep_schedule: "moon-outline",
@@ -43,12 +45,12 @@ const CATEGORY_ICONS: Record<FilterCategory, string> = {
   budget_range: "cash-outline",
   rushing: "ribbon-outline",
   social_energy: "people-circle-outline",
-  looking_for: "search-outline",
 };
 
 export default function NittyGrittyScreen() {
   const router = useRouter();
-  const { session } = useSession();
+  const { session, refreshOnboardingStatus } = useSession();
+  const { clearProgress } = useOnboarding();
   const [selections, setSelections] = useState<SelfSelections>({});
   const [loading, setLoading] = useState(false);
 
@@ -87,13 +89,20 @@ export default function NittyGrittyScreen() {
         return;
       }
 
-      router.push("/(auth)/roommate-preferences");
+      const complete = await markOnboardingComplete(userId);
+      if (complete.error) {
+        Alert.alert("Error", `Failed to complete profile: ${complete.error}`);
+        return;
+      }
+
+      await Promise.all([refreshOnboardingStatus(), clearProgress()]);
+      router.replace("/(tabs)");
     } catch {
       Alert.alert("Error", "Failed to save your lifestyle. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, [session?.user.id, selections, router]);
+  }, [session?.user.id, selections, router, refreshOnboardingStatus, clearProgress]);
 
   return (
     <SafeAreaView style={styles.screen}>

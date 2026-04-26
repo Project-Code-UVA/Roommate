@@ -16,12 +16,12 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
-  Image,
   ScrollView,
   Pressable,
   Dimensions,
   StyleSheet,
 } from "react-native";
+import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PhotoIndicator } from "@/components/discovery/photo-indicator";
@@ -50,8 +50,6 @@ const CATEGORY_LABELS: Record<FilterCategory, string> = {
   study_habits: "Study Habits",
   rushing: "Rushing",
   social_energy: "Introvert / Extrovert",
-  looking_for: "Looking For",
-
 };
 
 const CATEGORY_ICONS: Record<FilterCategory, keyof typeof Ionicons.glyphMap> = {
@@ -66,8 +64,6 @@ const CATEGORY_ICONS: Record<FilterCategory, keyof typeof Ionicons.glyphMap> = {
   study_habits: "book-outline",
   rushing: "ribbon-outline",
   social_energy: "people-circle-outline",
-  looking_for: "search-outline",
-
 };
 
 const CATEGORY_EMOJI: Record<FilterCategory, string> = {
@@ -82,8 +78,6 @@ const CATEGORY_EMOJI: Record<FilterCategory, string> = {
   study_habits: "📚",
   rushing: "🏛️",
   social_energy: "🗣️",
-  looking_for: "🔍",
-
 };
 
 // ---------------------------------------------------------------------------
@@ -159,7 +153,7 @@ export function ProfileCard({ profile, onProfileTap }: ProfileCardProps) {
         <Image
           source={{ uri: currentPhoto.url }}
           style={styles.heroPhoto}
-          resizeMode="cover"
+          contentFit="cover"
         />
 
         {/* Photo indicator bars — below notch / Dynamic Island */}
@@ -213,7 +207,7 @@ export function ProfileCard({ profile, onProfileTap }: ProfileCardProps) {
               <Image
                 source={{ uri: photo.url }}
                 style={styles.photo}
-                resizeMode="cover"
+                contentFit="cover"
               />
             </View>
           );

@@ -9,6 +9,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { Image } from "expo-image";
 
 import {
   getDiscoveryStack,
@@ -118,6 +119,18 @@ export function useDiscoveryStack(
       setOffset(profiles.length);
       setIsLoading(false);
       hasLoadedInitial.current = true;
+
+      // Warm the first 5 profiles' hero photos into expo-image's cache as
+      // soon as we have URLs — guarantees the first card renders with photo
+      // visible (not the grey placeholder) and removes the fade-in flash on
+      // subsequent swaps.
+      const heroUrls = profiles
+        .slice(0, 5)
+        .map((p) => p.photos?.[0]?.url)
+        .filter((u): u is string => Boolean(u));
+      if (heroUrls.length > 0) {
+        Image.prefetch(heroUrls, "memory-disk").catch(() => {});
+      }
 
       if (profiles.length < PAGE_SIZE) {
         hasReachedEnd.current = true;

@@ -130,21 +130,21 @@ export function SwipeCard({
         isAnimating.value = true;
         translateY.value = withSpring(
           -FLY_OUT_Y,
-          { damping: 20, stiffness: 200, mass: 0.8 },
+          { damping: 22, stiffness: 320, mass: 0.6 },
           () => { runOnJS(triggerSuperLike)(); },
         );
       } else if (event.translationX > SWIPE_THRESHOLD_X) {
         isAnimating.value = true;
         translateX.value = withSpring(
           FLY_OUT_X,
-          { damping: 20, stiffness: 200, mass: 0.8 },
+          { damping: 22, stiffness: 320, mass: 0.6 },
           () => { runOnJS(triggerLike)(); },
         );
       } else if (event.translationX < -SWIPE_THRESHOLD_X) {
         isAnimating.value = true;
         translateX.value = withSpring(
           -FLY_OUT_X,
-          { damping: 20, stiffness: 200, mass: 0.8 },
+          { damping: 22, stiffness: 320, mass: 0.6 },
           () => { runOnJS(triggerDismiss)(); },
         );
       } else {
@@ -257,6 +257,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 24,
     overflow: "hidden",
+    backgroundColor: "#e5e7eb",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,

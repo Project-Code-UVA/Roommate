@@ -57,11 +57,6 @@ const PREFERENCE_OPTIONS: OptionDef[] = [
     question: "Where do you usually study?",
     options: ["Home", "Library", "Mixed", "Minimal"],
   },
-  {
-    key: "looking_for",
-    question: "What are you looking for?",
-    options: ["Roommate", "Friends", "Both"],
-  },
 ];
 
 // ─── Pill selector component ─────────────────────────────────────────

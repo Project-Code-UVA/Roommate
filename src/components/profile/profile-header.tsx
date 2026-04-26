@@ -9,10 +9,10 @@ import { useState, useCallback } from "react";
 import {
   View,
   Text,
-  Image,
   Pressable,
   StyleSheet,
 } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 
 import { COLORS } from "@/lib/constants";
@@ -76,7 +76,7 @@ export function ProfileHeader({
             <Image
               source={{ uri: currentPhoto.url }}
               style={styles.avatar}
-              resizeMode="cover"
+              contentFit="cover"
             />
           ) : (
             <View style={[styles.avatar, styles.avatarPlaceholder]}>

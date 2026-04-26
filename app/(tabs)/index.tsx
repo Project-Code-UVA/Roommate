@@ -8,7 +8,7 @@
  * the card stack on the light gradient background — not overlaid on the photo.
  */
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
+import { Image } from "expo-image";
 
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -34,6 +35,7 @@ import { OverflowMenu } from "@/components/shared/overflow-menu";
 import { FilterButton } from "@/components/shared/filter-button";
 import { ReportSheet } from "@/components/safety/report-sheet";
 import { openFilterDraft } from "@/stores/filter-draft";
+import { setAppliedFilters, useAppliedFilters } from "@/stores/applied-filters";
 import { showBlockConfirmDialog } from "@/components/safety/block-confirm-dialog";
 import { blockUser } from "@/services/block-service";
 import { submitReport } from "@/services/report-service";
@@ -81,7 +83,7 @@ export default function DiscoveryScreen() {
   const insets = useSafeAreaInsets();
   const TAB_BAR_HEIGHT = 49 + insets.bottom;
 
-  const [filters, setFilters] = useState<DiscoveryFilters>({});
+  const filters = useAppliedFilters();
   const activeFilterCount = useMemo(() => countActiveFilters(filters), [filters]);
 
   const {
@@ -99,6 +101,19 @@ export default function DiscoveryScreen() {
   } = useDiscoveryStack(userId, filters);
 
   const nextProfile = stack[1] ?? null;
+
+  // Aggressively warm the image cache 5 profiles ahead. By the time a card
+  // reaches the visible "back" slot it already has its hero photo in cache,
+  // so the swap is instant and there's no expo-image fade-in flash.
+  const lookahead = useMemo(() => stack.slice(1, 6), [stack]);
+  useEffect(() => {
+    const heroes = lookahead
+      .map((p) => p.photos?.[0]?.url)
+      .filter((u): u is string => Boolean(u));
+    if (heroes.length > 0) {
+      Image.prefetch(heroes, "memory-disk").catch(() => {});
+    }
+  }, [lookahead]);
 
   const [reportVisible, setReportVisible] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
@@ -188,7 +203,7 @@ export default function DiscoveryScreen() {
   ], [handleBlock, handleReport]);
 
   const handleOpenFilters = useCallback(() => {
-    openFilterDraft(filters, setFilters);
+    openFilterDraft(filters, setAppliedFilters);
     router.push("/filters" as never);
   }, [filters, router]);
 
@@ -398,16 +413,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   behindCard: {
+    // Render the next card at full size behind the front one so that when
+    // the front flies off the next is already in place. No scale or opacity
+    // pop on swap — swipes feel instant.
     ...StyleSheet.absoluteFillObject,
     borderRadius: 24,
     overflow: "hidden",
-    transform: [{ scale: 0.95 }],
-    opacity: 0.7,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 4,
   },
   center: {
     flex: 1,

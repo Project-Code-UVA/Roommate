@@ -11,7 +11,6 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
-  Image,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -19,6 +18,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -126,7 +126,7 @@ function MatchMiniCard({
         <Image
           source={{ uri: thread.other_user_avatar_url }}
           style={matchStyles.image}
-          resizeMode="cover"
+          contentFit="cover"
         />
       ) : (
         <View style={[matchStyles.image, matchStyles.imageFallback]}>
@@ -207,7 +207,7 @@ function LikedMeRow({
         <Image
           source={{ uri: profile.photo_url }}
           style={likedMeStyles.avatar}
-          resizeMode="cover"
+          contentFit="cover"
         />
         <View style={likedMeStyles.heartBadge}>
           <Ionicons name="heart" size={10} color="#fff" />
@@ -452,7 +452,7 @@ function MyLikeCard({
           <Image
             source={{ uri: like.photo_url }}
             style={styles.myLikeImage}
-            resizeMode="cover"
+            contentFit="cover"
           />
           <LinearGradient
             colors={["transparent", "rgba(0,0,0,0.75)"]}

@@ -9,7 +9,6 @@ import { useCallback, useState } from "react";
 import {
   View,
   Text,
-  Image,
   ScrollView,
   Pressable,
   ActivityIndicator,
@@ -17,6 +16,7 @@ import {
   StyleSheet,
   RefreshControl,
 } from "react-native";
+import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -170,7 +170,7 @@ export default function ProfileScreen() {
           >
             <View style={styles.avatarWrap}>
               {primaryPhoto ? (
-                <Image source={{ uri: primaryPhoto.url }} style={styles.avatar} resizeMode="cover" />
+                <Image source={{ uri: primaryPhoto.url }} style={styles.avatar} contentFit="cover" />
               ) : (
                 <View style={[styles.avatar, styles.avatarPlaceholder]}>
                   <Ionicons name="person" size={40} color={COLORS.gray[300]} />
@@ -225,12 +225,6 @@ export default function ProfileScreen() {
             label="Your Status"
             detail={MODE_LABELS[modeStatus] ?? modeStatus}
             onPress={() => router.push("/profile/status" as never)}
-          />
-          <DirectoryRow
-            iconName="search-outline"
-            iconBg={COLORS.primary[600]}
-            label="Looking for"
-            onPress={() => router.push("/profile/preferences" as never)}
           />
           <DirectoryRow
             iconName="shield-checkmark-outline"
