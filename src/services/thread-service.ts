@@ -6,6 +6,12 @@
  */
 
 import { supabase } from "@/lib/supabase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import { getLatestVisibleMessageForUser } from "@/services/thread-preview";
+import type { Message } from "@/types/chat";
+
+const HIDDEN_MESSAGES_KEY = "room:hidden_messages";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -23,6 +29,7 @@ export type EnrichedThread = {
   readonly other_user_avatar_url: string | null;
   readonly last_message_body: string | null;
   readonly last_message_at: string | null;
+  readonly last_message: Message | null;
   readonly unread_count: number;
 };
 
@@ -59,7 +66,7 @@ export async function getThreads(userId: string): Promise<ThreadsResult> {
   const threadIds = threads.map((t: Record<string, unknown>) => t.id as string);
 
   // 3. Fetch profiles, primary photos, last messages, and unread counts in parallel
-  const [profilesRes, photosRes, messagesRes, unreadRes] = await Promise.all([
+  const [profilesRes, photosRes, messagesRes, unreadRes, hiddenIdsRaw] = await Promise.all([
     supabase
       .from("profiles")
       .select("user_id, display_name")
@@ -71,7 +78,9 @@ export async function getThreads(userId: string): Promise<ThreadsResult> {
       .eq("order_index", 0),
     supabase
       .from("messages")
-      .select("thread_id, body, created_at")
+      .select("*")
+
+
       .in("thread_id", threadIds)
       .order("created_at", { ascending: false }),
     supabase
@@ -80,9 +89,14 @@ export async function getThreads(userId: string): Promise<ThreadsResult> {
       .in("thread_id", threadIds)
       .neq("sender_id", userId)
       .is("read_at", null),
+    AsyncStorage.getItem(HIDDEN_MESSAGES_KEY),
   ]);
 
-  // 4. Build lookup maps
+  // 4. Check for errors in parallel fetches
+  if (profilesRes.error) return { data: null, error: profilesRes.error.message };
+  if (messagesRes.error) return { data: null, error: messagesRes.error.message };
+
+  // 5. Build lookup maps
   const profileMap = new Map(
     (profilesRes.data ?? []).map((p: Record<string, unknown>) => [
       p.user_id as string,
@@ -97,16 +111,13 @@ export async function getThreads(userId: string): Promise<ThreadsResult> {
     ]),
   );
 
+
   // Last message per thread (first occurrence wins since sorted desc)
-  const lastMsgMap = new Map<string, { body: string; created_at: string }>();
-  for (const msg of (messagesRes.data ?? []) as readonly Record<string, unknown>[]) {
-    const tid = msg.thread_id as string;
-    if (!lastMsgMap.has(tid)) {
-      lastMsgMap.set(tid, {
-        body: msg.body as string,
-        created_at: msg.created_at as string,
-      });
-    }
+  const hiddenMessageIds = new Set<string>(hiddenIdsRaw ? JSON.parse(hiddenIdsRaw) : []);
+  const threadMessagesMap = new Map<string, Message[]>();
+  for (const msg of (messagesRes.data ?? []) as readonly Message[]) {
+    const existing = threadMessagesMap.get(msg.thread_id) ?? [];
+    threadMessagesMap.set(msg.thread_id, [...existing, { ...msg, _status: "sent", reply_to: null }]);
   }
 
   // Unread count per thread
@@ -123,7 +134,12 @@ export async function getThreads(userId: string): Promise<ThreadsResult> {
         t.user_a_id === userId
           ? (t.user_b_id as string)
           : (t.user_a_id as string);
-      const lastMsg = lastMsgMap.get(t.id as string);
+      const messagesForThread = threadMessagesMap.get(t.id as string) ?? [];
+      const lastMsg = getLatestVisibleMessageForUser(
+        messagesForThread,
+        userId,
+        hiddenMessageIds,
+      );
 
       return {
         id: t.id as string,
@@ -137,6 +153,7 @@ export async function getThreads(userId: string): Promise<ThreadsResult> {
         other_user_avatar_url: photoMap.get(otherUserId) ?? null,
         last_message_body: lastMsg?.body ?? null,
         last_message_at: lastMsg?.created_at ?? (t.created_at as string),
+        last_message: lastMsg,
         unread_count: unreadMap.get(t.id as string) ?? 0,
       };
     },

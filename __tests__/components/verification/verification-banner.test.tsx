@@ -8,7 +8,7 @@ jest.mock("nativewind", () => {
   return { styled: (c: unknown) => c, StyledComponent: View };
 });
 
-import React from "react";
+import * as React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 import { VerificationBanner } from "@/components/verification/verification-banner";
 

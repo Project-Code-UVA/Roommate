@@ -4,7 +4,7 @@
  * Displays "Today", "Yesterday", or formatted date string.
  */
 
-import React from "react";
+import * as React from "react";
 import { View, Text } from "react-native";
 
 type Props = {

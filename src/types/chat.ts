@@ -25,8 +25,12 @@ export type Message = {
   readonly body: string | null;
   readonly media_url: string | null;
   readonly reply_to_id: string | null;
+  readonly unsent_at: string | null;
+  readonly deleted_for_everyone_at: string | null;
+  readonly deleted_at: string | null;
   readonly delivered_at: string | null;
   readonly read_at: string | null;
+  readonly edited_at: string | null;
   readonly created_at: string;
   /** Local-only field for optimistic UI state */
   readonly _status: DeliveryStatus | "failed";
@@ -45,6 +49,56 @@ export type MessageReaction = {
   readonly emoji: string;
   readonly created_at: string;
 };
+
+/**
+ * Canonical tapback reaction types.
+ * Stored in the DB as the emoji character; this enum maps friendly names to them.
+ */
+export type ReactionType =
+  | "heart"
+  | "thumbs_up"
+  | "thumbs_down"
+  | "laugh"
+  | "emphasis"
+  | "question";
+
+/**
+ * Maps each ReactionType to its display emoji.
+ * Single source of truth — import this wherever reactions are rendered.
+ */
+export const REACTION_EMOJIS: Record<ReactionType, string> = {
+  heart: "❤️",
+  thumbs_up: "👍",
+  thumbs_down: "👎",
+  laugh: "😂",
+  emphasis: "‼️",
+  question: "?",
+} as const;
+
+/**
+ * Ordered list of reaction types for consistent UI rendering.
+ */
+export const REACTION_TYPES: readonly ReactionType[] = [
+  "heart",
+  "thumbs_up",
+  "thumbs_down",
+  "laugh",
+  "emphasis",
+  "question",
+] as const;
+
+export const REACTION_OPTIONS: readonly {
+  readonly type: ReactionType;
+  readonly label: string;
+  readonly symbol: string;
+}[] = [
+  { type: "heart", label: "Heart", symbol: "❤️" },
+  { type: "thumbs_up", label: "Thumbs Up", symbol: "👍" },
+  { type: "thumbs_down", label: "Thumbs Down", symbol: "👎" },
+  { type: "laugh", label: "Laugh", symbol: "😂" },
+  { type: "emphasis", label: "Emphasis", symbol: "‼️" },
+  { type: "question", label: "Question", symbol: "?" },
+] as const;
 
 // ---------------------------------------------------------------------------
 // Threads

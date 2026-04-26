@@ -18,11 +18,12 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useSession } from "@/contexts/auth-context";
 import { COLORS } from "@/lib/constants";
+import { getConversationPreview } from "@/services/thread-preview";
 import { getThreads, type EnrichedThread } from "@/services/thread-service";
 
 // ---------------------------------------------------------------------------
@@ -57,8 +58,7 @@ function formatRelativeTime(dateString: string): string {
   });
 }
 
-function truncatePreview(text: string | null): string {
-  if (!text) return "No messages yet";
+function truncateText(text: string): string {
   if (text.length <= MAX_PREVIEW_LENGTH) return text;
   return `${text.slice(0, MAX_PREVIEW_LENGTH)}...`;
 }
@@ -69,9 +69,11 @@ function truncatePreview(text: string | null): string {
 
 function ThreadRow({
   thread,
+  currentUserId,
   onPress,
 }: {
   readonly thread: ThreadItem;
+  readonly currentUserId: string;
   readonly onPress: () => void;
 }) {
   return (
@@ -113,7 +115,12 @@ function ThreadRow({
             ]}
             numberOfLines={1}
           >
-            {truncatePreview(thread.last_message_body)}
+            {truncateText(
+              getConversationPreview(thread.last_message, currentUserId, {
+                senderName: thread.other_user_display_name,
+                currentUserLabel: "You",
+              }),
+            )}
           </Text>
           {thread.unread_count > 0 && (
             <View style={styles.badge} testID={`badge-${thread.id}`}>
@@ -162,16 +169,28 @@ export default function MessagesScreen() {
 
     const { data, error } = await getThreads(userId);
 
-    if (!error && data) {
+    if (error) {
+      console.error("[MessagesScreen] Error fetching threads:", error);
+      // We could set an error state here to show a message to the user
+    }
+
+    if (data) {
       setThreads(data);
     }
 
     setIsLoading(false);
   }, [userId]);
 
+
   useEffect(() => {
     fetchThreads();
   }, [fetchThreads]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void fetchThreads();
+    }, [fetchThreads]),
+  );
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -210,6 +229,7 @@ export default function MessagesScreen() {
         renderItem={({ item }) => (
           <ThreadRow
             thread={item}
+            currentUserId={userId}
             onPress={() => handlePressThread(item)}
           />
         )}

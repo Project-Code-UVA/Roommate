@@ -9,6 +9,7 @@ import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { EnrichedThread } from "@/services/thread-service";
 import { COLORS } from "@/lib/constants";
+import { getConversationPreview } from "@/services/thread-preview";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -16,6 +17,7 @@ import { COLORS } from "@/lib/constants";
 
 type MatchesRowProps = {
   readonly thread: EnrichedThread;
+  readonly currentUserId: string;
   readonly onPress: () => void;
 };
 
@@ -48,10 +50,12 @@ function formatRelativeTime(dateString: string | null): string {
 // Component
 // ---------------------------------------------------------------------------
 
-export function MatchesRow({ thread, onPress }: MatchesRowProps) {
+export function MatchesRow({ thread, currentUserId, onPress }: MatchesRowProps) {
   const hasUnread = thread.unread_count > 0;
-  const previewText = thread.last_message_body ?? "New match! Say hi";
-  const isNewMatch = !thread.last_message_body;
+  const previewText = getConversationPreview(thread.last_message, currentUserId, {
+    senderName: thread.other_user_display_name,
+  });
+  const isNewMatch = thread.last_message == null;
 
   return (
     <Pressable

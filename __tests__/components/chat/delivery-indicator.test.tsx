@@ -3,7 +3,7 @@
  * Covers: MSG-03 delivery status icons
  */
 
-import React from "react";
+import * as React from "react";
 import { render, screen } from "@testing-library/react-native";
 import { DeliveryIndicator } from "@/components/chat/delivery-indicator";
 

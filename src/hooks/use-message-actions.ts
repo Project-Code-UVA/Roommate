@@ -11,8 +11,10 @@ import * as Clipboard from "expo-clipboard";
 import {
   sendMessage,
   addReaction,
-  removeReaction as removeReactionService,
+  removeReactionForMessageUser,
   deleteMessageForMe,
+  editMessage as editMessageService,
+  unsendMessage as unsendMessageService,
 } from "@/services/message-service";
 import type { SendMessageParams } from "@/types/chat";
 
@@ -38,11 +40,13 @@ type UseMessageActionsReturn = {
     caption?: string,
     replyToId?: string,
   ) => Promise<SendError>;
-  readonly sendReaction: (messageId: string, emoji: string) => Promise<void>;
-  readonly removeReaction: (reactionId: string) => Promise<void>;
+  readonly sendReaction: (messageId: string, emoji: string) => Promise<SendError>;
+  readonly removeReaction: (messageId: string) => Promise<SendError>;
   readonly sendReply: (body: string, replyToId: string) => Promise<SendError>;
   readonly copyText: (text: string) => Promise<void>;
   readonly deleteForMe: (messageId: string) => Promise<void>;
+  readonly editMessage: (messageId: string, newBody: string) => Promise<SendError>;
+  readonly unsendMessage: (messageId: string) => Promise<SendError>;
 };
 
 export function useMessageActions(
@@ -83,14 +87,19 @@ export function useMessageActions(
 
   const sendReactionFn = useCallback(
     async (messageId: string, emoji: string) => {
-      await addReaction(messageId, userId, emoji);
+      const result = await addReaction(messageId, userId, emoji);
+      return { error: result.error };
     },
     [userId],
   );
 
-  const removeReactionFn = useCallback(async (reactionId: string) => {
-    await removeReactionService(reactionId);
-  }, []);
+  const removeReactionFn = useCallback(
+    async (messageId: string) => {
+      const result = await removeReactionForMessageUser(messageId, userId);
+      return { error: result.error };
+    },
+    [userId],
+  );
 
   const sendReply = useCallback(
     async (body: string, replyToId: string): Promise<SendError> => {
@@ -110,6 +119,22 @@ export function useMessageActions(
     [userId],
   );
 
+  const editMessageFn = useCallback(
+    async (messageId: string, newBody: string): Promise<SendError> => {
+      const result = await editMessageService(messageId, newBody);
+      return { error: result.error };
+    },
+    [],
+  );
+
+  const unsendMessageFn = useCallback(
+    async (messageId: string): Promise<SendError> => {
+      const result = await unsendMessageService(messageId);
+      return { error: result.error };
+    },
+    [],
+  );
+
   return {
     sendText,
     sendMedia,
@@ -118,5 +143,7 @@ export function useMessageActions(
     sendReply,
     copyText: copyTextFn,
     deleteForMe: deleteForMeFn,
+    editMessage: editMessageFn,
+    unsendMessage: unsendMessageFn,
   };
 }

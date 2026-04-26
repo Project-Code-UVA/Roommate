@@ -3,7 +3,7 @@
  * Covers: LIKE-04 (upgrade CTA for liked-me reveal).
  */
 
-import React from "react";
+import * as React from "react";
 import { Alert } from "react-native";
 import { render, fireEvent } from "@testing-library/react-native";
 

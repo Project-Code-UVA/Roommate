@@ -12,13 +12,14 @@ import { resetAllMocks } from "../setup";
 
 const mockSendMessage = jest.fn();
 const mockAddReaction = jest.fn();
-const mockRemoveReaction = jest.fn();
+const mockRemoveReactionForMessageUser = jest.fn();
 const mockDeleteMessageForMe = jest.fn();
 
 jest.mock("@/services/message-service", () => ({
   sendMessage: (...args: unknown[]) => mockSendMessage(...args),
   addReaction: (...args: unknown[]) => mockAddReaction(...args),
-  removeReaction: (...args: unknown[]) => mockRemoveReaction(...args),
+  removeReactionForMessageUser: (...args: unknown[]) =>
+    mockRemoveReactionForMessageUser(...args),
   deleteMessageForMe: (...args: unknown[]) => mockDeleteMessageForMe(...args),
 }));
 
@@ -41,7 +42,7 @@ describe("useMessageActions", () => {
     resetAllMocks();
     mockSendMessage.mockReset();
     mockAddReaction.mockReset();
-    mockRemoveReaction.mockReset();
+    mockRemoveReactionForMessageUser.mockReset();
     mockDeleteMessageForMe.mockReset();
   });
 
@@ -100,17 +101,20 @@ describe("useMessageActions", () => {
   });
 
   it("removeReaction calls removeReaction service", async () => {
-    mockRemoveReaction.mockResolvedValueOnce({ error: null });
+    mockRemoveReactionForMessageUser.mockResolvedValueOnce({ error: null });
 
     const { result } = renderHook(() =>
       useMessageActions(TEST_THREAD_ID, TEST_USER_ID),
     );
 
     await act(async () => {
-      await result.current.removeReaction("r-1");
+      await result.current.removeReaction("msg-1");
     });
 
-    expect(mockRemoveReaction).toHaveBeenCalledWith("r-1");
+    expect(mockRemoveReactionForMessageUser).toHaveBeenCalledWith(
+      "msg-1",
+      TEST_USER_ID,
+    );
   });
 
   it("sendReply calls sendMessage with reply_to_id", async () => {

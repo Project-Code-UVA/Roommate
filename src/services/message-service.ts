@@ -68,7 +68,60 @@ export async function addReaction(
   userId: string,
   emoji: string,
 ): Promise<ReactionResult> {
-  const { data, error } = await supabase
+  // First, check if this user already has any reaction on this message.
+  const { data: existing, error: fetchError } = await supabase
+    .from("message_reactions")
+    .select("id, emoji")
+    .eq("message_id", messageId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (fetchError) {
+    return { data: null, error: fetchError.message };
+  }
+
+  // CASE 1: User selected the SAME emoji that is already present -> REMOVE it.
+  if (existing && existing.emoji === emoji) {
+    const { error: deleteError } = await supabase
+      .from("message_reactions")
+      .delete()
+      .eq("id", existing.id);
+
+    if (deleteError) {
+      return { data: null, error: deleteError.message };
+    }
+    // Return null data to indicate the reaction was removed.
+    return { data: null, error: null };
+  }
+
+  // CASE 2: User has no reaction OR a DIFFERENT one -> UPSERT it.
+  const upsertResult = await supabase
+    .from("message_reactions")
+    .upsert(
+      {
+        message_id: messageId,
+        user_id: userId,
+        emoji,
+      },
+      { onConflict: "message_id,user_id" }
+    )
+    .select()
+    .single();
+
+  if (!upsertResult.error) {
+    return { data: upsertResult.data as MessageReaction, error: null };
+  }
+
+  // Runtime fallback for older schemas without the (message_id, user_id) 
+  // unique constraint + UPDATE policy migration.
+  if (existing) {
+    await supabase
+      .from("message_reactions")
+      .delete()
+      .eq("id", existing.id);
+  }
+
+  const insertResult = await supabase
     .from("message_reactions")
     .insert({
       message_id: messageId,
@@ -78,12 +131,13 @@ export async function addReaction(
     .select()
     .single();
 
-  if (error) {
-    return { data: null, error: error.message };
+  if (insertResult.error) {
+    return { data: null, error: insertResult.error.message };
   }
 
-  return { data: data as MessageReaction, error: null };
+  return { data: insertResult.data as MessageReaction, error: null };
 }
+
 
 type SimpleResult = {
   readonly error: string | null;
@@ -94,6 +148,23 @@ export async function removeReaction(reactionId: string): Promise<SimpleResult> 
     .from("message_reactions")
     .delete()
     .eq("id", reactionId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { error: null };
+}
+
+export async function removeReactionForMessageUser(
+  messageId: string,
+  userId: string,
+): Promise<SimpleResult> {
+  const { error } = await supabase
+    .from("message_reactions")
+    .delete()
+    .eq("message_id", messageId)
+    .eq("user_id", userId);
 
   if (error) {
     return { error: error.message };
@@ -145,4 +216,36 @@ export async function deleteMessageForMe(
     const message = err instanceof Error ? err.message : "Failed to hide message";
     return { success: false, error: message };
   }
+}
+
+// ---------------------------------------------------------------------------
+// Edit / Unsend
+// ---------------------------------------------------------------------------
+
+export async function editMessage(
+  messageId: string,
+  newBody: string,
+): Promise<SimpleResult> {
+  const { error } = await rpc("edit_message", {
+    p_message_id: messageId,
+    p_body: newBody,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { error: null };
+}
+
+export async function unsendMessage(messageId: string): Promise<SimpleResult> {
+  const { error } = await rpc("unsend_message", {
+    p_message_id: messageId,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { error: null };
 }

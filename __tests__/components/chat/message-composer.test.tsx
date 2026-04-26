@@ -3,7 +3,7 @@
  * Covers: Text input, send button, camera/GIF buttons, reply preview
  */
 
-import React from "react";
+import * as React from "react";
 import { render, screen, fireEvent } from "@testing-library/react-native";
 import { MessageComposer } from "@/components/chat/message-composer";
 

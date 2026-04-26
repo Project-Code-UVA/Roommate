@@ -3,7 +3,7 @@
  * Covers: MSG-06 GIF search UI with useGifSearch hook.
  */
 
-import React from "react";
+import * as React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 
 import { GifSearchPanel } from "@/components/chat/gif-search-panel";

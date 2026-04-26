@@ -8,6 +8,7 @@ import {
   sendMessage,
   addReaction,
   removeReaction,
+  removeReactionForMessageUser,
   updateDeliveryStatus,
   deleteMessageForMe,
 } from "@/services/message-service";
@@ -132,7 +133,7 @@ describe("message-service", () => {
   });
 
   describe("addReaction", () => {
-    it("inserts into message_reactions and returns reaction", async () => {
+    it("upserts into message_reactions and returns reaction", async () => {
       const reaction = {
         id: "reaction-1",
         message_id: TEST_MESSAGE_ID,
@@ -146,25 +147,70 @@ describe("message-service", () => {
       const result = await addReaction(TEST_MESSAGE_ID, TEST_USER_ID, "thumbsup");
 
       expect(mockSupabase.from).toHaveBeenCalledWith("message_reactions");
-      expect(chain.insert).toHaveBeenCalledWith({
-        message_id: TEST_MESSAGE_ID,
-        user_id: TEST_USER_ID,
-        emoji: "thumbsup",
-      });
+      expect(chain.upsert).toHaveBeenCalledWith(
+        {
+          message_id: TEST_MESSAGE_ID,
+          user_id: TEST_USER_ID,
+          emoji: "thumbsup",
+        },
+        { onConflict: "message_id,user_id" },
+      );
       expect(chain.select).toHaveBeenCalled();
       expect(chain.single).toHaveBeenCalled();
       expect(result.data).toEqual(reaction);
       expect(result.error).toBeNull();
     });
 
-    it("returns error on insert failure", async () => {
-      const chain = createChainMock({ data: null, error: { message: "Duplicate" } });
-      mockSupabase.from.mockReturnValueOnce(chain);
+    it("returns error on upsert failure", async () => {
+      const upsertChain = createChainMock({ data: null, error: { message: "Duplicate" } });
+      const lookupChain = createChainMock({ data: null, error: { message: "Lookup failed" } });
+      mockSupabase.from
+        .mockReturnValueOnce(upsertChain)
+        .mockReturnValueOnce(lookupChain);
 
       const result = await addReaction(TEST_MESSAGE_ID, TEST_USER_ID, "thumbsup");
 
       expect(result.data).toBeNull();
       expect(result.error).toBe("Duplicate");
+    });
+
+    it("falls back to delete+insert when upsert conflict target is unavailable", async () => {
+      const upsertErrorChain = createChainMock({
+        data: null,
+        error: { message: "there is no unique or exclusion constraint matching the ON CONFLICT specification" },
+      });
+      const existingLookupChain = createChainMock({
+        data: { id: "reaction-old", emoji: "heart" },
+        error: null,
+      });
+      const deleteOldChain = createChainMock({ data: null, error: null });
+      const insertNewChain = createChainMock({
+        data: {
+          id: "reaction-new",
+          message_id: TEST_MESSAGE_ID,
+          user_id: TEST_USER_ID,
+          emoji: "laugh",
+          created_at: "2026-03-11T00:00:00Z",
+        },
+        error: null,
+      });
+
+      mockSupabase.from
+        .mockReturnValueOnce(upsertErrorChain)
+        .mockReturnValueOnce(existingLookupChain)
+        .mockReturnValueOnce(deleteOldChain)
+        .mockReturnValueOnce(insertNewChain);
+
+      const result = await addReaction(TEST_MESSAGE_ID, TEST_USER_ID, "laugh");
+
+      expect(result.error).toBeNull();
+      expect(result.data?.emoji).toBe("laugh");
+      expect(deleteOldChain.eq).toHaveBeenCalledWith("id", "reaction-old");
+      expect(insertNewChain.insert).toHaveBeenCalledWith({
+        message_id: TEST_MESSAGE_ID,
+        user_id: TEST_USER_ID,
+        emoji: "laugh",
+      });
     });
   });
 
@@ -179,6 +225,19 @@ describe("message-service", () => {
       expect(chain.delete).toHaveBeenCalled();
       expect(chain.eq).toHaveBeenCalledWith("id", "reaction-1");
       expect(result.error).toBeNull();
+    });
+  });
+
+  describe("removeReactionForMessageUser", () => {
+    it("deletes the current user's reaction by message+user", async () => {
+      const chain = createChainMock({ data: null, error: null });
+      mockSupabase.from.mockReturnValueOnce(chain);
+
+      const result = await removeReactionForMessageUser(TEST_MESSAGE_ID, TEST_USER_ID);
+
+      expect(result.error).toBeNull();
+      expect(chain.eq).toHaveBeenCalledWith("message_id", TEST_MESSAGE_ID);
+      expect(chain.eq).toHaveBeenCalledWith("user_id", TEST_USER_ID);
     });
   });
 

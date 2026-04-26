@@ -3,7 +3,7 @@
  * Covers: Long-press overlay with reactions and action buttons.
  */
 
-import React from "react";
+import * as React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 
 import { MessageLongPress } from "@/components/chat/message-long-press";
@@ -20,6 +20,9 @@ const baseMessage: Message = {
   body: "Hello world",
   media_url: null,
   reply_to_id: null,
+  unsent_at: null,
+  deleted_for_everyone_at: null,
+  deleted_at: null,
   delivered_at: null,
   read_at: null,
   created_at: "2026-03-01T00:00:00Z",
@@ -35,14 +38,17 @@ const mediaOnlyMessage: Message = {
 };
 
 const defaultProps = {
+  currentUserId: "user-2",
   visible: true,
   message: baseMessage,
+  reactions: [],
   onReact: jest.fn(),
   onReply: jest.fn(),
   onCopy: jest.fn(),
+  onEdit: jest.fn(),
+  onUnsend: jest.fn(),
   onDelete: jest.fn(),
   onReport: jest.fn(),
-  onOpenEmojiPicker: jest.fn(),
   onClose: jest.fn(),
 };
 
@@ -64,15 +70,10 @@ describe("MessageLongPress", () => {
 
   it("renders 6 quick reaction emojis", () => {
     const { getByText } = render(<MessageLongPress {...defaultProps} />);
-    const emojis = ["\u2764\uFE0F", "\uD83D\uDE02", "\uD83D\uDC4D", "\uD83D\uDE2E", "\uD83D\uDE22", "\uD83D\uDD25"];
+    const emojis = ["\u2764\uFE0F", "\uD83D\uDC4D", "\uD83D\uDC4E", "\uD83D\uDE02", "\u203C\uFE0F", "?"];
     emojis.forEach((emoji) => {
       expect(getByText(emoji)).toBeTruthy();
     });
-  });
-
-  it("renders plus button for emoji picker", () => {
-    const { getByTestId } = render(<MessageLongPress {...defaultProps} />);
-    expect(getByTestId("emoji-picker-btn")).toBeTruthy();
   });
 
   it("renders Reply action", () => {
@@ -97,9 +98,18 @@ describe("MessageLongPress", () => {
     expect(getByText("Delete for me")).toBeTruthy();
   });
 
-  it("renders Report message action", () => {
+  it("renders Report message action for non-sender", () => {
     const { getByText } = render(<MessageLongPress {...defaultProps} />);
     expect(getByText("Report message")).toBeTruthy();
+  });
+
+  it("renders Edit and Unsend for sender when allowed", () => {
+    const senderMessage = { ...baseMessage, sender_id: "user-2", created_at: new Date().toISOString() };
+    const { getByText } = render(
+      <MessageLongPress {...defaultProps} currentUserId="user-2" message={senderMessage} />,
+    );
+    expect(getByText("Edit")).toBeTruthy();
+    expect(getByText("Unsend")).toBeTruthy();
   });
 
   it("calls onReact when emoji tapped", () => {
@@ -138,9 +148,14 @@ describe("MessageLongPress", () => {
     expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("calls onOpenEmojiPicker when plus button tapped", () => {
-    const { getByTestId } = render(<MessageLongPress {...defaultProps} />);
-    fireEvent.press(getByTestId("emoji-picker-btn"));
-    expect(defaultProps.onOpenEmojiPicker).toHaveBeenCalledTimes(1);
+  it("hides reply/copy/edit/unsend for unsent message state", () => {
+    const unsentMessage = { ...baseMessage, unsent_at: new Date().toISOString() };
+    const { queryByText } = render(
+      <MessageLongPress {...defaultProps} message={unsentMessage} />,
+    );
+    expect(queryByText("Reply")).toBeNull();
+    expect(queryByText("Copy text")).toBeNull();
+    expect(queryByText("Edit")).toBeNull();
+    expect(queryByText("Unsend")).toBeNull();
   });
 });

@@ -3,7 +3,7 @@
  * Covers: LIKE-03 (liked-me card with blur/reveal).
  */
 
-import React from "react";
+import * as React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 
 import { LikedMeCard } from "@/components/likes/liked-me-card";

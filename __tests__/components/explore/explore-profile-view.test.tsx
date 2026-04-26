@@ -53,7 +53,7 @@ jest.mock("@/lib/constants", () => ({
   },
 }));
 
-import React from "react";
+import * as React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 
 import { ExploreProfileView } from "@/components/explore/explore-profile-view";

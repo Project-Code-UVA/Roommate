@@ -6,7 +6,7 @@
  * report bottom sheet. Manages state for all interaction flows.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Keyboard,
@@ -20,14 +20,13 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { ChatHeader } from "@/components/chat/chat-header";
 import { GifSearchPanel } from "@/components/chat/gif-search-panel";
-import { IcebreakerCard } from "@/components/chat/icebreaker-card";
 import { MessageComposer } from "@/components/chat/message-composer";
 import { MessageList } from "@/components/chat/message-list";
 import { MessageLongPress } from "@/components/chat/message-long-press";
@@ -84,7 +83,7 @@ export default function ChatScreen() {
   const currentUserId = session?.user.id ?? "";
 
   // Hooks
-  const { messages, isLoading, hasMore, loadMore } = useChatMessages(
+  const { messages, isLoading, hasMore, loadMore, hideMessageLocally, reactionsMap } = useChatMessages(
     threadId,
     currentUserId,
   );
@@ -96,6 +95,8 @@ export default function ChatScreen() {
     sendReply,
     copyText,
     deleteForMe,
+    editMessage,
+    unsendMessage,
   } = useMessageActions(threadId, currentUserId);
 
   // Enforcement info for DM ban modal (D-05)
@@ -106,6 +107,7 @@ export default function ChatScreen() {
   // ---------------------------------------------------------------------------
 
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const [showDmBanModal, setShowDmBanModal] = useState(false);
   const [showGifPanel, setShowGifPanel] = useState(false);
   const [showLongPress, setShowLongPress] = useState(false);
@@ -114,42 +116,38 @@ export default function ChatScreen() {
   );
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [showReportSheet, setShowReportSheet] = useState(false);
-  const [icebreakerDismissed, setIcebreakerDismissed] = useState(true);
   const [imageViewerUrl, setImageViewerUrl] = useState<string | null>(null);
-
-  // Reactions map (empty for now; would be populated from a separate query)
-  const reactionsMap = useRef(new Map<string, readonly MessageReaction[]>());
-
   // ---------------------------------------------------------------------------
-  // Icebreaker dismissed state (AsyncStorage)
+  // Reactions State (Optimistic + Live)
   // ---------------------------------------------------------------------------
 
-  useEffect(() => {
-    async function checkDismissed() {
-      const key = `icebreaker_dismissed_${threadId}`;
-      const val = await AsyncStorage.getItem(key);
-      setIcebreakerDismissed(val === "true");
-    }
-    checkDismissed();
-  }, [threadId]);
+  // We track local "pending" reactions separately to avoid flickering when 
+  // reactionsMap (from Realtime) updates.
+  const [pendingReactions, setPendingReactions] = useState<Map<string, MessageReaction | "deleted">>(new Map());
 
-  const handleDismissIcebreaker = useCallback(async () => {
-    const key = `icebreaker_dismissed_${threadId}`;
-    await AsyncStorage.setItem(key, "true");
-    setIcebreakerDismissed(true);
-  }, [threadId]);
-
-  const handleSelectPrompt = useCallback(
-    async (text: string) => {
-      const result = await sendText(text, replyingTo?.id);
-      if (result.error === "under_enforcement") {
-        setShowDmBanModal(true);
-        return;
+  // Merge the live reactionsMap with our pending local changes.
+  const effectiveReactionsMap = useMemo(() => {
+    const merged = new Map(reactionsMap);
+    pendingReactions.forEach((reaction, messageId) => {
+      const existing = [...(merged.get(messageId) ?? [])].filter(r => r.user_id !== currentUserId);
+      if (reaction !== "deleted") {
+        merged.set(messageId, [...existing, reaction]);
+      } else if (existing.length > 0) {
+        merged.set(messageId, existing);
+      } else {
+        merged.delete(messageId);
       }
-      handleDismissIcebreaker();
-    },
-    [sendText, replyingTo, handleDismissIcebreaker],
-  );
+    });
+    return merged;
+  }, [reactionsMap, pendingReactions, currentUserId]);
+
+  const showReactionError = useCallback((error: string | null) => {
+    Alert.alert("Couldn’t update reaction.", error ?? "An unknown error occurred.");
+  }, []);
+
+  // Reactions map — now comes live from useChatMessages via Realtime subscriptions.
+  // This replaces the old static useRef that was never populated.
+  // reactionsMap: messageId → array of MessageReaction objects
 
   // ---------------------------------------------------------------------------
   // Message actions
@@ -157,6 +155,12 @@ export default function ChatScreen() {
 
   const handleSendText = useCallback(
     async (text: string) => {
+      if (editingMessage) {
+        await editMessage(editingMessage.id, text);
+        setEditingMessage(null);
+        return;
+      }
+
       const result = await sendText(text, replyingTo?.id);
       if (result.error === "under_enforcement") {
         setShowDmBanModal(true);
@@ -164,7 +168,7 @@ export default function ChatScreen() {
       }
       setReplyingTo(null);
     },
-    [sendText, replyingTo],
+    [sendText, editMessage, replyingTo, editingMessage],
   );
 
   const handleLongPress = useCallback((message: Message) => {
@@ -178,13 +182,61 @@ export default function ChatScreen() {
   }, []);
 
   const handleReact = useCallback(
-    (emoji: string) => {
-      if (longPressMessage) {
-        sendReaction(longPressMessage.id, emoji);
+    async (emoji: string) => {
+      if (!longPressMessage) {
+        closeLongPress();
+        return;
       }
+
+      const messageId = longPressMessage.id;
+      const reactions = effectiveReactionsMap.get(messageId) ?? [];
+      const existing = reactions.find((r) => r.user_id === currentUserId);
+      const isRemoving = existing?.emoji === emoji;
+
+      // 1. Optimistic update
+      setPendingReactions((prev) => {
+        const next = new Map(prev);
+        if (isRemoving) {
+          next.set(messageId, "deleted");
+        } else {
+          next.set(messageId, {
+            id: `optimistic-${messageId}-${currentUserId}`,
+            message_id: messageId,
+            user_id: currentUserId,
+            emoji,
+            created_at: new Date().toISOString(),
+          });
+        }
+        return next;
+      });
+
+      // 2. API call
+      const result = isRemoving
+        ? await removeReaction(messageId)
+        : await sendReaction(messageId, emoji);
+
+      // 3. Cleanup pending state (Realtime will take over)
+      if (result.error) {
+        setPendingReactions((prev) => {
+          const next = new Map(prev);
+          next.delete(messageId);
+          return next;
+        });
+        showReactionError(result.error);
+      } else {
+        // Wait a bit for Realtime before clearing pending to prevent flicker
+        setTimeout(() => {
+          setPendingReactions((prev) => {
+            const next = new Map(prev);
+            next.delete(messageId);
+            return next;
+          });
+        }, 1000);
+      }
+
       closeLongPress();
     },
-    [longPressMessage, sendReaction, closeLongPress],
+    [longPressMessage, effectiveReactionsMap, currentUserId, sendReaction, removeReaction, closeLongPress, showReactionError]
   );
 
   const handleReplyFromMenu = useCallback(() => {
@@ -201,12 +253,27 @@ export default function ChatScreen() {
     closeLongPress();
   }, [longPressMessage, copyText, closeLongPress]);
 
+  const handleEditFromMenu = useCallback(() => {
+    if (longPressMessage) {
+      setEditingMessage(longPressMessage);
+    }
+    closeLongPress();
+  }, [longPressMessage, closeLongPress]);
+
+  const handleUnsendFromMenu = useCallback(() => {
+    if (longPressMessage) {
+      void unsendMessage(longPressMessage.id);
+    }
+    closeLongPress();
+  }, [longPressMessage, unsendMessage, closeLongPress]);
+
   const handleDeleteForMe = useCallback(() => {
     if (longPressMessage) {
       deleteForMe(longPressMessage.id);
+      hideMessageLocally(longPressMessage.id);
     }
     closeLongPress();
-  }, [longPressMessage, deleteForMe, closeLongPress]);
+  }, [longPressMessage, deleteForMe, hideMessageLocally, closeLongPress]);
 
   const handleReportFromMenu = useCallback(() => {
     closeLongPress();
@@ -217,6 +284,10 @@ export default function ChatScreen() {
     setReplyingTo(null);
   }, []);
 
+  const handleCancelEdit = useCallback(() => {
+    setEditingMessage(null);
+  }, []);
+
   // ---------------------------------------------------------------------------
   // Image press (full-screen viewer)
   // ---------------------------------------------------------------------------
@@ -225,24 +296,71 @@ export default function ChatScreen() {
     setImageViewerUrl(mediaUrl);
   }, []);
 
+
   // ---------------------------------------------------------------------------
-  // Reaction press on a bubble
+  // Reaction toggle from bubble pills
   // ---------------------------------------------------------------------------
 
-  const handleReactionPress = useCallback(
-    (messageId: string, emoji: string) => {
-      sendReaction(messageId, emoji);
+  const handleReactionToggle = useCallback(
+    async (messageId: string, emoji: string) => {
+      const reactions = effectiveReactionsMap.get(messageId) ?? [];
+      const existing = reactions.find((r) => r.user_id === currentUserId);
+      const isRemoving = existing?.emoji === emoji;
+
+      // 1. Optimistic update
+      setPendingReactions((prev) => {
+        const next = new Map(prev);
+        if (isRemoving) {
+          next.set(messageId, "deleted");
+        } else {
+          next.set(messageId, {
+            id: `optimistic-${messageId}-${currentUserId}`,
+            message_id: messageId,
+            user_id: currentUserId,
+            emoji,
+            created_at: new Date().toISOString(),
+          });
+        }
+        return next;
+      });
+
+      // 2. API call
+      const result = isRemoving
+        ? await removeReaction(messageId)
+        : await sendReaction(messageId, emoji);
+
+      // 3. Cleanup pending
+      if (result.error) {
+        setPendingReactions((prev) => {
+          const next = new Map(prev);
+          next.delete(messageId);
+          return next;
+        });
+        showReactionError(result.error);
+      } else {
+        setTimeout(() => {
+          setPendingReactions((prev) => {
+            const next = new Map(prev);
+            next.delete(messageId);
+            return next;
+          });
+        }, 1000);
+      }
     },
-    [sendReaction],
+    [effectiveReactionsMap, currentUserId, sendReaction, removeReaction, showReactionError]
   );
 
   // ---------------------------------------------------------------------------
-  // Reply press (scroll to original -- for now just log)
+  // Reply press (scroll to original)
   // ---------------------------------------------------------------------------
 
   const handleReplyPress = useCallback((_messageId: string) => {
-    // In a future iteration, scroll to the original message.
-    // For now this is a no-op as the reply preview is inline.
+    // TODO: scroll to the original message in a future iteration.
+    // The reply preview is already shown inline on the bubble.
+  }, []);
+
+  const handleSwipeToReply = useCallback((message: Message) => {
+    setReplyingTo(message);
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -380,11 +498,9 @@ export default function ChatScreen() {
     avatar_url: otherAvatar,
   };
 
-  const showIcebreaker =
-    !icebreakerDismissed && messages.length === 0 && !isLoading;
-
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
+      <Stack.Screen options={{ headerShown: false }} />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -404,23 +520,15 @@ export default function ChatScreen() {
           <MessageList
             messages={messages as Message[]}
             currentUserId={currentUserId}
-            reactions={reactionsMap.current}
+            otherName={otherName}
+            reactions={effectiveReactionsMap}
             onLongPress={handleLongPress}
             onImagePress={handleImagePress}
-            onReactionPress={handleReactionPress}
+            onReactionToggle={handleReactionToggle}
             onReplyPress={handleReplyPress}
-            onEndReached={hasMore ? loadMore : () => {}}
+            onSwipeToReply={handleSwipeToReply}
+            onEndReached={hasMore ? loadMore : () => { }}
             isLoading={isLoading}
-            ListEmptyComponent={
-              showIcebreaker ? (
-                <View style={styles.icebreakerWrapper}>
-                  <IcebreakerCard
-                    onSelectPrompt={handleSelectPrompt}
-                    onDismiss={handleDismissIcebreaker}
-                  />
-                </View>
-              ) : undefined
-            }
           />
         </View>
 
@@ -449,20 +557,27 @@ export default function ChatScreen() {
           onGifPress={handleGifPress}
           replyTo={replyingTo}
           onDismissReply={handleDismissReply}
+          editingMessage={editingMessage}
+          onCancelEdit={handleCancelEdit}
+          currentUserId={currentUserId}
+          otherName={otherName}
           disabled={false}
         />
       </KeyboardAvoidingView>
 
       {/* Long-press overlay */}
       <MessageLongPress
+        currentUserId={currentUserId}
         visible={showLongPress}
         message={longPressMessage}
+        reactions={effectiveReactionsMap.get(longPressMessage?.id ?? "") ?? []}
         onReact={handleReact}
         onReply={handleReplyFromMenu}
         onCopy={handleCopy}
+        onEdit={handleEditFromMenu}
+        onUnsend={handleUnsendFromMenu}
         onDelete={handleDeleteForMe}
         onReport={handleReportFromMenu}
-        onOpenEmojiPicker={() => {}}
         onClose={closeLongPress}
       />
 
@@ -543,9 +658,6 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  icebreakerWrapper: {
-    transform: [{ scaleY: -1 }],
   },
   imageViewerBackdrop: {
     flex: 1,

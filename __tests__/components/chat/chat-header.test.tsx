@@ -3,7 +3,7 @@
  * Covers: Chat header with avatar, name, back button, overflow menu with Block/Report.
  */
 
-import React from "react";
+import * as React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 
 import { ChatHeader } from "@/components/chat/chat-header";

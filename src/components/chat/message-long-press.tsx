@@ -1,8 +1,8 @@
 /**
  * Long-press message overlay.
  *
- * Shows quick emoji reactions (6 + picker) and action rows:
- * Reply, Copy text, Delete for me, Report message.
+ * Shows the ReactionPicker tapback row (6 reactions with active state) and
+ * action rows: Reply, Copy text, Edit, Unsend, Delete for me, Report message.
  *
  * Displayed as a modal overlay with semi-transparent backdrop.
  */
@@ -12,27 +12,26 @@ import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
-import type { Message } from "@/types/chat";
-
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-const QUICK_EMOJIS = ["\u2764\uFE0F", "\uD83D\uDE02", "\uD83D\uDC4D", "\uD83D\uDE2E", "\uD83D\uDE22", "\uD83D\uDD25"] as const;
+import { ReactionPicker } from "@/components/chat/reaction-picker";
+import type { Message, MessageReaction } from "@/types/chat";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 type MessageLongPressProps = {
+  readonly currentUserId: string;
   readonly visible: boolean;
   readonly message: Message | null;
+  /** Current reactions on the message — used to show which ones are active */
+  readonly reactions: readonly MessageReaction[];
   readonly onReact: (emoji: string) => void;
   readonly onReply: () => void;
   readonly onCopy: () => void;
+  readonly onEdit: () => void;
+  readonly onUnsend: () => void;
   readonly onDelete: () => void;
   readonly onReport: () => void;
-  readonly onOpenEmojiPicker: () => void;
   readonly onClose: () => void;
 };
 
@@ -48,20 +47,23 @@ type ActionItem = {
 // ---------------------------------------------------------------------------
 
 export function MessageLongPress({
+  currentUserId,
   visible,
   message,
+  reactions = [],
   onReact,
   onReply,
   onCopy,
+  onEdit,
+  onUnsend,
   onDelete,
   onReport,
-  onOpenEmojiPicker,
   onClose,
 }: MessageLongPressProps) {
-  // Haptic on open
+  // Haptic feedback when the menu opens
   useEffect(() => {
     if (visible) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
   }, [visible]);
 
@@ -76,46 +78,61 @@ export function MessageLongPress({
     return null;
   }
 
+  const isSender = message.sender_id === currentUserId;
+  const isWithin5Minutes =
+    new Date().getTime() - new Date(message.created_at).getTime() < 5 * 60 * 1000;
+
+  const isUnsent = message.unsent_at != null;
+  const isDeletedForEveryone =
+    message.deleted_for_everyone_at != null || message.deleted_at != null;
+  const isHiddenState = isUnsent || isDeletedForEveryone;
+
+  // Single reaction per user/message.
+  const myActiveEmoji =
+    reactions.find((r) => r.user_id === currentUserId)?.emoji ?? null;
+
+  const hasCopyableText = Boolean(message.body?.trim());
+  const canReply = !isHiddenState;
+  const canCopy = hasCopyableText && !isHiddenState;
+  const canEdit = isSender && hasCopyableText && !isHiddenState;
+  const canUnsend = isSender && isWithin5Minutes && !isHiddenState;
+
   const actions: readonly ActionItem[] = [
-    { label: "Reply", icon: "arrow-undo-outline", onPress: onReply },
-    ...(message.body
+    ...(canReply
+      ? [{ label: "Reply", icon: "arrow-undo-outline" as keyof typeof Ionicons.glyphMap, onPress: onReply }]
+      : []),
+    ...(canCopy
       ? [{ label: "Copy text", icon: "copy-outline" as keyof typeof Ionicons.glyphMap, onPress: onCopy }]
       : []),
+    ...(canEdit
+      ? [{ label: "Edit", icon: "pencil-outline" as keyof typeof Ionicons.glyphMap, onPress: onEdit }]
+      : []),
+    ...(canUnsend
+      ? [{ label: "Unsend", icon: "arrow-undo-circle-outline" as keyof typeof Ionicons.glyphMap, onPress: onUnsend, color: "#ef4444" }]
+      : []),
     { label: "Delete for me", icon: "trash-outline", onPress: onDelete },
-    { label: "Report message", icon: "flag-outline", onPress: onReport, color: "#ef4444" },
+    ...(!isSender
+      ? [{ label: "Report message", icon: "flag-outline" as keyof typeof Ionicons.glyphMap, onPress: onReport, color: "#ef4444" }]
+      : []),
   ];
 
   return (
     <Modal transparent visible animationType="fade" testID="long-press-overlay">
-      {/* Backdrop */}
+      {/* Backdrop — tapping closes the menu */}
       <Pressable
         style={styles.backdrop}
         onPress={onClose}
         testID="long-press-backdrop"
       />
 
-      {/* Content */}
+      {/* Menu card */}
       <View style={styles.contentContainer}>
         <View style={styles.card}>
-          {/* Quick reactions row */}
-          <View style={styles.reactionsRow}>
-            {QUICK_EMOJIS.map((emoji) => (
-              <Pressable
-                key={emoji}
-                style={styles.emojiButton}
-                onPress={() => handleReact(emoji)}
-              >
-                <Text style={styles.emojiText}>{emoji}</Text>
-              </Pressable>
-            ))}
-            <Pressable
-              style={styles.emojiButton}
-              onPress={onOpenEmojiPicker}
-              testID="emoji-picker-btn"
-            >
-              <Ionicons name="add" size={22} color="#6b7280" />
-            </Pressable>
-          </View>
+          {/* Tapback reaction picker */}
+          <ReactionPicker
+            activeEmoji={myActiveEmoji}
+            onSelect={handleReact}
+          />
 
           {/* Separator */}
           <View style={styles.separator} />
@@ -124,24 +141,31 @@ export function MessageLongPress({
           {actions.map((action) => (
             <Pressable
               key={action.label}
-              style={styles.actionRow}
+              style={({ pressed }) => [
+                styles.actionRow,
+                pressed && styles.actionRowPressed,
+              ]}
               onPress={action.onPress}
             >
-              <Ionicons
-                name={action.icon}
-                size={20}
-                color={action.color ?? "#374151"}
-              />
-              <Text
-                style={[
-                  styles.actionLabel,
-                  action.color ? { color: action.color } : undefined,
-                ]}
-              >
-                {action.label}
-              </Text>
+              <View style={styles.actionContent}>
+                <Ionicons
+                  name={action.icon}
+                  size={22}
+                  color={action.color ?? "#4b5563"}
+                  style={styles.actionIcon}
+                />
+                <Text
+                  style={[
+                    styles.actionLabel,
+                    action.color ? { color: action.color } : undefined,
+                  ]}
+                >
+                  {action.label}
+                </Text>
+              </View>
             </Pressable>
           ))}
+
         </View>
       </View>
     </Modal>
@@ -155,7 +179,7 @@ export function MessageLongPress({
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
   },
   contentContainer: {
     flex: 1,
@@ -165,50 +189,43 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: "#fff",
-    borderRadius: 16,
-    paddingVertical: 8,
+    borderRadius: 18,
+    paddingVertical: 4,
     width: "100%",
-    maxWidth: 300,
+    maxWidth: 310,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  reactionsRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  emojiButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#f3f4f6",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emojiText: {
-    fontSize: 20,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 10,
   },
   separator: {
-    height: 1,
+    height: StyleSheet.hairlineWidth,
     backgroundColor: "#e5e7eb",
     marginHorizontal: 12,
+    marginVertical: 2,
   },
   actionRow: {
+    width: "100%",
+  },
+  actionContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 13,
+    paddingHorizontal: 18,
+  },
+  actionIcon: {
+    marginRight: 12,
+    width: 24, // Fixed width for icons to keep labels aligned
+    textAlign: "center",
+  },
+  actionRowPressed: {
+    backgroundColor: "#f3f4f6",
   },
   actionLabel: {
-    fontSize: 15,
+    fontSize: 16,
     color: "#374151",
     fontWeight: "500",
   },
 });
+

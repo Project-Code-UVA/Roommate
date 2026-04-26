@@ -3,7 +3,7 @@
  * Covers: MSG-04 (reaction pills UI)
  */
 
-import React from "react";
+import * as React from "react";
 import { render, screen, fireEvent } from "@testing-library/react-native";
 import { MessageReactions } from "@/components/chat/message-reactions";
 import type { MessageReaction } from "@/types/chat";
@@ -27,29 +27,43 @@ describe("MessageReactions", () => {
       makeReaction("heart", "user-3"),
     ];
     render(
-      <MessageReactions reactions={reactions} onReactionPress={jest.fn()} />,
+      <MessageReactions
+        reactions={reactions}
+        currentUserId="user-9"
+        onToggle={jest.fn()}
+        isSender={false}
+      />,
     );
     expect(screen.getByText("thumbsup")).toBeTruthy();
     expect(screen.getByText("2")).toBeTruthy();
     expect(screen.getByText("heart")).toBeTruthy();
-    expect(screen.getByText("1")).toBeTruthy();
   });
 
-  it("calls onReactionPress when pill tapped", () => {
+  it("calls onToggle when pill tapped", () => {
     const onPress = jest.fn();
     const reactions: readonly MessageReaction[] = [
       makeReaction("thumbsup"),
     ];
     render(
-      <MessageReactions reactions={reactions} onReactionPress={onPress} />,
+      <MessageReactions
+        reactions={reactions}
+        currentUserId="user-9"
+        onToggle={onPress}
+        isSender={false}
+      />,
     );
     fireEvent.press(screen.getByText("thumbsup"));
-    expect(onPress).toHaveBeenCalledWith("thumbsup");
+    expect(onPress).toHaveBeenCalledWith("thumbsup", null);
   });
 
   it("renders nothing when no reactions", () => {
     const { toJSON } = render(
-      <MessageReactions reactions={[]} onReactionPress={jest.fn()} />,
+      <MessageReactions
+        reactions={[]}
+        currentUserId="user-9"
+        onToggle={jest.fn()}
+        isSender={false}
+      />,
     );
     expect(toJSON()).toBeNull();
   });

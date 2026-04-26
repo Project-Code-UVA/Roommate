@@ -13,7 +13,7 @@ jest.mock("@/services/selfie-service", () => ({
   uploadSelfie: jest.fn(),
 }));
 
-import React from "react";
+import * as React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import { SelfieCapture } from "@/components/verification/selfie-capture";
 import { captureSelfie, uploadSelfie } from "@/services/selfie-service";

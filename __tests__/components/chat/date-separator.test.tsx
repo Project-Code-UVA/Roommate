@@ -3,7 +3,7 @@
  * Covers: MSG-02 (date display between groups)
  */
 
-import React from "react";
+import * as React from "react";
 import { render, screen } from "@testing-library/react-native";
 import { DateSeparator } from "@/components/chat/date-separator";
 

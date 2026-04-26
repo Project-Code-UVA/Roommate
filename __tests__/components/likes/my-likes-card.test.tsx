@@ -3,7 +3,7 @@
  * Covers: LIKE-02 (my likes card rendering).
  */
 
-import React from "react";
+import * as React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 
 import { MyLikesCard } from "@/components/likes/my-likes-card";

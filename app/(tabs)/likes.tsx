@@ -483,6 +483,7 @@ export default function LikesScreen() {
             <MatchesRow
               key={thread.id}
               thread={thread}
+              currentUserId={userId}
               onPress={() =>
                 handlePressMatch(
                   thread.id,

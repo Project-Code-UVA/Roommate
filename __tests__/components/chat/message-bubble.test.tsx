@@ -3,7 +3,7 @@
  * Covers: Bubble rendering, sender/receiver variants, media, delivery, reactions, reply
  */
 
-import React from "react";
+import * as React from "react";
 import { render, screen, fireEvent } from "@testing-library/react-native";
 import { MessageBubble } from "@/components/chat/message-bubble";
 import type { Message, MessageReaction } from "@/types/chat";

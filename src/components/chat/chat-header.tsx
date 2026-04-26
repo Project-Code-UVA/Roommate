@@ -67,29 +67,32 @@ export function ChatHeader({
         accessibilityLabel="Go back"
       >
         <Ionicons name="chevron-back" size={24} color="#111827" />
+        <Text style={styles.backText}>Messages</Text>
       </Pressable>
 
       {/* Avatar + Name */}
-      <Pressable
-        style={styles.profileSection}
-        onPress={onPressProfile}
-        testID="chat-header-profile"
-      >
-        {otherUser.avatar_url ? (
-          <Image
-            source={{ uri: otherUser.avatar_url }}
-            style={styles.avatar}
-            testID="chat-header-avatar"
-          />
-        ) : (
-          <View style={styles.avatarFallback} testID="chat-header-avatar-fallback">
-            <Ionicons name="person-circle" size={32} color="#9ca3af" />
-          </View>
-        )}
-        <Text style={styles.displayName} numberOfLines={1}>
-          {otherUser.display_name}
-        </Text>
-      </Pressable>
+      <View style={styles.centerContainer} pointerEvents="box-none">
+        <Pressable
+          style={styles.profileSection}
+          onPress={onPressProfile}
+          testID="chat-header-profile"
+        >
+          {otherUser.avatar_url ? (
+            <Image
+              source={{ uri: otherUser.avatar_url }}
+              style={styles.avatar}
+              testID="chat-header-avatar"
+            />
+          ) : (
+            <View style={styles.avatarFallback} testID="chat-header-avatar-fallback">
+              <Ionicons name="person-circle" size={32} color="#9ca3af" />
+            </View>
+          )}
+          <Text style={styles.displayName} numberOfLines={1}>
+            {otherUser.display_name}
+          </Text>
+        </Pressable>
+      </View>
 
       {/* Overflow menu button */}
       <Pressable
@@ -136,43 +139,56 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 8,
     paddingVertical: 10,
     backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#e5e7eb",
+    height: 64, // Slightly taller to accommodate stacked avatar and name
   },
   backButton: {
     padding: 4,
-  },
-  profileSection: {
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginLeft: 4,
+    zIndex: 1,
+  },
+  backText: {
+    fontSize: 16,
+    color: "#111827",
+    marginLeft: 2,
+  },
+  centerContainer: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  profileSection: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 2,
   },
   avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: "#f3f4f6",
   },
   avatarFallback: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
   displayName: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: "600",
     color: "#111827",
-    flexShrink: 1,
   },
   overflowButton: {
     padding: 4,
+    zIndex: 1,
   },
   menuBackdrop: {
     ...StyleSheet.absoluteFillObject,

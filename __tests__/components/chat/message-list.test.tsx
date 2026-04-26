@@ -3,7 +3,7 @@
  * Covers: MSG-02 (timestamps, grouping, inverted list)
  */
 
-import React from "react";
+import * as React from "react";
 import { render, screen } from "@testing-library/react-native";
 import { MessageList } from "@/components/chat/message-list";
 import type { Message } from "@/types/chat";
