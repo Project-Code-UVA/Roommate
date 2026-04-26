@@ -57,7 +57,7 @@ Room is not a dating app, not a housing marketplace, and not a global social net
 | Bottom sheets | **@gorhom/bottom-sheet 5** | Composer, filters, overflow menus. |
 | State | React Context + custom hooks (no Redux) | Lightweight; Supabase realtime is the source of truth. |
 | Navigation | **@react-navigation 7** (under expo-router) | Tab + stack navigators. |
-| Images | **expo-image-picker**, **expo-image-manipulator** | Photo upload pipeline (pick → resize → upload). |
+| Images | **expo-image**, **expo-image-picker**, **expo-image-manipulator** | Cached image rendering + photo upload pipeline (pick → resize → upload). |
 | Notifications | **expo-notifications** + **expo-device** | Push notification tokens registered server-side. |
 | Misc | **expo-haptics**, **expo-blur**, **expo-linear-gradient**, **expo-clipboard**, **react-native-confetti-cannon** | UX polish. |
 
@@ -70,7 +70,7 @@ Room is not a dating app, not a housing marketplace, and not a global social net
 | Storage | **Supabase Storage** — photos, selfie verification artifacts |
 | Realtime | **Supabase Realtime** — chat messages, reactions, read receipts |
 | Server logic | **Supabase Edge Functions** (Deno) — currently `send-push-notification`; trust/safety logic lives in Postgres functions + RLS |
-| Migrations | 58+ SQL migrations in `supabase/migrations/` |
+| Migrations | 59+ SQL migrations in `supabase/migrations/` |
 
 ### Tooling
 
@@ -211,7 +211,7 @@ Server-only secrets (used by Edge Functions and never shipped to the client):
 
 ## Database & Backend
 
-The schema lives in [`supabase/migrations/`](supabase/migrations/) — 58+ ordered SQL migrations, applied in numeric order (`00001_create_enums.sql` → `00058_mark_thread_read.sql`).
+The schema lives in [`supabase/migrations/`](supabase/migrations/) — 59+ ordered SQL migrations, applied in numeric order (`00001_create_enums.sql` → `00059_unique_demo_cover_photos.sql`).
 
 ### Apply migrations locally
 
@@ -276,7 +276,7 @@ Server-side guarantees enforced in DB (RLS + RPC):
 
 ### Onboarding
 
-15-step funnel under `app/(auth)/`: welcome → signup → phone → OTP → name → birthday → gender → school → photos → preferences → roommate-preferences → nitty-gritty → bio → login. Each step gates the next; partial accounts can't appear in Discovery/Explore.
+Multi-step funnel under `app/(auth)/`: welcome → signup → phone → OTP → name → birthday → gender → school → photos → preferences → nitty-gritty → bio → login. Each step gates the next; partial accounts can't appear in Discovery/Explore.
 
 ### Trust & Safety
 
